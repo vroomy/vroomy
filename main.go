@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -10,11 +11,15 @@ import (
 
 func main() {
 	var (
-		svc *service.Service
-		err error
+		svc    *service.Service
+		config string
+		err    error
 	)
 
-	if svc, err = service.New("./config.toml"); err != nil {
+	flag.StringVar(&config, "config", "./config.toml", "Location of configuration file")
+	flag.Parse()
+
+	if svc, err = service.New(config); err != nil {
 		log.Fatal(err)
 	}
 	defer svc.Close()
