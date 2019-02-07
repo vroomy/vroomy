@@ -1,0 +1,15 @@
+port = 8080
+tlsPort = 10443 
+tlsDir = "./tls"
+
+[[route]]
+httpPath = "/"
+target = "./public_html/index.html"
+
+[[route]]
+httpPath = "/js/*"
+target = "./public_html/js"
+
+[[route]]
+httpPath = "/css/*"
+target = "./public_html/css"
