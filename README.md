@@ -54,13 +54,13 @@ Requests/sec:   3359.25
 Transfer/sec:    384.98MB
 
 # vroomie
-$ wrk -c60 -d12s https://josh.usehatchapp.com
-Running 12s test @ https://josh.usehatchapp.com
+$ wrk -c60 -d20s https://josh.usehatchapp.com
+Running 20s test @ https://josh.usehatchapp.com
   2 threads and 60 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    13.54ms   10.31ms 202.61ms   82.20%
-    Req/Sec     2.32k   399.60     3.32k    89.12%
-  55494 requests in 12.07s, 6.21GB read
-Requests/sec:   4598.66
-Transfer/sec:    526.63MB
+    Latency    14.28ms    9.45ms  98.77ms   73.79%
+    Req/Sec     2.17k   304.46     3.03k    76.52%
+  86013 requests in 20.01s, 9.62GB read
+Requests/sec:   4297.88
+Transfer/sec:    492.22MB
 ```
