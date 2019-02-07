@@ -58,11 +58,9 @@ $ wrk -c60 -d12s https://josh.usehatchapp.com
 Running 12s test @ https://josh.usehatchapp.com
   2 threads and 60 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     3.08ms    2.53ms  77.12ms   83.59%
-    Req/Sec     9.67k     1.66k   12.09k    88.33%
-  231347 requests in 12.07s, 35.08MB read
-  Non-2xx or 3xx responses: 231347
-Requests/sec:  19167.01
-Transfer/sec:      2.91MB
-$
+    Latency    13.54ms   10.31ms 202.61ms   82.20%
+    Req/Sec     2.32k   399.60     3.32k    89.12%
+  55494 requests in 12.07s, 6.21GB read
+Requests/sec:   4598.66
+Transfer/sec:    526.63MB
 ```
