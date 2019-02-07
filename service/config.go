@@ -9,5 +9,5 @@ type Config struct {
 	TLSDir  string `toml:"tlsDir"`
 
 	// Routes are the routes to listen for and serve
-	Routes []Route `toml:"routes"`
+	Routes []*Route `toml:"routes"`
 }
