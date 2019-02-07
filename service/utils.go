@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/Hatch1fy/errors"
@@ -14,8 +13,6 @@ const (
 )
 
 func getKeyFromRequestPath(root, requestPath string) (key string, err error) {
-	fmt.Println("Getting key", root)
-	fmt.Println(requestPath)
 	// Clean request path
 	requestPath = filepath.Clean(requestPath)
 
