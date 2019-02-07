@@ -43,15 +43,15 @@ target = "./public_html/css"
 ### Performance
 ```bash
 # nginx
-$ wrk -c60 -d12s https://josh.usehatchapp.com
-Running 12s test @ https://josh.usehatchapp.com
+$ wrk -c60 -d20s https://josh.usehatchapp.com
+Running 20s test @ https://josh.usehatchapp.com
   2 threads and 60 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    17.46ms    2.97ms  84.95ms   93.73%
-    Req/Sec     1.70k   148.48     2.00k    82.85%
-  40655 requests in 12.10s, 4.55GB read
-Requests/sec:   3359.25
-Transfer/sec:    384.98MB
+    Latency    17.66ms    1.59ms  30.31ms   88.20%
+    Req/Sec     1.68k   102.72     1.91k    85.43%
+  66500 requests in 20.01s, 7.44GB read
+Requests/sec:   3323.69
+Transfer/sec:    380.91MB
 
 # vroomie
 $ wrk -c60 -d20s https://josh.usehatchapp.com
