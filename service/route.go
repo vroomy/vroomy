@@ -77,8 +77,6 @@ func (r *Route) serveHTTP(ctx *httpserve.Context) (res httpserve.Response) {
 		return httpserve.NewTextResponse(400, []byte(err.Error()))
 	}
 
-	fmt.Println("Key??", key)
-
 	if err := r.fs.Serve(key, ctx.Writer, ctx.Request); err != nil {
 		err = fmt.Errorf("Error serving %s: %v", key, err)
 		return httpserve.NewTextResponse(400, []byte(err.Error()))
