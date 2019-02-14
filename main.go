@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/hatchify/vroomie/service"
+	"github.com/Hatch1fy/vroomie/service"
 	"github.com/missionMeteora/toolkit/closer"
 )
 
