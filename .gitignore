@@ -2,3 +2,4 @@ tls/*
 config.toml
 vroomie
 public_html
+plugins
