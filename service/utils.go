@@ -2,6 +2,8 @@ package service
 
 import (
 	"path/filepath"
+	"plugin"
+	"strings"
 
 	"github.com/Hatch1fy/errors"
 )
@@ -22,5 +24,14 @@ func getKeyFromRequestPath(root, requestPath string) (key string, err error) {
 	}
 
 	key = requestPath[len(root):]
+	return
+}
+
+type plugins map[string]*plugin.Plugin
+
+func getPluginKey(filename string) (key string, err error) {
+	base := filepath.Base(filename)
+	spl := strings.Split(base, ".")
+	key = spl[0]
 	return
 }

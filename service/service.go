@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"plugin"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Hatch1fy/errors"
@@ -22,6 +23,11 @@ func New(cfgname string) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
+
+	if err = s.initPlugins(); err != nil {
+		return
+	}
+
 	if err = s.initRoutes(); err != nil {
 		return
 	}
@@ -34,18 +40,47 @@ func New(cfgname string) (sp *Service, err error) {
 type Service struct {
 	cfg Config
 	srv *httpserve.Serve
+	p   plugins
 	// Closed state
 	closed atoms.Bool
 }
 
+func (s *Service) initPlugins() (err error) {
+	s.p = make(plugins)
+
+	fmt.Println("Initing plugins", s.cfg.Plugins)
+	if len(s.cfg.Plugins) == 0 {
+		return
+	}
+
+	for _, filename := range s.cfg.Plugins {
+		var key string
+		if key, err = getPluginKey(filename); err != nil {
+			return
+		}
+
+		fmt.Println("Initing plugin", filename, key)
+
+		if s.p[key], err = plugin.Open(filename); err != nil {
+			return
+		}
+		fmt.Println("Plugin opened", key)
+	}
+
+	return
+}
+
 func (s *Service) initRoutes() (err error) {
+	fmt.Println("Initing routes!")
+
 	for i, r := range s.cfg.Routes {
-		if err = r.init(); err != nil {
+		fmt.Println("Initing route!", r)
+		if err = r.init(s.p); err != nil {
 			return fmt.Errorf("error initializing route #%d (%v): %v", i, r, err)
 		}
 
 		fmt.Printf("Listening to: %v\n", r.String())
-		s.srv.GET(r.HTTPPath, r.serveHTTP)
+		s.srv.GET(r.HTTPPath, r.handler)
 	}
 
 	return
