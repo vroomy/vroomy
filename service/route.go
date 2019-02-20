@@ -5,9 +5,22 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/fileserver"
 	"github.com/Hatch1fy/httpserve"
 )
+
+const (
+	// ErrPluginNotLoaded is returned when a requested plugin has not been loaded
+	ErrPluginNotLoaded = errors.Error("plugin not loaded")
+	// ErrInvalidPluginHandler is returned when a plugin handler is not valid
+	ErrInvalidPluginHandler = errors.Error("plugin handler not valid")
+	// ErrExpectedEndParen is returned when an ending parenthesis is missing
+	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
+)
+
+type route struct {
+}
 
 // Route represents a listening route
 type Route struct {
@@ -19,18 +32,32 @@ type Route struct {
 	// Note: This is only used when the target is a file rather than a directory
 	key string
 
+	// Target plug-in handler
+	// Note: This is only used when the target is a plugin handler
+	handlers []httpserve.Handler
+
+	// Route group
+	Group string `toml:"group"`
+	// HTTP method
+	Method string `toml:"method"`
 	// HTTP path
 	HTTPPath string `toml:"httpPath"`
 	// Directory or file to serve
 	Target string `toml:"target"`
+	// Plugin handlers
+	Handlers []string `toml:"handlers"`
 }
 
 // String will return a formatted version of the route
 func (r *Route) String() string {
-	return fmt.Sprintf(routeFmt, r.HTTPPath, r.Target)
+	return fmt.Sprintf(routeFmt, r.HTTPPath, r.Target, r.Handlers)
 }
 
-func (r *Route) init() (err error) {
+func (r *Route) init(p plugins) (err error) {
+	if len(r.Handlers) > 0 {
+		return r.initPlugins(p)
+	}
+
 	var info os.FileInfo
 	target := r.Target
 	if info, err = os.Stat(target); err != nil {
@@ -55,6 +82,20 @@ func (r *Route) init() (err error) {
 
 	// Set root as the target
 	r.root, _ = filepath.Split(r.HTTPPath)
+	r.handlers = append(r.handlers, r.serveHTTP)
+	return
+}
+
+func (r *Route) initPlugins(p plugins) (err error) {
+	for _, handlerKey := range r.Handlers {
+		var h httpserve.Handler
+		if h, err = newPluginHandler(p, handlerKey); err != nil {
+			return
+		}
+
+		r.handlers = append(r.handlers, h)
+	}
+
 	return
 }
 
