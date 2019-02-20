@@ -1,5 +1,6 @@
 tls/*
+data/
+public_html/
 config.toml
 vroomie
-public_html
 plugins

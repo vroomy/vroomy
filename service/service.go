@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"plugin"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Hatch1fy/errors"
@@ -23,8 +24,12 @@ func New(cfgname string) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
-
+	fmt.Println("Routes", s.cfg.Routes[0])
 	if err = s.initPlugins(); err != nil {
+		return
+	}
+
+	if err = s.initGroups(); err != nil {
 		return
 	}
 
@@ -47,8 +52,6 @@ type Service struct {
 
 func (s *Service) initPlugins() (err error) {
 	s.p = make(plugins)
-
-	fmt.Println("Initing plugins", s.cfg.Plugins)
 	if len(s.cfg.Plugins) == 0 {
 		return
 	}
@@ -59,28 +62,74 @@ func (s *Service) initPlugins() (err error) {
 			return
 		}
 
-		fmt.Println("Initing plugin", filename, key)
-
 		if s.p[key], err = plugin.Open(filename); err != nil {
 			return
 		}
-		fmt.Println("Plugin opened", key)
+	}
+
+	return
+}
+
+func (s *Service) initGroups() (err error) {
+	if len(s.cfg.Groups) == 0 {
+		return
+	}
+
+	for _, group := range s.cfg.Groups {
+		fmt.Printf("Group? %+v\n", group)
+		if err = group.init(s.p); err != nil {
+			return
+		}
+
+		var (
+			match *Group
+			grp   httpserve.Group = s.srv
+		)
+
+		if match, err = s.cfg.getGroup(group.Group); err != nil {
+			return
+		} else if match != nil {
+			grp = match.g
+		}
+
+		group.g = grp.Group(group.HTTPPath, group.handlers...)
 	}
 
 	return
 }
 
 func (s *Service) initRoutes() (err error) {
-	fmt.Println("Initing routes!")
-
 	for i, r := range s.cfg.Routes {
-		fmt.Println("Initing route!", r)
 		if err = r.init(s.p); err != nil {
 			return fmt.Errorf("error initializing route #%d (%v): %v", i, r, err)
 		}
 
-		fmt.Printf("Listening to: %v\n", r.String())
-		s.srv.GET(r.HTTPPath, r.handler)
+		var (
+			match *Group
+			grp   httpserve.Group = s.srv
+		)
+
+		if match, err = s.cfg.getGroup(r.Group); err != nil {
+			return
+		} else if match != nil {
+			grp = match.g
+		}
+
+		var fn func(string, ...httpserve.Handler)
+		switch strings.ToLower(r.Method) {
+		case "put":
+			fn = grp.PUT
+		case "post":
+			fn = grp.POST
+		case "delete":
+			fn = grp.DELETE
+
+		default:
+			// Default case is GET
+			fn = grp.GET
+		}
+
+		fn(r.HTTPPath, r.handlers...)
 	}
 
 	return
