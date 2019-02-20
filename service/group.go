@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
 )
@@ -30,14 +28,12 @@ type Group struct {
 }
 
 func (g *Group) init(p plugins) (err error) {
-	fmt.Println("Uhh", g, p)
 	for _, handlerKey := range g.Handlers {
 		var h httpserve.Handler
 		if h, err = newPluginHandler(p, handlerKey); err != nil {
 			return
 		}
 
-		fmt.Println("Appending")
 		g.handlers = append(g.handlers, h)
 	}
 

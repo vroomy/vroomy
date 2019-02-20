@@ -24,7 +24,6 @@ func New(cfgname string) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
-	fmt.Println("Routes", s.cfg.Routes[0])
 	if err = s.initPlugins(); err != nil {
 		return
 	}
@@ -76,7 +75,6 @@ func (s *Service) initGroups() (err error) {
 	}
 
 	for _, group := range s.cfg.Groups {
-		fmt.Printf("Group? %+v\n", group)
 		if err = group.init(s.p); err != nil {
 			return
 		}
