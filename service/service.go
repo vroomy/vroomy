@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -17,7 +18,7 @@ const (
 )
 
 // New will return a new instance of service
-func New(cfgname string) (sp *Service, err error) {
+func New(cfgname string, update bool) (sp *Service, err error) {
 	var s Service
 	if _, err = toml.DecodeFile(cfgname, &s.cfg); err != nil {
 		return
@@ -25,6 +26,18 @@ func New(cfgname string) (sp *Service, err error) {
 
 	if s.cfg.Dir == "" {
 		s.cfg.Dir = "./"
+	}
+
+	if err = os.Chdir(s.cfg.Dir); err != nil {
+		return
+	}
+
+	if err = initDir("data"); err != nil {
+		return
+	}
+
+	if err = initDir("plugins"); err != nil {
+		return
 	}
 
 	s.srv = httpserve.New()
@@ -54,7 +67,7 @@ type Service struct {
 }
 
 func (s *Service) initPlugins() (err error) {
-	if s.p, err = plugins.New(s.cfg.Dir); err != nil {
+	if s.p, err = plugins.New("plugins"); err != nil {
 		return
 	}
 
@@ -185,6 +198,16 @@ func (s *Service) Listen() (err error) {
 	go s.listenHTTPS(errC)
 	// Return any error which may come down the error channel
 	return <-errC
+}
+
+// Port will return the current HTTP port
+func (s *Service) Port() uint16 {
+	return s.cfg.Port
+}
+
+// TLSPort will return the current HTTPS port
+func (s *Service) TLSPort() uint16 {
+	return s.cfg.TLSPort
 }
 
 // Close will close the selected service
