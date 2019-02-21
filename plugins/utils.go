@@ -31,7 +31,7 @@ func goGet(gitURL string, update bool) (err error) {
 		return
 	}
 
-	args := []string{"get", "-u", "-v", downloadURL}
+	args := []string{"get", "-u", "-v", "-buildmode", "plugin", downloadURL}
 	if !update {
 		args = append(args[:1], args[2:]...)
 	}
@@ -42,20 +42,15 @@ func goGet(gitURL string, update bool) (err error) {
 
 	errBuf := bytes.NewBuffer(nil)
 	goget.Stderr = errBuf
-	if err = goget.Run(); err == nil {
-		return
+
+	if err = goget.Run(); err != nil {
+		return errors.Error(errBuf.String())
 	}
 
-	if strings.Index(errBuf.String(), "no Go files in") > -1 {
-		err = nil
-		return
-	}
-
-	err = errors.Error(errBuf.String())
 	return
 }
 
-func goBuild(gitURL, filename string) error {
+func goBuild(gitURL, filename string) (err error) {
 	homeDir := os.Getenv("HOME")
 	goDir := path.Join(homeDir, "go", "src", gitURL)
 
@@ -63,7 +58,15 @@ func goBuild(gitURL, filename string) error {
 	gobuild.Stdin = os.Stdin
 	gobuild.Stdout = os.Stdout
 	gobuild.Stderr = os.Stderr
-	return gobuild.Run()
+
+	errBuf := bytes.NewBuffer(nil)
+	gobuild.Stderr = errBuf
+
+	if err = gobuild.Run(); err != nil {
+		return errors.Error(errBuf.String())
+	}
+
+	return
 }
 
 func getGitDownloadURL(gitURL string) (downloadURL string, err error) {
