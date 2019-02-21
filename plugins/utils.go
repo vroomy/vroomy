@@ -26,12 +26,7 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func goGet(gitURL string, update bool) (err error) {
-	var downloadURL string
-	if downloadURL, err = getGitDownloadURL(gitURL); err != nil {
-		return
-	}
-
-	args := []string{"get", "-u", "-v", "-buildmode", "plugin", downloadURL}
+	args := []string{"get", "-u", "-v", "-buildmode", "plugin", gitURL}
 	if !update {
 		args = append(args[:1], args[2:]...)
 	}
@@ -66,25 +61,6 @@ func goBuild(gitURL, filename string) (err error) {
 		return errors.Error(errBuf.String())
 	}
 
-	return
-}
-
-func getGitDownloadURL(gitURL string) (downloadURL string, err error) {
-	var u *url.URL
-	if u, err = url.Parse("http://" + gitURL); err != nil {
-		return
-	}
-
-	spl := strings.Split(u.Path, "/")
-	if len(spl) > 2 {
-		spl = spl[:3]
-	}
-
-	// Update path
-	u.Path = path.Join(spl...)
-
-	// Set download URL
-	downloadURL = u.String()[7:]
 	return
 }
 
