@@ -1,6 +1,5 @@
 tls/*
-data/
+example_app/
 public_html/
 config.toml
 vroomie
-plugins

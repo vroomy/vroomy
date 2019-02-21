@@ -8,6 +8,7 @@ import (
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/fileserver"
 	"github.com/Hatch1fy/httpserve"
+	"github.com/Hatch1fy/vroomie/plugins"
 )
 
 const (
@@ -53,7 +54,7 @@ func (r *Route) String() string {
 	return fmt.Sprintf(routeFmt, r.HTTPPath, r.Target, r.Handlers)
 }
 
-func (r *Route) init(p plugins) (err error) {
+func (r *Route) init(p *plugins.Plugins) (err error) {
 	if len(r.Handlers) > 0 {
 		return r.initPlugins(p)
 	}
@@ -86,7 +87,7 @@ func (r *Route) init(p plugins) (err error) {
 	return
 }
 
-func (r *Route) initPlugins(p plugins) (err error) {
+func (r *Route) initPlugins(p *plugins.Plugins) (err error) {
 	for _, handlerKey := range r.Handlers {
 		var h httpserve.Handler
 		if h, err = newPluginHandler(p, handlerKey); err != nil {

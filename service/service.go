@@ -2,12 +2,12 @@ package service
 
 import (
 	"fmt"
-	"plugin"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
+	"github.com/Hatch1fy/vroomie/plugins"
 	"github.com/PathDNA/atoms"
 )
 
@@ -21,6 +21,10 @@ func New(cfgname string) (sp *Service, err error) {
 	var s Service
 	if _, err = toml.DecodeFile(cfgname, &s.cfg); err != nil {
 		return
+	}
+
+	if s.cfg.Dir == "" {
+		s.cfg.Dir = "./"
 	}
 
 	s.srv = httpserve.New()
@@ -44,24 +48,22 @@ func New(cfgname string) (sp *Service, err error) {
 type Service struct {
 	cfg Config
 	srv *httpserve.Serve
-	p   plugins
+	p   *plugins.Plugins
 	// Closed state
 	closed atoms.Bool
 }
 
 func (s *Service) initPlugins() (err error) {
-	s.p = make(plugins)
+	if s.p, err = plugins.New(s.cfg.Dir); err != nil {
+		return
+	}
+
 	if len(s.cfg.Plugins) == 0 {
 		return
 	}
 
-	for _, filename := range s.cfg.Plugins {
-		var key string
-		if key, err = getPluginKey(filename); err != nil {
-			return
-		}
-
-		if s.p[key], err = plugin.Open(filename); err != nil {
+	for _, pluginKey := range s.cfg.Plugins {
+		if _, err = s.p.New(pluginKey); err != nil {
 			return
 		}
 	}

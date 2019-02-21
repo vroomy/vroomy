@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
+	"github.com/Hatch1fy/vroomie/plugins"
 )
 
 const (
@@ -27,7 +28,7 @@ type Group struct {
 	g httpserve.Group
 }
 
-func (g *Group) init(p plugins) (err error) {
+func (g *Group) init(p *plugins.Plugins) (err error) {
 	for _, handlerKey := range g.Handlers {
 		var h httpserve.Handler
 		if h, err = newPluginHandler(p, handlerKey); err != nil {

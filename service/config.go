@@ -4,6 +4,7 @@ const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 
 // Config is the configuration needed to initialize a new instance of Service
 type Config struct {
+	Dir     string   `toml:"dir"`
 	Port    uint16   `toml:"port"`
 	TLSPort uint16   `toml:"tlsPort"`
 	TLSDir  string   `toml:"tlsDir"`
