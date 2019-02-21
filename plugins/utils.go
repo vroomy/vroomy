@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"bytes"
 	"net/url"
 	"os"
 	"os/exec"
@@ -36,8 +37,19 @@ func goGet(gitURL string, update bool) (err error) {
 	goget := exec.Command("go", args...)
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout
-	goget.Stderr = os.Stderr
-	return goget.Run()
+
+	errBuf := bytes.NewBuffer(nil)
+	goget.Stderr = errBuf
+	if err = goget.Run(); err == nil {
+		return
+	}
+
+	if strings.Index(err.Error(), "no Go files in") > -1 {
+		err = nil
+		return
+	}
+
+	return
 }
 
 func goBuild(gitURL, filename string) error {
