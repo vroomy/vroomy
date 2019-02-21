@@ -22,13 +22,18 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
-func goGet(gitURL string) (err error) {
+func goGet(gitURL string, update bool) (err error) {
 	var downloadURL string
 	if downloadURL, err = getGitDownloadURL(gitURL); err != nil {
 		return
 	}
 
-	goget := exec.Command("go", "get", "-u", "-v", downloadURL)
+	args := []string{"get", "-u", "-v", downloadURL}
+	if !update {
+		args = append(args[:1], args[2:]...)
+	}
+
+	goget := exec.Command("go", args...)
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout
 	goget.Stderr = os.Stderr
@@ -88,7 +93,7 @@ func doesPluginExist(filename string) (exists bool) {
 }
 
 func getGitPluginKey(gitURL string) (key string, err error) {
-	key, _, err = getGitURLParts(gitURL)
+	_, key, err = getGitURLParts(gitURL)
 	return
 }
 
@@ -98,9 +103,21 @@ func getGitURLParts(gitURL string) (gitUser, repoName string, err error) {
 		return
 	}
 
-	parts := strings.Split(u.Path, "/")
+	parts := stripEmpty(strings.Split(u.Path, "/"))
 	gitUser = parts[0]
 	repoName = parts[1]
+	return
+}
+
+func stripEmpty(ss []string) (out []string) {
+	for _, str := range ss {
+		if len(str) == 0 {
+			continue
+		}
+
+		out = append(out, str)
+	}
+
 	return
 }
 
