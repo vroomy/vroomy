@@ -31,6 +31,7 @@ func New(dir string) (pp *Plugins, err error) {
 	var p Plugins
 	p.out = journaler.New("Plugins")
 	p.dir = dir
+	p.m = make(map[string]*plugin.Plugin)
 	pp = &p
 	return
 }
@@ -73,7 +74,6 @@ func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
 
 		// Check to see if current plugin exists
 		if doesPluginExist(filename) {
-			fmt.Println("Exists!", filename)
 			return
 		}
 
@@ -88,16 +88,18 @@ func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
 
 func (p *Plugins) gitRetrieve(gitURL, filename string) (err error) {
 	p.out.Notification("About to get: %v", gitURL)
-	if err = goGet(gitURL); err != nil {
+	if err = goGet(gitURL, false); err != nil {
 		return
 	}
+
+	p.out.Success("Download of %s complete", gitURL)
 
 	p.out.Notification("About to build: %v", gitURL)
 	if err = goBuild(gitURL, filename); err != nil {
 		return
 	}
 
-	p.out.Success("%v downloaded and built", gitURL)
+	p.out.Success("Build of %s complete", gitURL)
 	return
 }
 
@@ -123,6 +125,7 @@ func (p *Plugins) New(pluginKey string) (key string, err error) {
 		return
 	}
 
+	p.out.Success("%s (%s) loaded", alias, pluginKey)
 	key = alias
 	return
 }
