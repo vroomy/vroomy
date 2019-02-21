@@ -8,6 +8,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/Hatch1fy/errors"
 )
 
 func parseKey(key string) (newKey, alias string) {
@@ -44,11 +46,12 @@ func goGet(gitURL string, update bool) (err error) {
 		return
 	}
 
-	if strings.Index(err.Error(), "no Go files in") > -1 {
+	if strings.Index(errBuf.String(), "no Go files in") > -1 {
 		err = nil
 		return
 	}
 
+	err = errors.Error(errBuf.String())
 	return
 }
 
