@@ -137,7 +137,7 @@ func (p *Plugins) Get(key string) (plugin *plugin.Plugin, err error) {
 
 	var ok bool
 	if plugin, ok = p.m[key]; !ok {
-		err = ErrPluginNotLoaded
+		err = fmt.Errorf("Cannot find plugin %s: %v", key, ErrPluginNotLoaded)
 		return
 	}
 
