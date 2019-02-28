@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"os"
+	"plugin"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -50,6 +51,10 @@ func New(cfgname string, update bool) (sp *Service, err error) {
 	}
 
 	if err = s.initRoutes(); err != nil {
+		return
+	}
+
+	if err = s.onInitialization(); err != nil {
 		return
 	}
 
@@ -143,6 +148,41 @@ func (s *Service) initRoutes() (err error) {
 		}
 
 		fn(r.HTTPPath, r.handlers...)
+	}
+
+	return
+}
+
+func (s *Service) onInitialization() (err error) {
+	for _, onInitKey := range s.cfg.OnInit {
+		var (
+			key   string
+			fnKey string
+			//			args []string
+		)
+
+		if key, fnKey, _, err = getHandlerParts(onInitKey); err != nil {
+			return
+		}
+
+		var p *plugin.Plugin
+		if p, err = s.p.Get(key); err != nil {
+			return
+		}
+
+		var sym plugin.Symbol
+		if sym, err = p.Lookup(fnKey); err != nil {
+			return
+		}
+
+		fn, ok := sym.(func(p *plugins.Plugins) error)
+		if !ok {
+			return fmt.Errorf("invalid init function, received %v", sym)
+		}
+
+		if err = fn(s.p); err != nil {
+			return
+		}
 	}
 
 	return
