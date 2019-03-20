@@ -255,9 +255,7 @@ func (s *Service) Close() (err error) {
 		return errors.ErrIsClosed
 	}
 
-	return
-}
-
-type listener interface {
-	Listen(port uint16) error
+	var errs errors.ErrorList
+	errs.Push(s.p.Close())
+	return errs.Err()
 }
