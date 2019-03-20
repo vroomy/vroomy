@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"plugin"
+	"reflect"
 	"sync"
 
 	"github.com/Hatch1fy/errors"
@@ -19,6 +20,8 @@ const (
 	ErrPluginKeyExists = errors.Error("plugin cannot be added, key already exists")
 	// ErrPluginNotLoaded is returned when a plugin namespace is provided that has not been loaded
 	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
+	// ErrNotAddressable is returned when a non-addressable value is provided
+	ErrNotAddressable = errors.Error("provided backend must be addressable")
 )
 
 // New will return a new instance of plugins
@@ -46,6 +49,8 @@ type Plugins struct {
 
 	// Internal plugin store (by key)
 	m map[string]*plugin.Plugin
+
+	closed bool
 }
 
 func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
@@ -143,3 +148,61 @@ func (p *Plugins) Get(key string) (plugin *plugin.Plugin, err error) {
 
 	return
 }
+
+// Backend will associated the backend of the requested key
+func (p *Plugins) Backend(key string, backend interface{}) (err error) {
+	var pi *plugin.Plugin
+	if pi, err = p.Get(key); err != nil {
+		return
+	}
+
+	var sym plugin.Symbol
+	if sym, err = pi.Lookup("Backend"); err != nil {
+		return
+	}
+
+	fn, ok := sym.(func() interface{})
+	if !ok {
+		return fmt.Errorf("invalid symbol, expected func() interface{} and received %v", reflect.TypeOf(sym))
+	}
+
+	refVal := reflect.ValueOf(backend)
+	elem := refVal.Elem()
+	if !elem.CanSet() {
+		return ErrNotAddressable
+	}
+
+	beVal := reflect.ValueOf(fn())
+
+	if elem.Type() != beVal.Type() {
+		return fmt.Errorf("invalid type, expected %v and received %v", elem.Type(), beVal.Type())
+	}
+
+	elem.Set(beVal)
+	return
+}
+
+// Close will close plugins
+func (p *Plugins) Close() (err error) {
+	p.mu.Lock()
+	p.mu.Unlock()
+	if p.closed {
+		return errors.ErrIsClosed
+	}
+
+	var errs errors.ErrorList
+	p.out.Notification("Closing plugins")
+	for key, pi := range p.m {
+		if err = closePlugin(pi); err != nil {
+			errs.Push(fmt.Errorf("error closing %s: %v", key, err))
+			continue
+		}
+
+		p.out.Success("Closed %s", key)
+	}
+
+	p.closed = true
+	return errs.Err()
+}
+
+type backendFn func() interface{}
