@@ -10,6 +10,8 @@ import (
 	"github.com/Hatch1fy/vroomie/service"
 	"github.com/missionMeteora/journaler"
 	"github.com/missionMeteora/toolkit/closer"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
