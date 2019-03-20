@@ -191,10 +191,14 @@ func (p *Plugins) Close() (err error) {
 	}
 
 	var errs errors.ErrorList
+	p.out.Notification("Closing plugins")
 	for key, pi := range p.m {
 		if err = closePlugin(pi); err != nil {
 			errs.Push(fmt.Errorf("error closing %s: %v", key, err))
+			continue
 		}
+
+		p.out.Success("Closed %s", key)
 	}
 
 	p.closed = true
