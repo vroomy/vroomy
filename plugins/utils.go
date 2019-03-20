@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"plugin"
 	"strings"
 
 	"github.com/Hatch1fy/errors"
@@ -158,4 +159,19 @@ func isGitReference(handlerKey string) (ok bool) {
 	var err error
 	_, err = url.Parse("http://" + handlerKey)
 	return err == nil
+}
+
+func closePlugin(p *plugin.Plugin) (err error) {
+	var sym plugin.Symbol
+	if sym, err = p.Lookup("Close"); err != nil {
+		err = nil
+		return
+	}
+
+	fn, ok := sym.(func() error)
+	if !ok {
+		return
+	}
+
+	return fn()
 }

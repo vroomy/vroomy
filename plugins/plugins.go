@@ -49,6 +49,8 @@ type Plugins struct {
 
 	// Internal plugin store (by key)
 	m map[string]*plugin.Plugin
+
+	closed bool
 }
 
 func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
@@ -178,6 +180,25 @@ func (p *Plugins) Backend(key string, backend interface{}) (err error) {
 
 	elem.Set(beVal)
 	return
+}
+
+// Close will close plugins
+func (p *Plugins) Close() (err error) {
+	p.mu.Lock()
+	p.mu.Unlock()
+	if p.closed {
+		return errors.ErrIsClosed
+	}
+
+	var errs errors.ErrorList
+	for key, pi := range p.m {
+		if err = closePlugin(pi); err != nil {
+			errs.Push(fmt.Errorf("error closing %s: %v", key, err))
+		}
+	}
+
+	p.closed = true
+	return errs.Err()
 }
 
 type backendFn func() interface{}
