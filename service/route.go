@@ -12,8 +12,6 @@ import (
 )
 
 const (
-	// ErrPluginNotLoaded is returned when a requested plugin has not been loaded
-	ErrPluginNotLoaded = errors.Error("plugin not loaded")
 	// ErrInvalidPluginHandler is returned when a plugin handler is not valid
 	ErrInvalidPluginHandler = errors.Error("plugin handler not valid")
 	// ErrExpectedEndParen is returned when an ending parenthesis is missing
