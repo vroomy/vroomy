@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"plugin"
+	"reflect"
 	"sync"
 
 	"github.com/Hatch1fy/errors"
@@ -19,6 +20,8 @@ const (
 	ErrPluginKeyExists = errors.Error("plugin cannot be added, key already exists")
 	// ErrPluginNotLoaded is returned when a plugin namespace is provided that has not been loaded
 	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
+	// ErrNotAddressable is returned when a non-addressable value is provided
+	ErrNotAddressable = errors.Error("provided backend must be addressable")
 )
 
 // New will return a new instance of plugins
@@ -143,3 +146,38 @@ func (p *Plugins) Get(key string) (plugin *plugin.Plugin, err error) {
 
 	return
 }
+
+// Backend will associated the backend of the requested key
+func (p *Plugins) Backend(key string, backend interface{}) (err error) {
+	var pi *plugin.Plugin
+	if pi, err = p.Get(key); err != nil {
+		return
+	}
+
+	var sym plugin.Symbol
+	if sym, err = pi.Lookup("Backend"); err != nil {
+		return
+	}
+
+	fn, ok := sym.(func() interface{})
+	if !ok {
+		return fmt.Errorf("invalid symbol, expected func() interface{} and received %v", reflect.TypeOf(sym))
+	}
+
+	refVal := reflect.ValueOf(backend)
+	elem := refVal.Elem()
+	if !elem.CanSet() {
+		return ErrNotAddressable
+	}
+
+	beVal := reflect.ValueOf(fn())
+
+	if elem.Type() != beVal.Type() {
+		return fmt.Errorf("invalid type, expected %v and received %v", elem.Type(), beVal.Type())
+	}
+
+	elem.Set(beVal)
+	return
+}
+
+type backendFn func() interface{}
