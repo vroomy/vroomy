@@ -17,6 +17,10 @@ const (
 	eerrr          = 1
 )
 
+type listener interface {
+	Listen(port uint16) error
+}
+
 func getKeyFromRequestPath(root, requestPath string) (key string, err error) {
 	// Clean request path
 	requestPath = filepath.Clean(requestPath)
