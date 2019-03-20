@@ -6,7 +6,6 @@ import (
 	"plugin"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
 	"github.com/Hatch1fy/vroomie/plugins"
@@ -21,7 +20,7 @@ const (
 // New will return a new instance of service
 func New(cfgname string, update bool) (sp *Service, err error) {
 	var s Service
-	if _, err = toml.DecodeFile(cfgname, &s.cfg); err != nil {
+	if s.cfg, err = newConfig(cfgname); err != nil {
 		return
 	}
 
@@ -64,7 +63,7 @@ func New(cfgname string, update bool) (sp *Service, err error) {
 
 // Service manages the web service
 type Service struct {
-	cfg Config
+	cfg *Config
 	srv *httpserve.Serve
 	p   *plugins.Plugins
 	// Closed state
