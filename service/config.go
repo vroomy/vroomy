@@ -12,13 +12,8 @@ func newConfig(loc string) (cfg *Config, err error) {
 		return
 	}
 
-	for _, include := range c.Include {
-		var icfg IncludeConfig
-		if _, err = toml.DecodeFile(include, &icfg); err != nil {
-			return
-		}
-
-		c.IncludeConfig.merge(&icfg)
+	if err = c.loadIncludes(); err != nil {
+		return
 	}
 
 	cfg = &c
@@ -37,6 +32,19 @@ type Config struct {
 
 	Include []string `toml:"include"`
 	IncludeConfig
+}
+
+func (c *Config) loadIncludes() (err error) {
+	for _, include := range c.Include {
+		var icfg IncludeConfig
+		if _, err = toml.DecodeFile(include, &icfg); err != nil {
+			return
+		}
+
+		c.IncludeConfig.merge(&icfg)
+	}
+
+	return
 }
 
 func (c *Config) getGroup(name string) (g *Group, err error) {
