@@ -53,7 +53,7 @@ type Plugins struct {
 	closed bool
 }
 
-func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
+func (p *Plugins) getPlugin(key string, update bool) (alias, filename string, err error) {
 	if key, alias = parseKey(key); err != nil {
 		return
 	}
@@ -78,7 +78,7 @@ func (p *Plugins) getPlugin(key string) (alias, filename string, err error) {
 		filename = filepath.Join(p.dir, alias+".so")
 
 		// Check to see if current plugin exists
-		if doesPluginExist(filename) {
+		if !update && doesPluginExist(filename) {
 			return
 		}
 
@@ -112,12 +112,12 @@ func (p *Plugins) gitRetrieve(gitURL, filename string) (err error) {
 // The following formats are accepted as keys:
 //	- path/to/file/plugin.so
 //	- github.com/username/repository/pluginDir
-func (p *Plugins) New(pluginKey string) (key string, err error) {
+func (p *Plugins) New(pluginKey string, update bool) (key string, err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	var pi Plugin
-	if pi.alias, pi.filename, err = p.getPlugin(pluginKey); err != nil {
+	if pi.alias, pi.filename, err = p.getPlugin(pluginKey, update); err != nil {
 		return
 	}
 

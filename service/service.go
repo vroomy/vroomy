@@ -41,7 +41,7 @@ func New(cfgname string, update bool) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
-	if err = s.initPlugins(); err != nil {
+	if err = s.initPlugins(update); err != nil {
 		return
 	}
 
@@ -70,7 +70,7 @@ type Service struct {
 	closed atoms.Bool
 }
 
-func (s *Service) initPlugins() (err error) {
+func (s *Service) initPlugins(update bool) (err error) {
 	if s.p, err = plugins.New("plugins"); err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (s *Service) initPlugins() (err error) {
 	}
 
 	for _, pluginKey := range s.cfg.Plugins {
-		if _, err = s.p.New(pluginKey); err != nil {
+		if _, err = s.p.New(pluginKey, update); err != nil {
 			return
 		}
 	}

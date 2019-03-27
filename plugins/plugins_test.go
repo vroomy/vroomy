@@ -34,7 +34,7 @@ func TestPlugins_getPlugin(t *testing.T) {
 	}
 	defer testTeardown()
 
-	alias, filename, err := p.getPlugin("github.com/Hatch1fy/releases/plugin as releases")
+	alias, filename, err := p.getPlugin("github.com/Hatch1fy/releases/plugin as releases", true)
 	if err != nil {
 		t.Fatal(err)
 	}
