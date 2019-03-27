@@ -85,7 +85,7 @@ func (s *Service) initPlugins() (err error) {
 		}
 	}
 
-	return
+	return s.p.Initialize()
 }
 
 func (s *Service) initGroups() (err error) {
