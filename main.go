@@ -33,7 +33,8 @@ func main() {
 	if update {
 		out.Notification("Plugin update flag enabled")
 	}
-	out.Notification("Starting HTTP service")
+
+	out.Notification("Starting service")
 	if svc, err = service.New(config, update); err != nil {
 		log.Fatal(err)
 	}
@@ -66,5 +67,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	out.Notification("*Catch*")
+	out.Notification("Close request received, one moment..")
+
+	if err = svc.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	out.Success("Service has been closed")
 	os.Exit(0)
 }
