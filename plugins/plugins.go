@@ -34,7 +34,7 @@ func New(dir string) (pp *Plugins, err error) {
 	var p Plugins
 	p.out = journaler.New("Plugins")
 	p.dir = dir
-	p.m = make(map[string]*Plugin)
+	p.ps = make(pluginslice, 0, 4)
 	pp = &p
 	return
 }
@@ -48,7 +48,7 @@ type Plugins struct {
 	dir string
 
 	// Internal plugin store (by key)
-	m map[string]*Plugin
+	ps pluginslice
 
 	closed bool
 }
@@ -121,12 +121,10 @@ func (p *Plugins) New(pluginKey string, update bool) (key string, err error) {
 		return
 	}
 
-	if _, ok := p.m[pi.alias]; ok {
-		err = ErrPluginKeyExists
+	if p.ps, err = p.ps.append(&pi); err != nil {
 		return
 	}
 
-	p.m[pi.alias] = &pi
 	p.out.Success("%s (%s) loaded", pi.alias, pluginKey)
 	key = pi.alias
 	return
@@ -138,10 +136,12 @@ func (p *Plugins) Initialize() (err error) {
 	defer p.mu.Unlock()
 	p.out.Notification("Initializing plugins")
 
-	for _, pi := range p.m {
+	for _, pi := range p.ps {
 		if err = pi.init(); err != nil {
 			return
 		}
+
+		p.out.Success("Initialized %s (%s)", pi.alias, pi.filename)
 	}
 
 	return
@@ -157,7 +157,7 @@ func (p *Plugins) Get(key string) (plugin *plugin.Plugin, err error) {
 		ok bool
 	)
 
-	if pi, ok = p.m[key]; !ok {
+	if pi, ok = p.ps.get(key); !ok {
 		err = fmt.Errorf("Cannot find plugin %s: %v", key, ErrPluginNotLoaded)
 		return
 	}
@@ -209,13 +209,13 @@ func (p *Plugins) Close() (err error) {
 
 	var errs errors.ErrorList
 	p.out.Notification("Closing plugins")
-	for key, pi := range p.m {
+	for _, pi := range p.ps {
 		if err = closePlugin(pi.p); err != nil {
-			errs.Push(fmt.Errorf("error closing %s: %v", key, err))
+			errs.Push(fmt.Errorf("error closing %s (%s): %v", pi.alias, pi.filename, err))
 			continue
 		}
 
-		p.out.Success("Closed %s", key)
+		p.out.Success("Closed %s", pi.alias)
 	}
 
 	p.closed = true
