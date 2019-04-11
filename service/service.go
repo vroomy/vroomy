@@ -140,6 +140,8 @@ func (s *Service) initRoutes() (err error) {
 			fn = grp.POST
 		case "delete":
 			fn = grp.DELETE
+		case "options":
+			fn = grp.OPTIONS
 
 		default:
 			// Default case is GET
