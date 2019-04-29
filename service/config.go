@@ -28,10 +28,11 @@ type Config struct {
 	TLSDir  string `toml:"tlsDir"`
 
 	Plugins []string `toml:"plugins"`
-	OnInit  []string `toml:"onInitialization"`
-
 	Include []string `toml:"include"`
 	IncludeConfig
+
+	// Plugin keys as they are referenced by the plugins store
+	pluginKeys []string
 }
 
 func (c *Config) loadIncludes() (err error) {

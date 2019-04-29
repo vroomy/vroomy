@@ -80,9 +80,12 @@ func (s *Service) initPlugins(update bool) (err error) {
 	}
 
 	for _, pluginKey := range s.cfg.Plugins {
-		if _, err = s.p.New(pluginKey, update); err != nil {
+		var key string
+		if key, err = s.p.New(pluginKey, update); err != nil {
 			return
 		}
+
+		s.cfg.pluginKeys = append(s.cfg.pluginKeys, key)
 	}
 
 	return s.p.Initialize()
@@ -155,30 +158,21 @@ func (s *Service) initRoutes() (err error) {
 }
 
 func (s *Service) onInitialization() (err error) {
-	for _, onInitKey := range s.cfg.OnInit {
-		var (
-			key   string
-			fnKey string
-			//			args []string
-		)
-
-		if key, fnKey, _, err = getHandlerParts(onInitKey); err != nil {
-			return
-		}
-
+	for _, pluginKey := range s.cfg.pluginKeys {
 		var p *plugin.Plugin
-		if p, err = s.p.Get(key); err != nil {
+		if p, err = s.p.Get(pluginKey); err != nil {
 			return
 		}
 
 		var sym plugin.Symbol
-		if sym, err = p.Lookup(fnKey); err != nil {
-			return
+		if sym, err = p.Lookup("OnInit"); err != nil {
+			err = nil
+			continue
 		}
 
 		fn, ok := sym.(func(p *plugins.Plugins) error)
 		if !ok {
-			return fmt.Errorf("invalid init function, received %v", sym)
+			continue
 		}
 
 		if err = fn(s.p); err != nil {
