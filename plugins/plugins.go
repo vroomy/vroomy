@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"plugin"
 	"reflect"
@@ -92,12 +93,17 @@ func (p *Plugins) getPlugin(key string, update bool) (alias, filename string, er
 }
 
 func (p *Plugins) gitRetrieve(gitURL, filename string) (err error) {
-	p.out.Notification("About to get: %v", gitURL)
-	if err = goGet(gitURL, false); err != nil {
+	p.out.Notification("About to git pull: %v", gitURL)
+	if err = gitPull(gitURL); os.IsNotExist(err) {
+		p.out.Notification("Plugin does not exist, downloading")
+		if err = goGet(gitURL, false); err != nil {
+			return
+		}
+
+		p.out.Success("Download of %s complete", gitURL)
+	} else if err != nil {
 		return
 	}
-
-	p.out.Success("Download of %s complete", gitURL)
 
 	p.out.Notification("About to build: %v", gitURL)
 	if err = goBuild(gitURL, filename); err != nil {

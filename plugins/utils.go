@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -26,6 +27,41 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
+func gitPull(gitURL string) (err error) {
+	var workingDir string
+	if workingDir, err = os.Getwd(); err != nil {
+		return
+	}
+	// Revert to original working directory
+	defer os.Chdir(workingDir)
+
+	goDir := getGoDir(gitURL)
+	if err = os.Chdir(goDir); err != nil {
+		return
+	}
+
+	gitpull := exec.Command("git", "pull")
+	gitpull.Stdin = os.Stdin
+
+	outBuf := bytes.NewBuffer(nil)
+	gitpull.Stdout = outBuf
+
+	errBuf := bytes.NewBuffer(nil)
+	gitpull.Stderr = errBuf
+
+	if err = gitpull.Run(); err != nil {
+		return errors.Error(errBuf.String())
+	}
+
+	outStr := outBuf.String()
+	if outStr == "Already up to date." {
+		return
+	}
+
+	fmt.Println(outStr)
+	return
+}
+
 func goGet(gitURL string, update bool) (err error) {
 	args := []string{"get", "-u", "-v", "-buildmode", "plugin", gitURL}
 	if !update {
@@ -47,9 +83,7 @@ func goGet(gitURL string, update bool) (err error) {
 }
 
 func goBuild(gitURL, filename string) (err error) {
-	homeDir := os.Getenv("HOME")
-	goDir := path.Join(homeDir, "go", "src", gitURL)
-
+	goDir := getGoDir(gitURL)
 	gobuild := exec.Command("go", "build", "--buildmode", "plugin", "-o", filename, goDir)
 	gobuild.Stdin = os.Stdin
 	gobuild.Stdout = os.Stdout
@@ -63,6 +97,11 @@ func goBuild(gitURL, filename string) (err error) {
 	}
 
 	return
+}
+
+func getGoDir(gitURL string) (goDir string) {
+	homeDir := os.Getenv("HOME")
+	return path.Join(homeDir, "go", "src", gitURL)
 }
 
 func trimSlash(in string) (out string) {
