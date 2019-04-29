@@ -170,12 +170,12 @@ func (s *Service) onInitialization() (err error) {
 			continue
 		}
 
-		fn, ok := sym.(func(p *plugins.Plugins) error)
+		fn, ok := sym.(func(p *plugins.Plugins, env map[string]string) error)
 		if !ok {
 			continue
 		}
 
-		if err = fn(s.p); err != nil {
+		if err = fn(s.p, s.cfg.Environment); err != nil {
 			return
 		}
 	}

@@ -31,6 +31,8 @@ type Config struct {
 	Include []string `toml:"include"`
 	IncludeConfig
 
+	Environment map[string]string `toml:"env"`
+
 	// Plugin keys as they are referenced by the plugins store
 	pluginKeys []string
 }
