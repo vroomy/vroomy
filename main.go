@@ -1,9 +1,7 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -14,29 +12,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var out *journaler.Journaler
+
 func main() {
 	var (
-		out    *journaler.Journaler
-		svc    *service.Service
-		config string
-		update bool
-		err    error
+		cfg *service.Config
+		svc *service.Service
+		err error
 	)
-
-	flag.StringVar(&config, "config", "./config.toml", "Location of configuration file")
-	flag.BoolVar(&update, "update", false, "Whether or not to update all plugins on start-up")
-	flag.Parse()
 
 	out = journaler.New("Vroomie")
 	out.Notification("Hello there! One moment, initializing..")
-	out.Notification("Configuration location: %s", config)
-	if update {
-		out.Notification("Plugin update flag enabled")
+	if cfg, err = service.NewConfig("./config.toml"); err != nil {
+		handleError(err)
 	}
 
 	out.Notification("Starting service")
-	if svc, err = service.New(config, update); err != nil {
-		log.Fatal(err)
+	if svc, err = service.New(cfg); err != nil {
+		handleError(err)
 	}
 	defer svc.Close()
 
@@ -64,16 +57,21 @@ func main() {
 	}()
 
 	if err = closer.Wait(); err != nil {
-		log.Fatal(err)
+		handleError(err)
 	}
 
 	out.Notification("*Catch*")
 	out.Notification("Close request received, one moment..")
 
 	if err = svc.Close(); err != nil {
-		log.Fatal(err)
+		handleError(err)
 	}
 
 	out.Success("Service has been closed")
 	os.Exit(0)
+}
+
+func handleError(err error) {
+	out.Error("Fatal error encountered: %v", err)
+	os.Exit(1)
 }
