@@ -15,18 +15,16 @@ import (
 const (
 	// ErrInvalidTLSDirectory is returned when a tls directory is unset when the tls port has been set
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
+	// ErrInvalidInitializationFunc is returned when an unsupported initialization function is encountered
+	ErrInvalidInitializationFunc = errors.Error("unsupported initialization func encountered")
+	// ErrProtectedFlag is returned when a protected flag is used
+	ErrProtectedFlag = errors.Error("cannot use protected flag")
 )
 
 // New will return a new instance of service
-func New(cfgname string, update bool) (sp *Service, err error) {
+func New(cfg *Config) (sp *Service, err error) {
 	var s Service
-	if s.cfg, err = newConfig(cfgname); err != nil {
-		return
-	}
-
-	if s.cfg.Dir == "" {
-		s.cfg.Dir = "./"
-	}
+	s.cfg = cfg
 
 	if err = os.Chdir(s.cfg.Dir); err != nil {
 		return
@@ -41,7 +39,11 @@ func New(cfgname string, update bool) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
-	if err = s.initPlugins(update); err != nil {
+	if err = s.loadPlugins(); err != nil {
+		return
+	}
+
+	if err = s.initPlugins(); err != nil {
 		return
 	}
 
@@ -50,10 +52,6 @@ func New(cfgname string, update bool) (sp *Service, err error) {
 	}
 
 	if err = s.initRoutes(); err != nil {
-		return
-	}
-
-	if err = s.onInitialization(); err != nil {
 		return
 	}
 
@@ -70,7 +68,7 @@ type Service struct {
 	closed atoms.Bool
 }
 
-func (s *Service) initPlugins(update bool) (err error) {
+func (s *Service) loadPlugins() (err error) {
 	if s.p, err = plugins.New("plugins"); err != nil {
 		return
 	}
@@ -81,7 +79,7 @@ func (s *Service) initPlugins(update bool) (err error) {
 
 	for _, pluginKey := range s.cfg.Plugins {
 		var key string
-		if key, err = s.p.New(pluginKey, update); err != nil {
+		if key, err = s.p.New(pluginKey, s.cfg.PerformUpdate); err != nil {
 			return
 		}
 
@@ -157,30 +155,38 @@ func (s *Service) initRoutes() (err error) {
 	return
 }
 
-func (s *Service) onInitialization() (err error) {
+func (s *Service) initPlugins() (err error) {
 	for _, pluginKey := range s.cfg.pluginKeys {
-		var p *plugin.Plugin
-		if p, err = s.p.Get(pluginKey); err != nil {
-			return
-		}
-
-		var sym plugin.Symbol
-		if sym, err = p.Lookup("OnInit"); err != nil {
-			err = nil
-			continue
-		}
-
-		fn, ok := sym.(func(p *plugins.Plugins, env map[string]string) error)
-		if !ok {
-			continue
-		}
-
-		if err = fn(s.p, s.cfg.Environment); err != nil {
+		if err = s.initPlugin(pluginKey); err != nil {
 			return
 		}
 	}
 
 	return
+}
+
+func (s *Service) initPlugin(pluginKey string) (err error) {
+	var p *plugin.Plugin
+	if p, err = s.p.Get(pluginKey); err != nil {
+		return
+	}
+
+	var sym plugin.Symbol
+	if sym, err = p.Lookup("OnInit"); err != nil {
+		err = nil
+		return
+	}
+
+	switch fn := sym.(type) {
+	case func(p *plugins.Plugins, env map[string]string) error:
+		return fn(s.p, s.cfg.Environment)
+
+	case func(p *plugins.Plugins, flags, env map[string]string) error:
+		return fn(s.p, s.cfg.Flags, s.cfg.Environment)
+
+	default:
+		return ErrInvalidInitializationFunc
+	}
 }
 
 func (s *Service) getHTTPListener() (l listener) {

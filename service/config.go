@@ -1,12 +1,16 @@
 package service
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/BurntSushi/toml"
 )
 
 const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 
-func newConfig(loc string) (cfg *Config, err error) {
+// NewConfig will return a new configuration
+func NewConfig(loc string) (cfg *Config, err error) {
 	var c Config
 	if _, err = toml.DecodeFile(loc, &c); err != nil {
 		return
@@ -14,6 +18,14 @@ func newConfig(loc string) (cfg *Config, err error) {
 
 	if err = c.loadIncludes(); err != nil {
 		return
+	}
+
+	if err = c.initFlags(); err != nil {
+		return
+	}
+
+	if c.Dir == "" {
+		c.Dir = "./"
 	}
 
 	cfg = &c
@@ -32,6 +44,11 @@ type Config struct {
 	IncludeConfig
 
 	Environment map[string]string `toml:"env"`
+	Flags       map[string]string `toml:"-"`
+
+	FlagEntries []Flag `toml:"flag"`
+
+	PerformUpdate bool `toml:"-"`
 
 	// Plugin keys as they are referenced by the plugins store
 	pluginKeys []string
@@ -65,6 +82,31 @@ func (c *Config) getGroup(name string) (g *Group, err error) {
 	}
 
 	err = ErrGroupNotFound
+	return
+}
+
+func (c *Config) initFlags() (err error) {
+	var strs []*string
+	flag.BoolVar(&c.PerformUpdate, "update", false, "Whether or not to update all plugins on start-up")
+
+	for _, flagEntry := range c.FlagEntries {
+		switch flagEntry.Name {
+		case "update":
+			err = fmt.Errorf("error setting flag \"%s\": %v", flagEntry.Name, ErrProtectedFlag)
+			return
+		}
+
+		str := flag.String(flagEntry.Name, flagEntry.DefaultValue, flagEntry.Usage)
+		strs = append(strs, str)
+	}
+
+	flag.Parse()
+	c.Flags = make(map[string]string, len(strs))
+
+	for i, str := range strs {
+		c.Flags[c.FlagEntries[i].Name] = *str
+	}
+
 	return
 }
 
