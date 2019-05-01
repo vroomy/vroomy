@@ -28,19 +28,8 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func gitPull(gitURL string) (err error) {
-	var workingDir string
-	if workingDir, err = os.Getwd(); err != nil {
-		return
-	}
-	// Revert to original working directory
-	defer os.Chdir(workingDir)
-
 	goDir := getGoDir(gitURL)
-	if err = os.Chdir(goDir); err != nil {
-		return
-	}
-
-	gitpull := exec.Command("git", "pull")
+	gitpull := exec.Command("git", "-C", goDir, "pull")
 	gitpull.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
