@@ -9,10 +9,11 @@ import (
 	"github.com/missionMeteora/journaler"
 )
 
-func newPlugin(dir, key string) (pp *Plugin, err error) {
+func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 	var p Plugin
 	p.importKey = key
 	key, p.alias = parseKey(key)
+	p.update = update
 
 	switch {
 	case filepath.Ext(key) != "":
@@ -57,10 +58,17 @@ type Plugin struct {
 	gitURL string
 	// The filename of the plugin's .so file
 	filename string
+
+	// Signals if the plugin was loaded with an active update state
+	update bool
 }
 
 func (p *Plugin) retrieve() (err error) {
 	if len(p.gitURL) == 0 {
+		return
+	}
+
+	if doesPluginExist(p.filename) && !p.update {
 		return
 	}
 

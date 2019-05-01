@@ -61,7 +61,7 @@ func (p *Plugins) New(pluginKey string, update bool) (key string, err error) {
 	defer p.mu.Unlock()
 
 	var pi *Plugin
-	if pi, err = newPlugin(p.dir, pluginKey); err != nil {
+	if pi, err = newPlugin(p.dir, pluginKey, update); err != nil {
 		return
 	}
 
