@@ -2,8 +2,6 @@ package plugins
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"plugin"
 	"reflect"
 	"sync"
@@ -54,66 +52,6 @@ type Plugins struct {
 	closed bool
 }
 
-func (p *Plugins) getPlugin(key string, update bool) (alias, filename string, err error) {
-	if key, alias = parseKey(key); err != nil {
-		return
-	}
-
-	switch {
-	case filepath.Ext(key) != "":
-		if len(alias) == 0 {
-			alias = getPluginKey(key)
-		}
-
-		filename = key
-		return
-
-	case isGitReference(key):
-		if len(alias) == 0 {
-			if alias, err = getGitPluginKey(key); err != nil {
-				return
-			}
-		}
-
-		// Set filename
-		filename = filepath.Join(p.dir, alias+".so")
-
-		// Check to see if current plugin exists
-		if !update && doesPluginExist(filename) {
-			return
-		}
-
-		err = p.gitRetrieve(key, filename)
-
-	default:
-		fmt.Println("Not supported?")
-	}
-
-	return
-}
-
-func (p *Plugins) gitRetrieve(gitURL, filename string) (err error) {
-	p.out.Notification("About to git pull: %v", gitURL)
-	if err = gitPull(gitURL); os.IsNotExist(err) {
-		p.out.Notification("Plugin does not exist, downloading")
-		if err = goGet(gitURL, false); err != nil {
-			return
-		}
-
-		p.out.Success("Download of %s complete", gitURL)
-	} else if err != nil {
-		return
-	}
-
-	p.out.Notification("About to build: %v", gitURL)
-	if err = goBuild(gitURL, filename); err != nil {
-		return
-	}
-
-	p.out.Success("Build of %s complete", gitURL)
-	return
-}
-
 // New will load a new plugin by plugin key
 // The following formats are accepted as keys:
 //	- path/to/file/plugin.so
@@ -122,16 +60,15 @@ func (p *Plugins) New(pluginKey string, update bool) (key string, err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	var pi Plugin
-	if pi.alias, pi.filename, err = p.getPlugin(pluginKey, update); err != nil {
+	var pi *Plugin
+	if pi, err = newPlugin(p.dir, pluginKey); err != nil {
 		return
 	}
 
-	if p.ps, err = p.ps.append(&pi); err != nil {
+	if p.ps, err = p.ps.append(pi); err != nil {
 		return
 	}
 
-	p.out.Success("%s (%s) loaded", pi.alias, pluginKey)
 	key = pi.alias
 	return
 }
@@ -140,6 +77,25 @@ func (p *Plugins) New(pluginKey string, update bool) (key string, err error) {
 func (p *Plugins) Initialize() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
+	p.out.Notification("Retrieving plugins")
+	errs := make(chan error, len(p.ps))
+	for _, pi := range p.ps {
+		go wrapProcess(pi.retrieve, errs)
+	}
+
+	if err = waitForProcesses(errs, len(p.ps)); err != nil {
+		return
+	}
+
+	p.out.Notification("Building plugins")
+
+	for _, pi := range p.ps {
+		if err = pi.build(); err != nil {
+			return
+		}
+	}
+
 	p.out.Notification("Initializing plugins")
 
 	for _, pi := range p.ps {
