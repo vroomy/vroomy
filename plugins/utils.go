@@ -54,7 +54,7 @@ func gitPull(gitURL string) (err error) {
 	}
 
 	outStr := outBuf.String()
-	if outStr == "Already up to date." {
+	if strings.Index(outStr, "Already up to date.") == 0 {
 		return
 	}
 
@@ -213,4 +213,23 @@ func closePlugin(p *plugin.Plugin) (err error) {
 	}
 
 	return fn()
+}
+
+func wrapProcess(fn func() error, ch chan error) {
+	ch <- fn()
+}
+
+func waitForProcesses(ch chan error, count int) (err error) {
+	var n int
+	for err = range ch {
+		if err != nil {
+			return
+		}
+
+		if n++; n == count {
+			break
+		}
+	}
+
+	return
 }
