@@ -72,7 +72,7 @@ func (p *Plugin) retrieve() (err error) {
 		return
 	}
 
-	p.out.Notification("About to git pull: %v", p.gitURL)
+	p.out.Notification("About to retrieve")
 	if err = gitPull(p.gitURL); !os.IsNotExist(err) {
 		return
 	}
@@ -91,7 +91,6 @@ func (p *Plugin) build() (err error) {
 		return
 	}
 
-	p.out.Notification("About to build")
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
 	}
