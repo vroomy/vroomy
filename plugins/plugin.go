@@ -87,6 +87,10 @@ func (p *Plugin) retrieve() (err error) {
 }
 
 func (p *Plugin) build() (err error) {
+	if doesPluginExist(p.filename) && !p.update {
+		return
+	}
+
 	p.out.Notification("About to build")
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
