@@ -222,3 +222,12 @@ func waitForProcesses(ch chan error, count int) (err error) {
 
 	return
 }
+
+func isDoesNotExistError(err error) (ok bool) {
+	if err == nil {
+		return
+	}
+
+	str := err.Error()
+	return strings.Index(str, "No such file or directory") > -1
+}

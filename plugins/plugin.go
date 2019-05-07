@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"plugin"
 
@@ -73,7 +72,7 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
-	if err = gitPull(p.gitURL); !os.IsNotExist(err) {
+	if err = gitPull(p.gitURL); !isDoesNotExistError(err) {
 		return
 	}
 
