@@ -28,8 +28,8 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func gitPull(gitURL string) (err error) {
-	gitDir := getGitDir(gitURL)
-	gitpull := exec.Command("git", "--git-dir", gitDir, "pull")
+	goDir := getGoDir(gitURL)
+	gitpull := exec.Command("git", "-C", goDir, "pull")
 	gitpull.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
@@ -91,36 +91,6 @@ func goBuild(gitURL, filename string) (err error) {
 func getGoDir(gitURL string) (goDir string) {
 	homeDir := os.Getenv("HOME")
 	return path.Join(homeDir, "go", "src", gitURL)
-}
-
-func getGitDir(gitURL string) (goDir string) {
-	homeDir := os.Getenv("HOME")
-	spl := strings.Split(gitURL, "/")
-
-	var parts []string
-	parts = append(parts, homeDir)
-	parts = append(parts, "go")
-	parts = append(parts, "src")
-
-	if len(spl) > 0 {
-		// Append host
-		parts = append(parts, spl[0])
-	}
-
-	if len(spl) > 1 {
-		// Append git user
-		parts = append(parts, spl[1])
-	}
-
-	if len(spl) > 2 {
-		// Append repo name
-		parts = append(parts, spl[2])
-	}
-
-	// Append git dir
-	parts = append(parts, ".git")
-
-	return path.Join(parts...)
 }
 
 func trimSlash(in string) (out string) {
