@@ -28,8 +28,8 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func gitPull(gitURL string) (err error) {
-	goDir := getGoDir(gitURL)
-	gitpull := exec.Command("git", "-C", goDir, "pull")
+	goDir := path.Join(getGoDir(gitURL), ".git")
+	gitpull := exec.Command("git", "--git-dir", goDir, "pull")
 	gitpull.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
