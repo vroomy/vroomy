@@ -28,8 +28,8 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func gitPull(gitURL string) (err error) {
-	goDir := getGitDir(gitURL)
-	gitpull := exec.Command("git", "-C", goDir, "pull")
+	gitDir := getGitDir(gitURL)
+	gitpull := exec.Command("git", "-C", gitDir, "pull")
 	gitpull.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
@@ -116,9 +116,6 @@ func getGitDir(gitURL string) (goDir string) {
 		// Append repo name
 		parts = append(parts, spl[2])
 	}
-
-	// Append git dir
-	parts = append(parts, ".git")
 
 	return path.Join(parts...)
 }
