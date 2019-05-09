@@ -260,5 +260,5 @@ func isDoesNotExistError(err error) (ok bool) {
 	}
 
 	str := strings.ToLower(err.Error())
-	return strings.Index(str, "No such file or directory") > -1
+	return strings.Index(str, "no such file or directory") > -1
 }
