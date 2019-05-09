@@ -39,7 +39,6 @@ func gitPull(gitURL string) (err error) {
 	gitpull.Stderr = errBuf
 
 	if err = gitpull.Run(); err != nil {
-		fmt.Printf("Error found with gitpull run / %s / %s \n", err, errBuf.String())
 		return errors.Error(errBuf.String())
 	}
 
@@ -240,7 +239,6 @@ func waitForProcesses(ch chan error, count int) (err error) {
 	var n int
 	for err = range ch {
 		if err != nil {
-			fmt.Printf("Process error encountered! %v\n", err)
 			return
 		}
 
@@ -257,6 +255,6 @@ func isDoesNotExistError(err error) (ok bool) {
 		return
 	}
 
-	str := err.Error()
+	str := strings.ToLower(err.Error())
 	return strings.Index(str, "No such file or directory") > -1
 }
