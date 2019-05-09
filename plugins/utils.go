@@ -39,7 +39,11 @@ func gitPull(gitURL string) (err error) {
 	gitpull.Stderr = errBuf
 
 	if err = gitpull.Run(); err != nil {
-		return errors.Error(errBuf.String())
+		if errBuf.Len() > 0 {
+			return errors.Error(errBuf.String())
+		}
+
+		return err
 	}
 
 	outStr := outBuf.String()
