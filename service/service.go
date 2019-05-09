@@ -77,6 +77,7 @@ type Service struct {
 
 func (s *Service) loadPlugins() (err error) {
 	if s.p, err = plugins.New("plugins"); err != nil {
+		err = fmt.Errorf("error initializing plugins manager: %v", err)
 		return
 	}
 
@@ -87,13 +88,19 @@ func (s *Service) loadPlugins() (err error) {
 	for _, pluginKey := range s.cfg.Plugins {
 		var key string
 		if key, err = s.p.New(pluginKey, s.cfg.PerformUpdate); err != nil {
+			err = fmt.Errorf("error creating new plugin for key \"%s\": %v", pluginKey, err)
 			return
 		}
 
 		s.cfg.pluginKeys = append(s.cfg.pluginKeys, key)
 	}
 
-	return s.p.Initialize()
+	if err = s.p.Initialize(); err != nil {
+		err = fmt.Errorf("erorr initializing plugins: %v", err)
+		return
+	}
+
+	return
 }
 
 func (s *Service) initGroups() (err error) {
