@@ -73,7 +73,6 @@ func (p *Plugin) retrieve() (err error) {
 
 	p.out.Notification("About to retrieve")
 	if err = gitPull(p.gitURL); !isDoesNotExistError(err) {
-		fmt.Println("Error here?", err)
 		return
 	}
 
