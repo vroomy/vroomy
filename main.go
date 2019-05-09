@@ -24,13 +24,13 @@ func main() {
 	out = journaler.New("Vroomie")
 	out.Notification("Hello there! One moment, initializing..")
 	if cfg, err = service.NewConfig("./config.toml"); err != nil {
-		err = fmt.Errorf("Error encountered while reading configuration: \"%s\"", err)
+		err = fmt.Errorf("error encountered while reading configuration: %v", err)
 		handleError(err)
 	}
 
 	out.Notification("Starting service")
 	if svc, err = service.New(cfg); err != nil {
-		err = fmt.Errorf("Error encountered while initializing service: \"%s\"", err)
+		err = fmt.Errorf("error encountered while initializing service: %v", err)
 		handleError(err)
 	}
 	defer svc.Close()
@@ -38,7 +38,7 @@ func main() {
 	closer := closer.New()
 	go func() {
 		if err := svc.Listen(); err != nil {
-			err = fmt.Errorf("Error encountered while attempting to listen to HTTP: \"%s\"", err)
+			err = fmt.Errorf("error encountered while attempting to listen to HTTP: %v", err)
 			closer.Close(err)
 		}
 	}()
@@ -67,7 +67,7 @@ func main() {
 	out.Notification("Close request received, one moment..")
 
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("Error encountered while closing service: \"%s\"", err)
+		err = fmt.Errorf("error encountered while closing service: %v", err)
 		handleError(err)
 	}
 
@@ -76,6 +76,6 @@ func main() {
 }
 
 func handleError(err error) {
-	out.Error("Fatal error encountered: \"%v\"", err)
+	out.Error("Fatal error encountered: %v", err)
 	os.Exit(1)
 }

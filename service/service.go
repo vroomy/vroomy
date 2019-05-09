@@ -27,31 +27,38 @@ func New(cfg *Config) (sp *Service, err error) {
 	s.cfg = cfg
 
 	if err = os.Chdir(s.cfg.Dir); err != nil {
+		err = fmt.Errorf("error changing directory: %v", err)
 		return
 	}
 
 	if err = initDir("data"); err != nil {
+		err = fmt.Errorf("error initializing data directory: %v", err)
 		return
 	}
 
 	if err = initDir("plugins"); err != nil {
+		err = fmt.Errorf("error changing plugins directory: %v", err)
 		return
 	}
 
 	s.srv = httpserve.New()
 	if err = s.loadPlugins(); err != nil {
+		err = fmt.Errorf("error loading plugins: %v", err)
 		return
 	}
 
 	if err = s.initPlugins(); err != nil {
+		err = fmt.Errorf("error initializing plugins: %v", err)
 		return
 	}
 
 	if err = s.initGroups(); err != nil {
+		err = fmt.Errorf("error initializing groups: %v", err)
 		return
 	}
 
 	if err = s.initRoutes(); err != nil {
+		err = fmt.Errorf("error initializing routes: %v", err)
 		return
 	}
 
