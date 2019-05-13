@@ -28,7 +28,7 @@ func parseKey(key string) (newKey, alias string) {
 }
 
 func gitPull(gitURL string) (err error) {
-	gitpull := exec.Command("git", "pull")
+	gitpull := exec.Command("git", "pull", "origin")
 	gitpull.Dir = getGitDir(gitURL)
 	gitpull.Stdin = os.Stdin
 
