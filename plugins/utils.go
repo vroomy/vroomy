@@ -259,6 +259,15 @@ func isDoesNotExistError(err error) (ok bool) {
 		return
 	}
 
+	return isUnixDoesNotExist(err) || isWindowsDoesNotExist(err)
+}
+
+func isUnixDoesNotExist(err error) (ok bool) {
 	str := strings.ToLower(err.Error())
 	return strings.Index(str, "no such file or directory") > -1
+}
+
+func isWindowsDoesNotExist(err error) (ok bool) {
+	str := strings.ToLower(err.Error())
+	return strings.Index(str, "the system cannot find the file specified") > -1
 }
