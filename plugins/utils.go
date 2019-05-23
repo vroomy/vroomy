@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"bytes"
-	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -27,7 +26,7 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
-func gitPull(gitURL string) (err error) {
+func gitPull(gitURL string) (resp string, err error) {
 	gitpull := exec.Command("git", "pull", "origin")
 	gitpull.Dir = getGitDir(gitURL)
 	gitpull.Stdin = os.Stdin
@@ -40,10 +39,10 @@ func gitPull(gitURL string) (err error) {
 
 	if err = gitpull.Run(); err != nil {
 		if errBuf.Len() > 0 {
-			return errors.Error(errBuf.String())
+			err = errors.Error(errBuf.String())
 		}
 
-		return err
+		return
 	}
 
 	outStr := outBuf.String()
@@ -51,7 +50,7 @@ func gitPull(gitURL string) (err error) {
 		return
 	}
 
-	fmt.Println(outStr)
+	resp = outStr
 	return
 }
 

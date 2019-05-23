@@ -72,9 +72,12 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
-	if err = gitPull(p.gitURL); !isDoesNotExistError(err) {
+	var status string
+	if status, err = gitPull(p.gitURL); err != nil && !isDoesNotExistError(err) {
 		return
 	}
+
+	p.out.Success(status)
 
 	p.out.Notification("Plugin does not exist, downloading")
 	if err = goGet(p.gitURL, false); err != nil {
