@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"plugin"
 	"strings"
@@ -28,6 +29,10 @@ func New(cfg *Config) (sp *Service, err error) {
 
 	if err = os.Chdir(s.cfg.Dir); err != nil {
 		err = fmt.Errorf("error changing directory: %v", err)
+		return
+	}
+
+	if s.plog, err = newPanicLog(); err != nil {
 		return
 	}
 
@@ -71,6 +76,8 @@ type Service struct {
 	cfg *Config
 	srv *httpserve.Serve
 	p   *plugins.Plugins
+
+	plog *panicLog
 	// Closed state
 	closed atoms.Bool
 }
@@ -131,6 +138,9 @@ func (s *Service) initGroups() (err error) {
 }
 
 func (s *Service) initRoutes() (err error) {
+	// Set panic func
+	s.srv.SetPanic(s.onPanic)
+
 	for i, r := range s.cfg.Routes {
 		if err = r.init(s.p); err != nil {
 			return fmt.Errorf("error initializing route #%d (%v): %v", i, r, err)
@@ -203,6 +213,11 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 	}
 }
 
+func (s *Service) onPanic(v interface{}) {
+	log.Println("Panic encountered", v)
+	s.plog.Write(v)
+}
+
 func (s *Service) getHTTPListener() (l listener) {
 	if s.cfg.TLSPort > 0 {
 		// TLS port exists, return a new upgrader pointing to the configured tls port
@@ -273,5 +288,6 @@ func (s *Service) Close() (err error) {
 
 	var errs errors.ErrorList
 	errs.Push(s.p.Close())
+	errs.Push(s.plog.Close())
 	return errs.Err()
 }
