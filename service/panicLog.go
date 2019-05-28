@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/debug"
 	"sync"
 )
 
@@ -25,7 +26,8 @@ type panicLog struct {
 func (p *panicLog) Write(v interface{}) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	str := fmt.Sprintf("%v\n", v)
+	str := fmt.Sprintf("%v\n%v\n\n", v, debug.Stack())
+
 	if _, err := p.f.WriteString(str); err != nil {
 		log.Println("Error writing string to panic log", err)
 		return
