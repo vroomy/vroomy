@@ -2,13 +2,14 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"sync"
 )
 
 func newPanicLog() (pp *panicLog, err error) {
 	var p panicLog
-	if p.f, err = os.OpenFile("./panics.log", os.O_CREATE|os.O_APPEND, 0744); err != nil {
+	if p.f, err = os.OpenFile("./panics.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0744); err != nil {
 		return
 	}
 
@@ -21,16 +22,19 @@ type panicLog struct {
 	f  *os.File
 }
 
-func (p *panicLog) Write(v interface{}) (err error) {
+func (p *panicLog) Write(v interface{}) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
-	str := fmt.Sprint(v)
-	if _, err = p.f.WriteString(str); err != nil {
+	str := fmt.Sprintf("%v\n", v)
+	if _, err := p.f.WriteString(str); err != nil {
+		log.Println("Error writing string to panic log", err)
 		return
 	}
 
-	return p.f.Sync()
+	if err := p.f.Sync(); err != nil {
+		log.Println("Error writing string to panic log", err)
+		return
+	}
 }
 
 func (p *panicLog) Close() (err error) {

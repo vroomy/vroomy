@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"plugin"
 	"strings"
@@ -139,7 +138,7 @@ func (s *Service) initGroups() (err error) {
 
 func (s *Service) initRoutes() (err error) {
 	// Set panic func
-	s.srv.SetPanic(s.onPanic)
+	s.srv.SetPanic(s.plog.Write)
 
 	for i, r := range s.cfg.Routes {
 		if err = r.init(s.p); err != nil {
@@ -211,11 +210,6 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 	default:
 		return ErrInvalidInitializationFunc
 	}
-}
-
-func (s *Service) onPanic(v interface{}) {
-	log.Println("Panic encountered", v)
-	s.plog.Write(v)
 }
 
 func (s *Service) getHTTPListener() (l listener) {
