@@ -1,5 +1,7 @@
 #!/bin/bash
 echo "Installing VPM (Vroomy package manager)"
+go get -u github.com/vroomy/vpm;
 go install github.com/vroomy/vpm;
 echo "Installing Vroomy"
+go get -u github.com/vroomy/vroomy;
 go install github.com/vroomy/vroomy;
