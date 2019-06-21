@@ -4,12 +4,18 @@
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
+### Download and install
+```bash
+curl -s https://raw.githubusercontent.com/vroomy/vroomy/master/install | bash -s
+```
+
+### Bash script
 ```bash
 #!/bin/bash
 echo "Installing VPM (Vroomy package manager)"
-go install github.com/vroomy/vpm;
+go get -u github.com/vroomy/vpm;
 echo "Installing Vroomy"
-go install github.com/vroomy/vroomy;
+go get -u github.com/vroomy/vroomy;
 ```
 
 ## Usage
