@@ -1,4 +1,6 @@
 # Vroomy
+
+![billboard](https://github.com/hatchify/output/blob/master/vroomy-billboard.png?raw=true "Vroomy billboard")
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
