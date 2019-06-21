@@ -7,7 +7,7 @@ import (
 
 	"github.com/missionMeteora/journaler"
 	"github.com/missionMeteora/toolkit/closer"
-	"github.com/vroomy/server/service"
+	"github.com/vroomy/vroomy/service"
 
 	_ "github.com/lib/pq"
 )
