@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Hatch1fy/vroomie/service"
 	"github.com/missionMeteora/journaler"
 	"github.com/missionMeteora/toolkit/closer"
+	"github.com/vroomy/server/service"
 
 	_ "github.com/lib/pq"
 )

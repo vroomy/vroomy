@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
-	"github.com/Hatch1fy/vroomie/plugins"
+	"github.com/vroomy/plugins"
 )
 
 const (
