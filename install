@@ -1,3 +1,5 @@
 #!/bin/bash
-go build -i -o vroomy;
-mv vroomy $GOPATH/bin;
+echo "Installing VPM (Vroomy package manager)"
+go install github.com/vroomy/vpm;
+echo "Installing Vroomy"
+go install github.com/vroomy/vroomy;
