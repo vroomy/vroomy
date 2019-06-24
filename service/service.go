@@ -181,6 +181,7 @@ func (s *Service) initRoutes() (err error) {
 func (s *Service) initPlugins() (err error) {
 	for _, pluginKey := range s.cfg.pluginKeys {
 		if err = s.initPlugin(pluginKey); err != nil {
+			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
 			return
 		}
 	}
