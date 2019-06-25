@@ -4,6 +4,10 @@
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
+Installing by compilation is very straight forward. The following dependencies are required:
+- Go
+- GCC
+
 ### Method 1 - Download and install
 ```bash
 curl -s https://raw.githubusercontent.com/vroomy/vroomy/master/install | bash -s
