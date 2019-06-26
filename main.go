@@ -21,7 +21,7 @@ var (
 
 func main() {
 	var err error
-	out := output.NewWrapper("Vroomy")
+	out = output.NewWrapper("Vroomy")
 	out.Print("Hello there! One moment, initializing..")
 
 	if err = initService(); err != nil {
