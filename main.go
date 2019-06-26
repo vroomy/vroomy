@@ -13,54 +13,27 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var out output.Outputter
+var (
+	out  output.Outputter
+	svc  *service.Service
+	clsr *closer.Closer
+)
 
 func main() {
-	var (
-		cfg *service.Config
-		svc *service.Service
-		err error
-	)
-
+	var err error
 	out := output.NewWrapper("Vroomy")
 	out.Print("Hello there! One moment, initializing..")
-	if cfg, err = service.NewConfig("./config.toml"); err != nil {
-		err = fmt.Errorf("error encountered while reading configuration: %v", err)
-		handleError(err)
-	}
 
-	out.Notification("Starting service")
-	if svc, err = service.New(cfg); err != nil {
-		err = fmt.Errorf("error encountered while initializing service: %v", err)
+	if err = initService(); err != nil {
 		handleError(err)
 	}
 	defer svc.Close()
 
-	closer := closer.New()
-	go func() {
-		if err := svc.Listen(); err != nil {
-			err = fmt.Errorf("error encountered while attempting to listen to HTTP: %v", err)
-			closer.Close(err)
-		}
-	}()
+	clsr = closer.New()
+	go listen()
+	go notifyOfListening()
 
-	go func() {
-		time.Sleep(time.Millisecond * 300)
-		var msg string
-		port := svc.Port()
-		tlsPort := svc.TLSPort()
-		if port > 0 && tlsPort > 0 {
-			msg = fmt.Sprintf("ports %d (HTTP) and %d (HTTPS)", port, tlsPort)
-		} else if port > 0 {
-			msg = fmt.Sprintf("port %d (HTTP)", port)
-		} else {
-			msg = fmt.Sprintf("port %d (HTTPS)", tlsPort)
-		}
-
-		out.Success("HTTP is now listening on %s", msg)
-	}()
-
-	if err = closer.Wait(); err != nil {
+	if err = clsr.Wait(); err != nil {
 		handleError(err)
 	}
 
@@ -74,6 +47,51 @@ func main() {
 
 	out.Success("Service has been closed")
 	os.Exit(0)
+}
+
+func initService() (err error) {
+	var cfg *service.Config
+	if cfg, err = service.NewConfig("./config.toml"); err != nil {
+		err = fmt.Errorf("error encountered while reading configuration: %v", err)
+		return
+	}
+
+	out.Notification("Starting service")
+	if svc, err = service.New(cfg); err != nil {
+		err = fmt.Errorf("error encountered while initializing service: %v", err)
+		return
+	}
+
+	return
+}
+
+func listen() {
+	var err error
+	if err = svc.Listen(); err == nil {
+		return
+	}
+
+	err = fmt.Errorf("error encountered while attempting to listen to HTTP: %v", err)
+	clsr.Close(err)
+}
+
+func notifyOfListening() {
+	time.Sleep(time.Millisecond * 300)
+	msg := getListeningMessage(svc.Port(), svc.TLSPort())
+	out.Success("HTTP is now listening on %s", msg)
+}
+
+func getListeningMessage(port, tlsPort uint16) (msg string) {
+	switch {
+	case port > 0 && tlsPort > 0:
+		msg = fmt.Sprintf("ports %d (HTTP) and %d (HTTPS)", port, tlsPort)
+	case port > 0:
+		msg = fmt.Sprintf("port %d (HTTP)", port)
+	case tlsPort > 0:
+		msg = fmt.Sprintf("port %d (HTTPS)", tlsPort)
+	}
+
+	return
 }
 
 func handleError(err error) {
