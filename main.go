@@ -5,14 +5,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/missionMeteora/journaler"
+	"github.com/hatchify/output"
+
 	"github.com/missionMeteora/toolkit/closer"
 	"github.com/vroomy/vroomy/service"
 
 	_ "github.com/lib/pq"
 )
 
-var out *journaler.Journaler
+var out output.Outputter
 
 func main() {
 	var (
@@ -21,8 +22,8 @@ func main() {
 		err error
 	)
 
-	out = journaler.New("Vroomie")
-	out.Notification("Hello there! One moment, initializing..")
+	out := output.NewWrapper("Vroomy")
+	out.Print("Hello there! One moment, initializing..")
 	if cfg, err = service.NewConfig("./config.toml"); err != nil {
 		err = fmt.Errorf("error encountered while reading configuration: %v", err)
 		handleError(err)
@@ -63,8 +64,8 @@ func main() {
 		handleError(err)
 	}
 
-	out.Notification("*Catch*")
-	out.Notification("Close request received, one moment..")
+	out.Print("*Catch*")
+	out.Print("Close request received, one moment..")
 
 	if err = svc.Close(); err != nil {
 		err = fmt.Errorf("error encountered while closing service: %v", err)
