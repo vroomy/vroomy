@@ -120,6 +120,10 @@ type IncludeConfig struct {
 }
 
 func (i *IncludeConfig) merge(merge *IncludeConfig) {
+	if i.Environment == nil {
+		i.Environment = make(map[string]string)
+	}
+
 	for key, val := range merge.Environment {
 		i.Environment[key] = val
 	}
