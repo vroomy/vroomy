@@ -13,6 +13,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// DefaultConfigLocation is the default configuration location
+const DefaultConfigLocation = "./config.toml"
+
 var (
 	out  output.Outputter
 	svc  *service.Service
@@ -50,8 +53,13 @@ func main() {
 }
 
 func initService() (err error) {
+	configLocation := os.Getenv("config")
+	if len(configLocation) == 0 {
+		configLocation = DefaultConfigLocation
+	}
+
 	var cfg *service.Config
-	if cfg, err = service.NewConfig("./config.toml"); err != nil {
+	if cfg, err = service.NewConfig(configLocation); err != nil {
 		err = fmt.Errorf("error encountered while reading configuration: %v", err)
 		return
 	}
