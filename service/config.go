@@ -43,8 +43,7 @@ type Config struct {
 	Include []string `toml:"include"`
 	IncludeConfig
 
-	Environment map[string]string `toml:"env"`
-	Flags       map[string]string `toml:"-"`
+	Flags map[string]string `toml:"-"`
 
 	FlagEntries []Flag `toml:"flag"`
 
@@ -112,12 +111,19 @@ func (c *Config) initFlags() (err error) {
 
 // IncludeConfig will include routes
 type IncludeConfig struct {
+	// Application environment
+	Environment map[string]string `toml:"env"`
+	// Groups are the route groups
 	Groups []*Group `toml:"group"`
 	// Routes are the routes to listen for and serve
 	Routes []*Route `toml:"route"`
 }
 
 func (i *IncludeConfig) merge(merge *IncludeConfig) {
+	for key, val := range merge.Environment {
+		i.Environment[key] = val
+	}
+
 	i.Groups = append(i.Groups, merge.Groups...)
 	i.Routes = append(i.Routes, merge.Routes...)
 }
