@@ -53,7 +53,7 @@ func main() {
 }
 
 func initService() (err error) {
-	configLocation := os.Getenv("config")
+	configLocation := os.Getenv("VROOMIE_CONFIG")
 	if len(configLocation) == 0 {
 		configLocation = DefaultConfigLocation
 	}
