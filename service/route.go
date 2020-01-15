@@ -54,7 +54,19 @@ func (r *Route) String() string {
 
 func (r *Route) init(p *plugins.Plugins) (err error) {
 	if len(r.Handlers) > 0 {
-		return r.initPlugins(p)
+		if err = r.initPlugins(p); err != nil {
+			return
+		}
+
+		// Note: We are going to support the ability to serve a target even if we already
+		// have handlers specified. This will allow us to add MW logic to file serving routes
+		// in addition to our standard plugin routes.
+		// TODO: Determine if we want to move file serving to a plugin approach, and remove it
+		// from the core vroomy offerings
+		if len(r.Target) == 0 {
+			// No target is set, bail out now
+			return
+		}
 	}
 
 	var info os.FileInfo
