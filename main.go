@@ -5,27 +5,24 @@ import (
 	"os"
 	"time"
 
-	"github.com/hatchify/output"
-
+	"github.com/hatchify/scribe"
 	"github.com/missionMeteora/toolkit/closer"
 	"github.com/vroomy/vroomy/service"
-
-	_ "github.com/lib/pq"
 )
 
 // DefaultConfigLocation is the default configuration location
 const DefaultConfigLocation = "./config.toml"
 
 var (
-	out  output.Outputter
+	out  *scribe.Scribe
 	svc  *service.Service
 	clsr *closer.Closer
 )
 
 func main() {
 	var err error
-	out = output.NewWrapper("Vroomy")
-	out.Print("Hello there! One moment, initializing..")
+	out = scribe.New("Vroomy")
+	out.Notification("Hello there! One moment, initializing..")
 
 	if err = initService(); err != nil {
 		handleError(err)
@@ -40,8 +37,8 @@ func main() {
 		handleError(err)
 	}
 
-	out.Print("*Catch*")
-	out.Print("Close request received, one moment..")
+	out.Notification("*Catch*")
+	out.Notification("Close request received, one moment..")
 
 	if err = svc.Close(); err != nil {
 		err = fmt.Errorf("error encountered while closing service: %v", err)
@@ -86,7 +83,7 @@ func listen() {
 func notifyOfListening() {
 	time.Sleep(time.Millisecond * 300)
 	msg := getListeningMessage(svc.Port(), svc.TLSPort())
-	out.Success("HTTP is now listening on %s", msg)
+	out.Successf("HTTP is now listening on %s", msg)
 }
 
 func getListeningMessage(port, tlsPort uint16) (msg string) {
@@ -103,6 +100,6 @@ func getListeningMessage(port, tlsPort uint16) (msg string) {
 }
 
 func handleError(err error) {
-	out.Error("Fatal error encountered: %v", err)
+	out.Errorf("Fatal error encountered: %v", err)
 	os.Exit(1)
 }
