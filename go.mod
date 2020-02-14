@@ -14,7 +14,6 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/hatchify/output v0.0.0-20191219041843-6ec602c6aa7e // indirect
 	github.com/hatchify/scribe v0.0.0-20200213211534-25c033ab3c1a
-	github.com/lib/pq v1.3.0 // indirect
 	github.com/missionMeteora/journaler v0.0.0-20170330173229-ac561671e66f // indirect
 	github.com/missionMeteora/toolkit v0.0.0-20170713173850-88364e3ef8cc
 	github.com/vroomy/plugins v0.0.0-20200214163306-73444a26e28e
