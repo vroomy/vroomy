@@ -4,6 +4,8 @@ github.com/Hatch1fy/cron v0.0.0-20181011175651-1a19f6ee1f7c h1:eVU/3USbQIHqxUYcF
 github.com/Hatch1fy/cron v0.0.0-20181011175651-1a19f6ee1f7c/go.mod h1:PiW4gMHbJSJv2+jhZSMIL1kJQTWAFuPMu3CWfQbWmho=
 github.com/Hatch1fy/errors v0.0.0-20190124213112-81fd84668c75 h1:mdor7h+/JzGqDJXZESUD4B4FxwN85whEUrN7QA4Czk8=
 github.com/Hatch1fy/errors v0.0.0-20190124213112-81fd84668c75/go.mod h1:9/KQCSUklomtEqY0m9m/Ca10Y/rtOpu1x1/FVE6r8/8=
+github.com/Hatch1fy/errors v0.1.0 h1:O0eV+wlv/uF++/IQFxPaTVQOCHxzEXFFX0cMrIs8GSs=
+github.com/Hatch1fy/errors v0.1.0/go.mod h1:ghvTU0wQ49AH7DcAfdKmWjBDjgEOoc1ltdPhDlGPz7w=
 github.com/Hatch1fy/filecacher v0.0.0-20190129203933-ee8797f94ccd h1:B/+H2ScvqDbDw7eHYXzcKXVvBYp2VKMIF1GIt+r198c=
 github.com/Hatch1fy/filecacher v0.0.0-20190129203933-ee8797f94ccd/go.mod h1:FaiMjHUY4vWws/42PEdN4y6jrlc72+lUsSDBh+TqTMo=
 github.com/Hatch1fy/filecacher v0.1.0 h1:AC3BtCcdbYaiNuMM4pdki991hOmZxwp50OyDauR5wAw=
@@ -48,6 +50,8 @@ github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcMEpPG5Rm84=
 github.com/mattn/go-isatty v0.0.11 h1:FxPOTFNqGkuDUGi3H/qkUbQO4ZiBa2brKq5r0l8TGeM=
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
+github.com/mattn/go-isatty v0.0.12 h1:wuysRhFDzyxgEmMf5xjvJ2M9dZoWAXNNr5LSBS7uHXY=
+github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/missionMeteora/journaler v0.0.0-20170330173229-ac561671e66f h1:Dr3tl9cnxtBir8NTL8D2SE3+uU9ikELfA06QuROXh70=
 github.com/missionMeteora/journaler v0.0.0-20170330173229-ac561671e66f/go.mod h1:0vElUr8ZeUZrVbOxFNNoWSeU6oFfKsmMo3t+St8HAC0=
 github.com/missionMeteora/toolkit v0.0.0-20170713173850-88364e3ef8cc h1:/oFlKiuu6L1sIvZ7A363qMhNM+DUQL5WsVe1xIRQnFU=
@@ -75,5 +79,11 @@ golang.org/x/sys v0.0.0-20190422165155-953cdadca894/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20191008105621-543471e840be/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193GlqGZbnPFnPV/5Rsb4=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4 h1:sfkvUWPNGwSV+8/fNqctR5lS2AqCSqYwXdrjCxp/dXo=
+golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
+golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
