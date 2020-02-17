@@ -8,7 +8,7 @@ import (
 
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
-	"github.com/PathDNA/atoms"
+	"github.com/hatchify/atoms"
 	"github.com/vroomy/plugins"
 )
 

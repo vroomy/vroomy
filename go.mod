@@ -5,12 +5,13 @@ go 1.13
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Hatch1fy/errors v0.1.0
-	github.com/Hatch1fy/filecacher v0.1.0 // indirect
-	github.com/Hatch1fy/fileserver v0.0.0-20190502213538-d6495bff9299
-	github.com/Hatch1fy/httpserve v0.0.0-20191115194802-22b681080ba6
-	github.com/PathDNA/atoms v0.0.0-20171213201720-7540df7fe84d
-	github.com/hatchify/scribe v0.0.0-20200214223301-181cd9c02a84
+	github.com/Hatch1fy/fileserver v0.1.0
+	github.com/Hatch1fy/httpserve v0.1.0
+	github.com/hatchify/atoms v0.1.0
+	github.com/hatchify/scribe v0.1.0
+	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/missionMeteora/apiserv v0.0.0-20181226234637-1830f2e988b8 // indirect
 	github.com/missionMeteora/toolkit v0.0.0-20170713173850-88364e3ef8cc
 	github.com/vroomy/plugins v0.1.0
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
