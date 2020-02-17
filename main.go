@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/hatchify/closer"
 	"github.com/hatchify/scribe"
-	"github.com/missionMeteora/toolkit/closer"
 	"github.com/vroomy/vroomy/service"
 )
 
