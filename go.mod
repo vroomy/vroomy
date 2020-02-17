@@ -9,9 +9,7 @@ require (
 	github.com/Hatch1fy/httpserve v0.1.0
 	github.com/hatchify/atoms v0.1.0
 	github.com/hatchify/scribe v0.1.0
-	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/missionMeteora/apiserv v0.0.0-20181226234637-1830f2e988b8 // indirect
 	github.com/missionMeteora/toolkit v0.0.0-20170713173850-88364e3ef8cc
 	github.com/vroomy/plugins v0.1.0
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
