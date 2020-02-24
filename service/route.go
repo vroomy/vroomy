@@ -3,9 +3,8 @@ package service
 import (
 	"fmt"
 	"os"
-	"io"
-	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/fileserver"
@@ -136,10 +135,12 @@ func (r *Route) serveHTTP(ctx *httpserve.Context) (res httpserve.Response) {
 		return httpserve.NewTextResponse(400, []byte(err.Error()))
 	}
 
-        b, _ := io.Copy(ioutil.Discard, ctx.Request.Body)
-        if b == 0 {
-            defer ctx.Request.Body.Close()
-        }
+	switch strings.ToLower(ctx.Request.Method) {
+	case "get", "delete":
+		defer ctx.Request.Body.Close()
+
+	default:
+	}
 
 	return
 }
