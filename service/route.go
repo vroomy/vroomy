@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 	"os"
+	"io"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/Hatch1fy/errors"
@@ -133,6 +135,11 @@ func (r *Route) serveHTTP(ctx *httpserve.Context) (res httpserve.Response) {
 		err = fmt.Errorf("Error serving %s: %v", key, err)
 		return httpserve.NewTextResponse(400, []byte(err.Error()))
 	}
+
+        b, _ := io.Copy(ioutil.Discard, ctx.Request.Body)
+        if b == 0 {
+            defer ctx.Request.Body.Close()
+        }
 
 	return
 }
