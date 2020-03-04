@@ -1,6 +1,6 @@
 module github.com/vroomy/vroomy
 
-go 1.13
+go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -10,5 +10,5 @@ require (
 	github.com/hatchify/atoms v0.1.0
 	github.com/hatchify/closer v0.1.0
 	github.com/hatchify/scribe v0.1.2
-	github.com/vroomy/plugins v0.1.7
+	github.com/vroomy/plugins v0.1.8
 )

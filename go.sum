@@ -20,5 +20,5 @@ github.com/hatchify/colors v0.1.0 h1:EOU0mKjn7ScTR7vjWq/lknv1XQQoLlkm0Nk0XTLqoVA
 github.com/hatchify/colors v0.1.0/go.mod h1:t0952Ef1zDFMVTCkOwhrdJS9ToVWTdcJ3PWCHZADLuU=
 github.com/hatchify/scribe v0.1.2 h1:Y5sLp5uYsavKoo5h8BaOX4we9mYpi0acgYPRt81ziNk=
 github.com/hatchify/scribe v0.1.2/go.mod h1:5edr7Z5qp41ahKKgImyXBy1gn+evaSs5SuwQfY1r+eQ=
-github.com/vroomy/plugins v0.1.7 h1:BWT0ExGWxiWrHkBy2TETk0/6SUKrmXwyHYn1zz5IkTk=
-github.com/vroomy/plugins v0.1.7/go.mod h1:OlbcPKyE76JgWDSPEU09XDGlF2kCre3ln+cuUtW2Iyo=
+github.com/vroomy/plugins v0.1.8 h1:2mXMFvfc6Nl8Qg9/45oHwtqLeO80KwnQla8Pjawqx7g=
+github.com/vroomy/plugins v0.1.8/go.mod h1:OlbcPKyE76JgWDSPEU09XDGlF2kCre3ln+cuUtW2Iyo=
