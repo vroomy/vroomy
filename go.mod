@@ -10,5 +10,5 @@ require (
 	github.com/hatchify/atoms v0.2.0
 	github.com/hatchify/closer v0.2.0
 	github.com/hatchify/scribe v0.2.0
-	github.com/vroomy/plugins v0.2.0
+	github.com/vroomy/plugins v0.2.1
 )

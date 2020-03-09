@@ -18,7 +18,9 @@ github.com/hatchify/closer v0.2.0 h1:sG1zYfY4JrsN+QIEGvYCH+eJaem7CdMCw5LQ0tAbwXw
 github.com/hatchify/closer v0.2.0/go.mod h1:0tnoQ9y0q9wl6sQB3Y4iDPkdT+zctyEP+2C1k+tn5Cc=
 github.com/hatchify/colors v0.2.0 h1:xBh5eztvly1MCesMeIXEaCKISH4XXDw70+0BSkOJCYQ=
 github.com/hatchify/colors v0.2.0/go.mod h1:t0952Ef1zDFMVTCkOwhrdJS9ToVWTdcJ3PWCHZADLuU=
+github.com/hatchify/queue v0.1.0 h1:seZZpT3ZvPSbvvrWxS62747vXtkt+fXAohBEE+aKYhk=
+github.com/hatchify/queue v0.1.0/go.mod h1:b976dT/lR/zCD+aXGI4a9t1LJZlW8ukI6BPxxih0ehY=
 github.com/hatchify/scribe v0.2.0 h1:I3lOw51ankELnUKXYRufLWSwjNoAkxUhTzcMlTwkC6U=
 github.com/hatchify/scribe v0.2.0/go.mod h1:TGeaI8mWh7oFSyqvYa7eIsWFKYcN4iobleHhaDmY9G0=
-github.com/vroomy/plugins v0.2.0 h1:R3HbXGvjkg0vwqbVyKNCgpwNGfP4FklKTjo7845QdNM=
-github.com/vroomy/plugins v0.2.0/go.mod h1:Y6d2ULwOsZPlxLcdckwuJjCn+SZOAHvFDf5r3RdH96w=
+github.com/vroomy/plugins v0.2.1 h1:vsratYCW96DOIdJHbm2Zkk8/QSVBzfmtB1jEExVVt4o=
+github.com/vroomy/plugins v0.2.1/go.mod h1:vwuEhzklLsGx1fA0sFdzYvQigdNjG+YSdgx9oLCwX1A=
