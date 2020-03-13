@@ -22,5 +22,5 @@ github.com/hatchify/queue v0.3.0 h1:33BT5gycJQ+X4oCKK0H8BXlOnBv6ROz4mMhMlwOA1us=
 github.com/hatchify/queue v0.3.0/go.mod h1:b976dT/lR/zCD+aXGI4a9t1LJZlW8ukI6BPxxih0ehY=
 github.com/hatchify/scribe v0.3.0 h1:ZgOyvmvBnD0g1qMaYbx9R5T7g++LjiMYrUKU+nbHyUc=
 github.com/hatchify/scribe v0.3.0/go.mod h1:t7cySodn0RY6M/EpdcZy3Syl7pCKYIWg/epA2brO/a4=
-github.com/vroomy/plugins v0.3.0 h1:jIq1yz2q+8+VmLuijnuwYgYWEm1npwQDK6Qh8ZdV5d8=
-github.com/vroomy/plugins v0.3.0/go.mod h1:39NNL2ZF3nqlLBmfs0KPaevfWcLoe0w2z/OAqOKPO2o=
+github.com/vroomy/plugins v0.3.2 h1:Dtlg6NGCRtzQuIdhB89Spy627wh4uF9s4CPp3T8zt3I=
+github.com/vroomy/plugins v0.3.2/go.mod h1:39NNL2ZF3nqlLBmfs0KPaevfWcLoe0w2z/OAqOKPO2o=
