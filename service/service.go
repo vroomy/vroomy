@@ -9,6 +9,7 @@ import (
 	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
 	"github.com/hatchify/atoms"
+	"github.com/vroomy/common"
 	"github.com/vroomy/plugins"
 )
 
@@ -202,6 +203,10 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 	}
 
 	switch fn := sym.(type) {
+	case func(p common.Plugins, flags, env map[string]string) error:
+		return fn(s.p, s.cfg.Flags, s.cfg.Environment)
+
+	// TODO: Deprecate the remaining initialization funcs
 	case func(p *plugins.Plugins, env map[string]string) error:
 		return fn(s.p, s.cfg.Environment)
 
