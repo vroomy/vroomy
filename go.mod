@@ -11,5 +11,5 @@ require (
 	github.com/hatchify/closer v0.3.0
 	github.com/hatchify/scribe v0.3.1
 	github.com/vroomy/common v0.1.0
-	github.com/vroomy/plugins v0.3.8
+	github.com/vroomy/plugins v0.3.9
 )
