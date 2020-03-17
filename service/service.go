@@ -205,11 +205,14 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 	switch fn := sym.(type) {
 	case func(p common.Plugins, flags, env map[string]string) error:
 		return fn(s.p, s.cfg.Flags, s.cfg.Environment)
+	case func(p common.Plugins, env map[string]string) error:
+		return fn(s.p, s.cfg.Environment)
 
 	// TODO: Deprecate the remaining initialization funcs
 	case func(p *plugins.Plugins, env map[string]string) error:
 		return fn(s.p, s.cfg.Environment)
 
+	// TODO: Deprecate the remaining initialization funcs
 	case func(p *plugins.Plugins, flags, env map[string]string) error:
 		return fn(s.p, s.cfg.Flags, s.cfg.Environment)
 
