@@ -103,7 +103,7 @@ func (s *Service) loadPlugins() (err error) {
 	}
 
 	if err = s.p.Initialize(); err != nil {
-		err = fmt.Errorf("erorr initializing plugins: %v", err)
+		err = fmt.Errorf("error initializing plugins: %v", err)
 		return
 	}
 
