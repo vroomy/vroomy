@@ -3,6 +3,9 @@ package service
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 
 	"github.com/BurntSushi/toml"
 )
@@ -55,12 +58,38 @@ type Config struct {
 
 func (c *Config) loadIncludes() (err error) {
 	for _, include := range c.Include {
+		// Include each file or directory
+		if err = c.loadInclude(include); err != nil {
+			// Include failed
+			return
+		}
+	}
+
+	return
+}
+
+func (c *Config) loadInclude(include string) (err error) {
+	if path.Ext(include) == ".toml" {
+		// Attempt to decode toml
 		var icfg IncludeConfig
 		if _, err = toml.DecodeFile(include, &icfg); err != nil {
 			return
 		}
 
 		c.IncludeConfig.merge(&icfg)
+	} else {
+		// Attempt to parse directory
+		var files []os.FileInfo
+		if files, err = ioutil.ReadDir(include); err != nil {
+			return fmt.Errorf("%s is not a .toml file or directory", include)
+		}
+
+		// Call recursively
+		for _, file := range files {
+			if err = c.loadInclude(path.Join(include, file.Name())); err != nil {
+				return
+			}
+		}
 	}
 
 	return
