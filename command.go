@@ -79,6 +79,9 @@ func test(cmd *parg.Command) (err error) {
 		handleError(err)
 	}
 
+	out.Notification("Initialized plugins successfully!")
+	out.Notification("Closing...")
+
 	if err = svc.Close(); err != nil {
 		out.Error("Close test failed :(")
 
@@ -86,6 +89,7 @@ func test(cmd *parg.Command) (err error) {
 		handleError(err)
 	}
 
+	out.Notification("Closed plugins successfully!")
 	out.Success("Test complete!")
 	return
 }

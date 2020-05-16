@@ -23,15 +23,17 @@ var (
 )
 
 func main() {
-	var err error
-	out = scribe.New("Vroomy")
-	out.Notification("Hello there! One moment, initializing..")
+	outW := scribe.NewStdout()
+	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
+	out = scribe.NewWithWriter(outW, "")
+	out.Notification("Hello there! One moment, please: Initializing ::")
 
 	configLocation := os.Getenv("VROOMY_CONFIG")
 	if len(configLocation) == 0 {
 		configLocation = DefaultConfigLocation
 	}
 
+	var err error
 	if cfg, err = service.NewConfig(configLocation); err != nil {
 		err = fmt.Errorf("error encountered while reading configuration: %v", err)
 		return
