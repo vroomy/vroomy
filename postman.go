@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/vroomy/vroomy/service"
+	"github.com/vroomy/service"
 )
 
 type postmanGroup struct {
