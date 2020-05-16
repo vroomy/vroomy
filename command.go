@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/hatchify/closer"
 	parg "github.com/hatchify/parg"
@@ -80,10 +81,19 @@ func doc(cmd *parg.Command) (err error) {
 	out.Notificationf("Documenting postman config...")
 
 	output := postmanFromConfig()
-	file, _ := json.MarshalIndent(output, "", " ")
-	_ = ioutil.WriteFile("postman.json", file, 0644)
+	file, _ := json.MarshalIndent(output, "", "  ")
 
-	out.Success("Generated postman.json collection successfully!")
+	var filename string
+	filename = cfg.Name
+	if len(filename) >= 0 {
+		filename += " "
+	}
+
+	filename += "postman_collection.json"
+	filename = strings.Replace(filename, " ", "_", -1)
+	_ = ioutil.WriteFile(filename, file, 0644)
+
+	out.Successf("Generated \"%s\" collection successfully!", filename)
 	return
 }
 

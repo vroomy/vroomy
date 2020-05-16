@@ -9,7 +9,12 @@ import (
 )
 
 func initService() (err error) {
-	out.Notification("Starting service")
+	if len(cfg.Name) > 0 {
+		out.Notificationf("Starting %s...", cfg.Name)
+	} else {
+		out.Notification("Starting vroomy service...")
+	}
+
 	if svc, err = service.New(cfg); err != nil {
 		err = fmt.Errorf("error encountered while initializing service: %v", err)
 		return

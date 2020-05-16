@@ -3,6 +3,8 @@ package main
 import (
 	"path"
 	"strings"
+
+	"github.com/vroomy/service"
 )
 
 type postmanGroup struct {
@@ -49,8 +51,6 @@ type postmanBody struct {
 	Options postmanOptions `json:"options,omitempty"`
 }
 
-type postmanOptions map[string]map[string]string
-
 type postmanHeader struct {
 	Key   string `json:"key,omitempty"`
 	Name  string `json:"name,omitempty"`
@@ -58,73 +58,104 @@ type postmanHeader struct {
 	Value string `json:"value,omitempty"`
 }
 
+type postmanOptions map[string]map[string]string
+
+type postmanCollection []*postmanGroup
+
+var groupCache = map[string]*postmanGroup{}
+
 func postmanFromConfig() (output map[string]interface{}) {
-	var groups = map[string]*postmanGroup{}
-	var postmanGroups = []*postmanGroup{}
+	var (
+		rootGroup  = &postmanGroup{Name: "/", route: "/"}
+		collection = postmanCollection{}
+	)
+
+	groupCache[rootGroup.Name] = rootGroup
+
+	for _, group := range cfg.Groups {
+		collection.addGroup(group)
+	}
+
+	for _, route := range cfg.Routes {
+		collection.addRoute(route)
+	}
+
+	output = map[string]interface{}{
+		"info": map[string]string{
+			"name":   cfg.Name + " vroomy",
+			"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		},
+
+		"item": collection,
+	}
+
+	return output
+}
+
+func (c *postmanCollection) addGroup(group *service.Group) {
+	group.Name = strings.Trim(group.Name, "/")
+	group.Group = strings.Trim(group.Group, "/")
+
 	var g *postmanGroup
 	var newGroup = false
-	for _, group := range cfg.Groups {
-		group.Name = strings.Trim(group.Name, "/")
-		group.Group = strings.Trim(group.Group, "/")
+	if oldGroup, ok := groupCache[group.Name]; ok {
+		// Append to existing group
+		g = oldGroup
+		newGroup = false
+	} else {
+		// New group
+		g = &postmanGroup{Name: group.Name}
+		newGroup = true
+	}
 
-		if oldGroup, ok := groups[group.Name]; ok {
-			// Append to existing group
-			g = oldGroup
-			newGroup = false
+	g.route = group.HTTPPath
+	if len(group.Group) > 0 {
+		if parent, ok := groupCache[group.Group]; ok {
+			g.route = path.Join(parent.route, g.route)
+			parent.Item = append(parent.Item, g)
 		} else {
-			// New group
-			g = &postmanGroup{Name: group.Name}
-			newGroup = true
+			out.Warningf("Unable to find parent group: %s", group.Group)
+			return
 		}
-
-		g.route = group.HTTPPath
-		if len(group.Group) > 0 {
-			if parent, ok := groups[group.Group]; ok {
-				g.route = path.Join(parent.route, g.route)
-				parent.Item = append(parent.Item, g)
-			} else {
-				out.Warningf("Unable to find parent group: %s", group.Group)
-				continue
-			}
-		} else {
-			// Root group
-			if newGroup {
-				postmanGroups = append(postmanGroups, g)
-			}
+	} else {
+		// Root group
+		if newGroup {
+			*c = append(*c, g)
 		}
+	}
 
-		groups[group.Name] = g
+	groupCache[group.Name] = g
+}
+
+func (c *postmanCollection) addRoute(route *service.Route) {
+	route.HTTPPath = strings.Trim(route.HTTPPath, "/")
+	route.Group = strings.Trim(route.Group, "/")
+
+	if len(route.Group) == 0 {
+		route.Group = "/"
 	}
 
 	var r *postmanRoute
-	for _, route := range cfg.Routes {
-		route.HTTPPath = strings.Trim(route.HTTPPath, "/")
-		route.Group = strings.Trim(route.Group, "/")
-
-		r = &postmanRoute{Name: route.HTTPPath}
-		r.route = route.HTTPPath
-		if len(route.Group) > 0 {
-			if parent, ok := groups[route.Group]; ok {
-				r.route = path.Join(parent.route, r.route)
-				r.Request = &postmanRequest{
-					Method: route.Method,
-					URL: &postmanURL{
-						Raw:  "{{URL}}" + r.route,
-						Host: "{{URL}}",
-						Path: strings.Split(strings.Trim(r.route, "/"), "/"),
-					},
-				}
-
-				parent.Item = append(parent.Item, r)
-			} else {
-				out.Warningf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
-				continue
+	r = &postmanRoute{}
+	r.route = route.HTTPPath
+	if len(route.Group) > 0 {
+		if parent, ok := groupCache[route.Group]; ok {
+			r.route = path.Join(parent.route, r.route)
+			r.Name = r.route
+			r.Request = &postmanRequest{
+				Method: route.Method,
+				URL: &postmanURL{
+					Raw:  "{{URL}}" + r.route,
+					Host: "{{URL}}",
+					Path: strings.Split(strings.Trim(r.route, "/"), "/"),
+				},
 			}
+
+			parent.Item = append(parent.Item, r)
+		} else {
+			out.Warningf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
 		}
+	} else {
+		out.Warningf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
 	}
-
-	output["info"] = map[string]string{"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"}
-	output["item"] = postmanGroups
-
-	return output
 }
