@@ -26,7 +26,7 @@ func main() {
 	outW := scribe.NewStdout()
 	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
 	out = scribe.NewWithWriter(outW, "")
-	out.Notification("Hello there! One moment, please: Initializing ::")
+	out.Notification("Hello there! :: One moment, please... ::")
 
 	configLocation := os.Getenv("VROOMY_CONFIG")
 	if len(configLocation) == 0 {

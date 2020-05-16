@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/hatchify/closer"
@@ -20,7 +22,17 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 	p.AddHandler("test", test, "Tests the currently checked out version of plugin(s).\n  Accepts filtered trailing args to target specific plugins.\n  Use `vpm test` for all plugins, or `vpm test <plugin> <plugin>`")
 
 	for _, f := range cfg.FlagEntries {
-		p.AddGlobalFlag(parg.Flag{Name: f.Name, Help: f.Usage, Identifiers: []string{"-" + f.Name}, Value: f.DefaultValue})
+		usage := f.Usage
+		if len(f.DefaultValue) != 0 {
+			usage += "\n  Default: " + f.DefaultValue
+		}
+
+		p.AddGlobalFlag(parg.Flag{
+			Name:        f.Name,
+			Help:        usage,
+			Identifiers: []string{"-" + f.Name},
+			Value:       f.DefaultValue,
+		})
 	}
 
 	cmd, err = parg.Validate()
@@ -56,17 +68,22 @@ func startServer(cmd *parg.Command) (err error) {
 
 func help(cmd *parg.Command) (err error) {
 	if cmd == nil {
-		fmt.Println(parg.Help())
+		out.Success(parg.Help())
 		return
 	}
 
-	fmt.Println(cmd.Help())
+	out.Success(cmd.Help())
 	return
 }
 
 func doc(cmd *parg.Command) (err error) {
-	out.Notificationf("Documenting...")
+	out.Notificationf("Documenting postman config...")
 
+	output := postmanFromConfig()
+	file, _ := json.MarshalIndent(output, "", " ")
+	_ = ioutil.WriteFile("postman.json", file, 0644)
+
+	out.Success("Generated postman.json collection successfully!")
 	return
 }
 
