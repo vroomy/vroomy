@@ -7,7 +7,7 @@ import (
 
 	"github.com/hatchify/closer"
 	"github.com/hatchify/scribe"
-	"github.com/vroomy/vroomy/service"
+	"github.com/vroomy/service"
 )
 
 // DefaultConfigLocation is the default configuration location
