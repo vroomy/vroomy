@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/vroomy/service"
+	"github.com/vroomy/vroomy/service"
 )
 
 func initService() (err error) {
