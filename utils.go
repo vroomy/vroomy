@@ -60,7 +60,7 @@ func handleError(err error) {
 	os.Exit(1)
 }
 
-// Convert command flags to flag entities, and viceversa
+// Convert command flags to flag entities, handle defaults
 func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 	cfg.Flags = map[string]string{}
 
