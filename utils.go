@@ -93,14 +93,14 @@ func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 
 		default:
 			// Needs argument unless asking for usage
-			err = fmt.Errorf("error: %s flag received unexpected argument type: unable to parse \"%+v\"", name, f.Type)
+			err = fmt.Errorf("error: %s flag received unexpected argument type: unable to parse \"%+v\"", f.Name, f.Type)
 			return
 		}
 
 		if len(cfg.Flags[name]) == 0 {
 			if cmd.Action != "help" {
 				// Needs argument unless asking for usage
-				err = fmt.Errorf("error: %s flag expects %s: got \"%+v\"", name, f.Type.Expects(), f.Value)
+				err = fmt.Errorf("error: \"-%s\" flag expects %s: got \"%+v\"", f.Name, f.Type.Expects(), f.Value)
 				return
 			}
 			return

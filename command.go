@@ -27,42 +27,51 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 		Type:        parg.STRINGS,
 	})
 
-	if cfg != nil {
-		if cfg.CommandEntries != nil {
-			// Handle config commands/flags
-			for _, c := range cfg.CommandEntries {
-				if _, ok := p.GetAllowedCommands()[c.Name]; ok {
-					err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
-					return
-				}
+	addDynamicActions(p)
 
-				p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
+	cmd, err = parg.Validate()
+	return
+}
+
+func addDynamicActions(p *parg.Parg) (err error) {
+	if cfg == nil {
+		// No actions to add
+		return
+	}
+
+	if cfg.CommandEntries != nil {
+		// Handle config commands/flags
+		for _, c := range cfg.CommandEntries {
+			if _, ok := p.GetAllowedCommands()[c.Name]; ok {
+				err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
+				return
 			}
-		}
 
-		if cfg.FlagEntries != nil {
-			for _, f := range cfg.FlagEntries {
-				usage := f.Usage
-				if len(f.DefaultValue) != 0 {
-					usage += "\n  Default: " + f.DefaultValue
-				}
-
-				if _, ok := p.GetGlobalFlags()[f.Name]; ok {
-					err = fmt.Errorf("error: duplicate flag with name: %s", f.Name)
-					return
-				}
-
-				p.AddGlobalFlag(parg.Flag{
-					Name:        f.Name,
-					Help:        usage,
-					Identifiers: []string{"-" + f.Name},
-					Value:       f.DefaultValue,
-				})
-			}
+			p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
 		}
 	}
 
-	cmd, err = parg.Validate()
+	if cfg.FlagEntries != nil {
+		for _, f := range cfg.FlagEntries {
+			usage := f.Usage
+			if len(f.DefaultValue) != 0 {
+				usage += "\n  Default: " + f.DefaultValue
+			}
+
+			if _, ok := p.GetGlobalFlags()[f.Name]; ok {
+				err = fmt.Errorf("error: duplicate flag with name: %s", f.Name)
+				return
+			}
+
+			p.AddGlobalFlag(parg.Flag{
+				Name:        f.Name,
+				Help:        usage,
+				Identifiers: []string{"-" + f.Name},
+				Value:       f.DefaultValue,
+			})
+		}
+	}
+
 	return
 }
 
