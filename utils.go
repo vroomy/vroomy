@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
+	flag "github.com/hatchify/parg"
 	"github.com/vroomy/service"
 )
 
@@ -55,4 +58,54 @@ func getListeningMessage(port, tlsPort uint16) (msg string) {
 func handleError(err error) {
 	out.Errorf("Fatal error encountered: %v", err)
 	os.Exit(1)
+}
+
+// Convert command flags to flag entities, and viceversa
+func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
+	cfg.Flags = map[string]string{}
+
+	// Add default values
+	cmdFlags := cmd.Flags
+	for _, entry := range cfg.FlagEntries {
+		if entry.DefaultValue != "" {
+			if _, ok := cmd.Flags[entry.Name]; !ok {
+				// Set default value
+				cfg.Flags[entry.Name] = entry.DefaultValue
+			}
+		}
+	}
+
+	// Parse flags, override defaults
+	for name, f := range cmdFlags {
+		switch f.Type {
+		case flag.DEFAULT:
+			cfg.Flags[name] = cmd.StringFrom(f.Name)
+		case flag.STRINGS:
+			cfg.Flags[name] = strings.Join(cmd.StringsFrom(f.Name), " ")
+		case flag.BOOL:
+			if cmd.BoolFrom(f.Name) {
+				cfg.Flags[name] = "true"
+			} else {
+				cfg.Flags[name] = "false"
+			}
+		case flag.INT:
+			cfg.Flags[name] = strconv.Itoa(cmd.IntFrom(f.Name))
+
+		default:
+			// Needs argument unless asking for usage
+			err = fmt.Errorf("error: %s flag received unexpected argument type: unable to parse \"%+v\"", name, f.Type)
+			return
+		}
+
+		if len(cfg.Flags[name]) == 0 {
+			if cmd.Action != "help" {
+				// Needs argument unless asking for usage
+				err = fmt.Errorf("error: %s flag expects non-nil %s argument: got \"%+v\"", name, f.Type.Expects(), f.Value)
+				return
+			}
+			return
+		}
+	}
+
+	return
 }

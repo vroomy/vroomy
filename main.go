@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/hatchify/closer"
 	flag "github.com/hatchify/parg"
@@ -49,18 +48,10 @@ func main() {
 		handleError(err)
 	}
 
-	// Parse flags
-	cfg.Flags = make(map[string]string, len(cmd.Flags))
-	for name, f := range cmd.Flags {
-		switch val := f.Value.(type) {
-		case string:
-			cfg.Flags[name] = val
-		case []string:
-			cfg.Flags[name] = strings.Join(val, " ")
-		default:
-			err = fmt.Errorf("error: %s flag expects non-nil string argument: got \"%v\"", name, val)
-			handleError(err)
-		}
+	// Parse flags into config
+	if err = parseConfigFlagsFrom(cmd); err != nil {
+		help(cmd)
+		handleError(err)
 	}
 
 	// Run command handler

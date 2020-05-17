@@ -14,7 +14,7 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 
 	p.AddHandler("", runService, "Runs vroomy server.\n  Accepts flags specified in config.toml.\n  Use `vroomy` or `vroomy -<flag>`")
 
-	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` to get more specific info.")
+	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
 	p.AddHandler("test", test, "Tests the currently checked out version of plugin(s).\n  Accepts filtered trailing args to target specific plugins.\n  Use `vpm test` for all plugins, or `vpm test <plugin> <plugin>`")
 
 	p.AddGlobalFlag(parg.Flag{
@@ -82,12 +82,19 @@ func runService(cmd *parg.Command) (err error) {
 }
 
 func help(cmd *parg.Command) (err error) {
+	var serviceName = cfg.Name
+	if serviceName == "" {
+		serviceName = "Vroomy"
+	}
+
+	var prefix = "Usage ::\n\n# " + serviceName + "\n"
+
 	if cmd == nil {
-		out.Success(parg.Help())
+		out.Notification(prefix + parg.Help(true))
 		return
 	}
 
-	out.Success(cmd.Help())
+	out.Notification(prefix + cmd.Help(true))
 	return
 }
 
