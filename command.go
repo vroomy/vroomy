@@ -14,6 +14,9 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 
 	p.AddHandler("", runService, "Runs vroomy server.\n  Accepts flags specified in config.toml.\n  Use `vroomy` or `vroomy -<flag>`")
 
+	p.AddHandler("version", printVersion, "Prints current version of vroomy installation.\n  Use `vroomy version`")
+	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation.\n  Skips if version is up to date.\n  Use `vroomy upgrade`")
+
 	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
 	p.AddHandler("test", test, "Tests the currently checked out version of plugin(s).\n  Accepts filtered trailing args to target specific plugins.\n  Use `vpm test` for all plugins, or `vpm test <plugin> <plugin>`")
 
@@ -24,27 +27,39 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 		Type:        parg.STRINGS,
 	})
 
-	for _, c := range cfg.CommandEntries {
-		if _, ok := p.GetAllowedCommands()[c.Name]; ok {
-			err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
-			return
+	if cfg != nil {
+		if cfg.CommandEntries != nil {
+			// Handle config commands/flags
+			for _, c := range cfg.CommandEntries {
+				if _, ok := p.GetAllowedCommands()[c.Name]; ok {
+					err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
+					return
+				}
+
+				p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
+			}
 		}
 
-		p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
-	}
+		if cfg.FlagEntries != nil {
+			for _, f := range cfg.FlagEntries {
+				usage := f.Usage
+				if len(f.DefaultValue) != 0 {
+					usage += "\n  Default: " + f.DefaultValue
+				}
 
-	for _, f := range cfg.FlagEntries {
-		usage := f.Usage
-		if len(f.DefaultValue) != 0 {
-			usage += "\n  Default: " + f.DefaultValue
+				if _, ok := p.GetGlobalFlags()[f.Name]; ok {
+					err = fmt.Errorf("error: duplicate flag with name: %s", f.Name)
+					return
+				}
+
+				p.AddGlobalFlag(parg.Flag{
+					Name:        f.Name,
+					Help:        usage,
+					Identifiers: []string{"-" + f.Name},
+					Value:       f.DefaultValue,
+				})
+			}
 		}
-
-		p.AddGlobalFlag(parg.Flag{
-			Name:        f.Name,
-			Help:        usage,
-			Identifiers: []string{"-" + f.Name},
-			Value:       f.DefaultValue,
-		})
 	}
 
 	cmd, err = parg.Validate()
@@ -52,6 +67,13 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 }
 
 func runService(cmd *parg.Command) (err error) {
+	var serviceName = cfg.Name
+	if serviceName == "" {
+		serviceName = "service"
+	}
+
+	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", serviceName)
+
 	if err = initService(); err != nil {
 		handleError(err)
 	}
@@ -63,11 +85,6 @@ func runService(cmd *parg.Command) (err error) {
 
 	if err = clsr.Wait(); err != nil {
 		handleError(err)
-	}
-
-	var serviceName = cfg.Name
-	if serviceName == "" {
-		serviceName = "service"
 	}
 
 	out.Notification("Close request received. One moment please...")
@@ -82,9 +99,13 @@ func runService(cmd *parg.Command) (err error) {
 }
 
 func help(cmd *parg.Command) (err error) {
-	var serviceName = cfg.Name
+	var serviceName string
+	if cfg != nil {
+		serviceName = cfg.Name
+	}
+
 	if serviceName == "" {
-		serviceName = "Vroomy"
+		serviceName = "vroomy"
 	}
 
 	var prefix = "Usage ::\n\n# " + serviceName + "\n"
@@ -99,12 +120,12 @@ func help(cmd *parg.Command) (err error) {
 }
 
 func test(cmd *parg.Command) (err error) {
-	out.Notificationf("Testing plugin compatibility...")
-
 	var serviceName = cfg.Name
 	if serviceName == "" {
 		serviceName = "service"
 	}
+
+	out.Notificationf("Hello there! :: Testing %s Compatibility :: One moment, please... ::", serviceName)
 
 	if err = initService(); err != nil {
 		out.Error("Init test failed :(")

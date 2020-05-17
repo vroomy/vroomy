@@ -1,5 +1,2 @@
 #!/bin/bash
-echo "Installing VPM (Vroomy package manager)"
-go get -u github.com/vroomy/vpm;
-echo "Installing Vroomy"
-go get -u github.com/vroomy/vroomy;
+go install -i -v -ldflags="-X main.version=$1" -trimpath || exit 1

@@ -19,26 +19,21 @@ var (
 
 	clsr *closer.Closer
 
-	out *scribe.Scribe
+	out  *scribe.Scribe
+	outW *scribe.Stdout
 )
 
 func main() {
-	outW := scribe.NewStdout()
+	var err error
+
+	outW = scribe.NewStdout()
 	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
 	out = scribe.NewWithWriter(outW, "")
-	out.Notification("Hello there! :: One moment, please... ::")
 
 	// Load config location
 	configLocation := os.Getenv("VROOMY_CONFIG")
 	if len(configLocation) == 0 {
 		configLocation = DefaultConfigLocation
-	}
-
-	// Parse config
-	var err error
-	if cfg, err = service.NewConfig(configLocation); err != nil {
-		err = fmt.Errorf("error encountered while reading configuration: %v", err)
-		return
 	}
 
 	// Get commmand
@@ -48,10 +43,22 @@ func main() {
 		handleError(err)
 	}
 
-	// Parse flags into config
-	if err = parseConfigFlagsFrom(cmd); err != nil {
-		help(cmd)
-		handleError(err)
+	switch cmd.Action {
+	case "help", "version", "upgrade":
+		// No config needed
+		cfg = &service.Config{Name: "vroomy"}
+	default:
+		// Parse config
+		if cfg, err = service.NewConfig(configLocation); err != nil {
+			handleError(fmt.Errorf("error encountered while reading configuration: %v", err))
+			return
+		}
+
+		// Parse flags into config
+		if err = parseConfigFlagsFrom(cmd); err != nil {
+			help(cmd)
+			handleError(err)
+		}
 	}
 
 	// Run command handler
