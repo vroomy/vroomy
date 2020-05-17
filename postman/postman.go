@@ -2,9 +2,7 @@ package postman
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"path"
 	"strings"
 
 	"github.com/hatchify/scribe"
@@ -13,6 +11,7 @@ import (
 
 // PostmanSchema defines the current struct definitions
 const postmanSchema = "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+const rootRoute = "/"
 
 // Postman represents the documenation output object
 type Postman struct {
@@ -100,33 +99,45 @@ func FromConfig(cfg *service.Config) (p *Postman, err error) {
 	out = scribe.New("Postman Docs")
 	out.Notification("Parsing vroomy config...")
 
-	var rootGroup = &postmanGroup{Name: "/", route: "/"}
+	var rootGroup = &postmanGroup{Name: "/", route: rootRoute}
 
 	p = &Postman{
 		Info: postmanInfo{
-			Name:   cfg.Name + " vroomy",
+			Name:   cfg.Name + " (vroomy)",
 			Schema: postmanSchema,
 		},
 		Item:     postmanCollection{rootGroup},
 		groupMap: map[string]*postmanGroup{rootGroup.route: rootGroup},
 	}
 
+	// Load nested groups
+	var groupCount = 0
 	for _, group := range cfg.Groups {
 		p.addGroup(group)
+		groupCount++
 	}
 
+	// Load route and add to parent group
+	var routeCount = 0
 	for _, route := range cfg.Routes {
 		p.addRoute(route)
+		routeCount++
 	}
 
-	if len(rootGroup.Item) == 0 {
+	// Check if root group is necessary
+	var rootItemCount = len(rootGroup.Item)
+	if rootItemCount == 0 {
 		// No root routes, remove root group
 		p.Item = p.Item[1:]
+	} else {
+		out.Notificationf("%d ungrouped routes found in root \"/\" path.", rootItemCount)
 	}
 
+	out.Successf("Documented %d routes in %d groups for %s!", routeCount, groupCount, p.Info.Name)
 	return
 }
 
+// WriteToFile will output the postman config json to the provided filename
 func (p *Postman) WriteToFile(filename string) (err error) {
 	var bytes []byte
 	if bytes, err = json.MarshalIndent(p, "", "  "); err != nil {
@@ -141,31 +152,7 @@ func (p *Postman) WriteToFile(filename string) (err error) {
 	return
 }
 
-func (p *Postman) groupFrom(group *service.Group) (pg *postmanGroup, created bool) {
-	if oldGroup, ok := p.groupMap[group.Name]; ok {
-		// Append to existing group
-		pg = oldGroup
-		created = false
-	} else {
-		// New group
-		pg = &postmanGroup{Name: group.Name}
-		created = true
-	}
-
-	return
-}
-
-func (p *Postman) addGroupToParent(g *postmanGroup, parent string) (err error) {
-	if parent, ok := p.groupMap[parent]; ok {
-		g.route = path.Join(parent.route, g.route)
-		parent.Item = append(parent.Item, g)
-	} else {
-		err = fmt.Errorf("Unable to find parent group: %s", parent)
-		return
-	}
-
-	return
-}
+// Groups
 
 func (p *Postman) addGroup(group *service.Group) {
 	group.Name = strings.Trim(group.Name, "/")
@@ -173,8 +160,9 @@ func (p *Postman) addGroup(group *service.Group) {
 
 	var g *postmanGroup
 	var newGroup bool
-	g, newGroup = p.groupFrom(group)
+	g, newGroup = postmanGroupFrom(group, p.groupMap)
 
+	// Check if group has parent
 	g.route = group.HTTPPath
 	if len(group.Group) == 0 {
 		if newGroup {
@@ -182,53 +170,37 @@ func (p *Postman) addGroup(group *service.Group) {
 			p.Item = append(p.Item, g)
 			out.Notificationf("Found root group \"%s\"", g.Name)
 		} else {
+			// We've seen this group before... Is this a problem?
 			out.Warningf("Repeat definition of group \"%s\"", g.Name)
 		}
 	} else {
-		if err := p.addGroupToParent(g, group.Group); err != nil {
-			out.Warning(err.Error())
+		// Group is nested in a parent group
+		if err := addGroupToParent(g, group.Group, p.groupMap); err != nil {
+			out.Error(err.Error())
 		} else {
 			out.Notificationf("Added group \"%s\" to parent \"%s\"", g.Name, group.Group)
 		}
 	}
 
+	// Add group to quick-reference map
 	p.groupMap[group.Name] = g
 }
 
-func (p *Postman) addRouteToParent(route *service.Route) {
-	var r *postmanRoute
-	r = &postmanRoute{}
-	r.route = route.HTTPPath
-
-	if parent, ok := p.groupMap[route.Group]; ok {
-		r.route = path.Join(parent.route, r.route)
-		r.Name = r.route
-		r.Request = &postmanRequest{
-			Method: route.Method,
-			URL: &postmanURL{
-				Raw:  "{{URL}}" + r.route,
-				Host: "{{URL}}",
-				Path: strings.Split(strings.Trim(r.route, "/"), "/"),
-			},
-		}
-
-		parent.Item = append(parent.Item, r)
-	} else {
-		out.Warningf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
-	}
-}
+// Routes
 
 func (p *Postman) addRoute(route *service.Route) {
 	route.HTTPPath = strings.Trim(route.HTTPPath, "/")
 	route.Group = strings.Trim(route.Group, "/")
 
+	// Add to root group
 	if len(route.Group) == 0 {
-		route.Group = "/"
+		route.Group = rootRoute
 	}
 
 	if len(route.Group) > 0 {
-		p.addRouteToParent(route)
+		addRouteToParent(route, p.groupMap)
 	} else {
-		out.Warningf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
+		// Orphan route!
+		out.Errorf("Unable to find parent (%s) of route: %s", route.Group, route.HTTPPath)
 	}
 }

@@ -53,15 +53,18 @@ func startServer(cmd *parg.Command) (err error) {
 		handleError(err)
 	}
 
-	out.Notification("*Catch*")
-	out.Notification("Close request received, one moment..")
+	var serviceName = cfg.Name
+	if serviceName == "" {
+		serviceName = "service"
+	}
 
+	out.Notification("Close request received. One moment please...")
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("error encountered while closing service: %v", err)
+		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
 		handleError(err)
 	}
 
-	out.Success("Service has been closed")
+	out.Successf("Successfully closed %s!", serviceName)
 	os.Exit(0)
 	return
 }
@@ -101,9 +104,15 @@ func doc(cmd *parg.Command) (err error) {
 func test(cmd *parg.Command) (err error) {
 	out.Notificationf("Testing plugin compatibility...")
 
+	var serviceName = cfg.Name
+	if serviceName == "" {
+		serviceName = "service"
+	}
+
 	if err = initService(); err != nil {
 		out.Error("Init test failed :(")
 
+		err = fmt.Errorf("error encountered while initializing %s: %v", serviceName, err)
 		handleError(err)
 	}
 
@@ -113,7 +122,7 @@ func test(cmd *parg.Command) (err error) {
 	if err = svc.Close(); err != nil {
 		out.Error("Close test failed :(")
 
-		err = fmt.Errorf("error encountered while closing service: %v", err)
+		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
 		handleError(err)
 	}
 
