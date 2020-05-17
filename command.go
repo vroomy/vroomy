@@ -1,14 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/hatchify/closer"
 	parg "github.com/hatchify/parg"
+	"github.com/vroomy/vroomy/postman"
 )
 
 func commandFromArgs() (cmd *parg.Command, err error) {
@@ -78,20 +77,22 @@ func help(cmd *parg.Command) (err error) {
 }
 
 func doc(cmd *parg.Command) (err error) {
-	out.Notificationf("Documenting postman config...")
+	out.Notificationf("Generating Docs...")
 
-	output := postmanFromConfig()
-	file, _ := json.MarshalIndent(output, "", "  ")
-
-	var filename string
-	filename = cfg.Name
-	if len(filename) >= 0 {
-		filename += " "
+	var p *postman.Postman
+	if p, err = postman.FromConfig(cfg); err != nil {
+		handleError(err)
 	}
 
-	filename += "postman_collection.json"
-	filename = strings.Replace(filename, " ", "_", -1)
-	_ = ioutil.WriteFile(filename, file, 0644)
+	var filename string
+	if len(cfg.Name) > 0 {
+		filename = strings.Replace(cfg.Name, " ", "_", -1)
+	} else {
+		filename = "vroomy"
+	}
+
+	filename += "_postman_collection.json"
+	p.WriteToFile(filename)
 
 	out.Successf("Generated \"%s\" collection successfully!", filename)
 	return
