@@ -18,8 +18,8 @@ github.com/hatchify/closer v0.4.78 h1:mwI0j5kvwEPeZ8AQ35rQfuPGM4VUt/gtjI3ASsqYTi
 github.com/hatchify/closer v0.4.78/go.mod h1:9Wj3IOc9TYssGRiKcMFtK+kZXSuOzP8N7cel9OIhB1M=
 github.com/hatchify/colors v0.4.77 h1:wPtYLLPbsekeamTZzu71rZVsbq8P2ues1YDx7OsKAxU=
 github.com/hatchify/colors v0.4.77/go.mod h1:AG6qII7bJEBO7WL28IACU62PqoavhEqpNFhfE/5Zyfk=
-github.com/hatchify/parg v0.1.23 h1:w6HMDb7DUH/zPKvhIRmoXlUdyDf1NK0IJfO3esUqXFs=
-github.com/hatchify/parg v0.1.23/go.mod h1:gzHauB6/16uJlyoPyT1NSm3LTAPCSJJ+4f/4YqNaPlI=
+github.com/hatchify/parg v0.1.24 h1:bg7rvgXKDwd9QMWDJ0f/F/63tLY1ukRLGMuYgexhuvk=
+github.com/hatchify/parg v0.1.24/go.mod h1:gzHauB6/16uJlyoPyT1NSm3LTAPCSJJ+4f/4YqNaPlI=
 github.com/hatchify/queue v0.4.77 h1:M+Ph2bAtL1iYPN8CWZXd+YP92bBqXnSgDxVQK2br5og=
 github.com/hatchify/queue v0.4.77/go.mod h1:GCpUbFRlSiheEnRN6lQi4KOUtfyXpPKp9IHu2x3Jjcg=
 github.com/hatchify/scribe v0.4.78 h1:35wRjRJxRbj3NBGYg0/sPGpd0HfI8tWucKPFI0upAno=
