@@ -13,19 +13,21 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 	p = parg.New()
 
 	p.AddHandler("", runService, "Runs vroomy server.\n  Accepts flags specified in config.toml.\n  Use `vroomy` or `vroomy -<flag>`")
-	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
+	p.AddHandler("test", test, "Tests the currently built plugins for compatibility.\n  Closes service upon successful execution.\n  Use `vroomy test`")
 
+	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
 	p.AddHandler("version", printVersion, "Prints current version of vroomy installation.\n  Use `vroomy version`")
 	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
 
-	p.AddHandler("test", test, "Tests the currently checked out version of plugin(s).\n  Accepts filtered trailing args to target specific plugins.\n  Use `vpm test` for all plugins, or `vpm test <plugin> <plugin>`")
-
-	p.AddGlobalFlag(parg.Flag{
-		Name:        "initialize",
-		Help:        "Initializes only the specified plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
-		Identifiers: []string{"-init", "-initialize"},
-		Type:        parg.STRINGS,
-	})
+	/*
+		// Not yet implemented
+		p.AddGlobalFlag(parg.Flag{
+			Name:        "initialize",
+			Help:        "Initializes only the specified plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
+			Identifiers: []string{"-init", "-initialize"},
+			Type:        parg.STRINGS,
+		})
+	*/
 
 	addDynamicActions(p)
 
