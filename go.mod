@@ -13,3 +13,9 @@ require (
 // Replace Local Deps
 
 replace github.com/vroomy/service => /Users/lytic/go/src/github.com/vroomy/service
+
+// Replace Local Deps
+
+replace github.com/vroomy/common => /Users/lytic/go/src/github.com/vroomy/common
+
+replace github.com/vroomy/plugins => /Users/lytic/go/src/github.com/vroomy/plugins
