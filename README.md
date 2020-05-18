@@ -82,3 +82,46 @@ Running 20s test @ https://josh.usehatchapp.com
 Requests/sec:   4297.88
 Transfer/sec:    492.22MB
 ```
+
+## Dynamic Commands/Flags
+Commands and flags can be added in config.toml and will automatically print in `vroomy help`
+`handler` represents the plugin.method of a command handler.
+
+```
+Example: 
+[[command]]
+name = "seed"
+usage = "Use `vroomy seed` to execute the seed plugin handler\n  Accepts flag -seedfile <filepath>"
+handler = "seed.Reseed"
+
+[[flag]]
+name = "seedfile"
+defaultValue = "test"
+usage = "Set the seed file (i.e. \"custom.json\" when you want to run a custom seed"
+```
+
+## Default Commands
+These are provided by default and are "reserved" commands. They cannot be used in dynamic configs.
+
+### vroomy
+  :: Runs vroomy server.
+  Accepts flags specified in config.toml.
+  Use `vroomy` or `vroomy -<flag>`
+
+### vroomy test
+  :: Tests the currently built plugins for compatibility.
+  Closes service upon successful execution.
+  Use `vroomy test`
+
+### vroomy help
+  :: Prints available commands and flags.
+  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.
+
+### vroomy version
+  :: Prints current version of vroomy installation.
+  Use `vroomy version`
+
+### vroomy upgrade
+  :: Upgrades vroomy installation.
+  Skips if version is up to date.
+  Use `vroomy upgrade` or `vroomy upgrade branch`

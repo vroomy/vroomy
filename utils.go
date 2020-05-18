@@ -8,9 +8,63 @@ import (
 	"time"
 
 	flag "github.com/hatchify/parg"
+	"github.com/hatchify/scribe"
 	"github.com/vroomy/service"
 )
 
+// Load the action and config environment
+func setupRuntime() (cmd *flag.Command) {
+	// Setup logging
+	outW = scribe.NewStdout()
+	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
+	out = scribe.NewWithWriter(outW, "")
+
+	// Load config location
+	configLocation := os.Getenv("VROOMY_CONFIG")
+	if len(configLocation) == 0 {
+		configLocation = DefaultConfigLocation
+	}
+
+	// Parse config
+	var cfgErr error
+	cfg, cfgErr = service.NewConfig(configLocation)
+
+	// Load command (apply config if available)
+	var err error
+	if cmd, err = commandFromArgs(); err != nil {
+		showHelp(cmd)
+		handleError(err)
+	}
+
+	switch cmd.Action {
+	case "version", "upgrade":
+		if cfg == nil {
+			// Use default cfg for vroomy-based commands
+			cfg = &service.Config{Name: "vroomy"}
+		}
+	default:
+		// Parse flags into config
+		if cfg == nil {
+			if cmd.Action == "help" {
+				// Use global cfg
+				cfg = &service.Config{Name: "vroomy"}
+			} else {
+				// This is a problem
+				handleError(cfgErr)
+			}
+		}
+
+		if err = parseConfigFlagsFrom(cmd); err != nil {
+			showHelp(cmd)
+
+			handleError(err)
+		}
+	}
+
+	return
+}
+
+// Starts server
 func initService() (err error) {
 	if len(cfg.Name) > 0 {
 		out.Notificationf("Starting %s...", cfg.Name)
@@ -26,6 +80,7 @@ func initService() (err error) {
 	return
 }
 
+//
 func listen() {
 	var err error
 	if err = svc.Listen(); err == nil {

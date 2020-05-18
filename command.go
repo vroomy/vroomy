@@ -15,9 +15,9 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 	p.AddHandler("", runService, "Runs vroomy server.\n  Accepts flags specified in config.toml.\n  Use `vroomy` or `vroomy -<flag>`")
 	p.AddHandler("test", test, "Tests the currently built plugins for compatibility.\n  Closes service upon successful execution.\n  Use `vroomy test`")
 
-	p.AddHandler("help", help, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
+	p.AddHandler("help", showHelp, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
 	p.AddHandler("version", printVersion, "Prints current version of vroomy installation.\n  Use `vroomy version`")
-	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
+	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation itself.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
 
 	/*
 		// Not yet implemented
@@ -37,12 +37,12 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 
 func addDynamicActions(p *parg.Parg) (err error) {
 	if cfg == nil {
-		// No actions to add
+		// No dynamic commands or flags
 		return
 	}
 
 	if cfg.CommandEntries != nil {
-		// Handle config commands/flags
+		// Handle config commands
 		for _, c := range cfg.CommandEntries {
 			if _, ok := p.GetAllowedCommands()[c.Name]; ok {
 				err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
@@ -54,6 +54,7 @@ func addDynamicActions(p *parg.Parg) (err error) {
 	}
 
 	if cfg.FlagEntries != nil {
+		// Handle config flags
 		for _, f := range cfg.FlagEntries {
 			usage := f.Usage
 			if len(f.DefaultValue) != 0 {
@@ -109,7 +110,7 @@ func runService(cmd *parg.Command) (err error) {
 	return
 }
 
-func help(cmd *parg.Command) (err error) {
+func showHelp(cmd *parg.Command) (err error) {
 	var serviceName string
 	if cfg != nil {
 		serviceName = cfg.Name
