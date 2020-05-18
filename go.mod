@@ -9,3 +9,7 @@ require (
 	github.com/hatchify/scribe v0.4.78
 	github.com/vroomy/service v0.0.5
 )
+
+// Replace Local Deps
+
+replace github.com/vroomy/service => /Users/lytic/go/src/github.com/vroomy/service
