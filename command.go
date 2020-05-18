@@ -19,15 +19,12 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 	p.AddHandler("version", printVersion, "Prints current version of vroomy installation.\n  Use `vroomy version`")
 	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation itself.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
 
-	/*
-		// Not yet implemented
-		p.AddGlobalFlag(parg.Flag{
-			Name:        "initialize",
-			Help:        "Initializes only the specified plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
-			Identifiers: []string{"-init", "-initialize"},
-			Type:        parg.STRINGS,
-		})
-	*/
+	p.AddGlobalFlag(parg.Flag{
+		Name:        "initialize",
+		Help:        "Initializes only the specified plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
+		Identifiers: []string{"-init", "-initialize"},
+		Type:        parg.STRINGS,
+	})
 
 	addDynamicActions(p)
 

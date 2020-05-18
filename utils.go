@@ -119,6 +119,18 @@ func handleError(err error) {
 func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 	cfg.Flags = map[string]string{}
 
+	// Set requires first, override if provided elsewhere
+	for _, c := range cfg.CommandEntries {
+		if c.Name == cmd.Action {
+			// We're running this command
+			if len(c.Require) != 0 {
+				cfg.Flags["initialize"] = c.Require
+			}
+
+			break
+		}
+	}
+
 	// Add default values
 	cmdFlags := cmd.Flags
 	for _, entry := range cfg.FlagEntries {
