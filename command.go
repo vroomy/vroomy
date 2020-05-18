@@ -20,9 +20,9 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation itself.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
 
 	p.AddGlobalFlag(parg.Flag{
-		Name:        "initialize",
-		Help:        "Initializes only the specified plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
-		Identifiers: []string{"-init", "-initialize"},
+		Name:        "require",
+		Help:        "Initializes only the specified \"required\" plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
+		Identifiers: []string{"-require", "-r"},
 		Type:        parg.STRINGS,
 	})
 

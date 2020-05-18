@@ -124,7 +124,7 @@ func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 		if c.Name == cmd.Action {
 			// We're running this command
 			if len(c.Require) != 0 {
-				cfg.Flags["initialize"] = c.Require
+				cfg.Flags["require"] = c.Require
 			}
 
 			break
