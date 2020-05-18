@@ -80,7 +80,7 @@ func upgrade(cmd *flag.Command) (err error) {
 				if hasChanges {
 					out.Notification("There appears to be local changes...")
 				} else {
-					out.Notification("Version is up to date!")
+					out.Successf("%s is up to date!", version)
 					return
 				}
 			} else {
@@ -158,7 +158,7 @@ func upgrade(cmd *flag.Command) (err error) {
 
 	if currentVersion == version && tagCommit == headCommit {
 		if !hasChanges {
-			out.Success("Version is up to date!")
+			out.Successf("%s is up to date!", version)
 
 			if len(originalBranch) > 0 {
 				lib.File.CheckoutBranch(originalBranch)
