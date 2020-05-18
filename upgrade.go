@@ -95,7 +95,11 @@ func upgrade(cmd *flag.Command) (err error) {
 		msg = "latest"
 	}
 
-	out.Notification("Upgrading Installation from " + currentVersion + " to " + version + "...")
+	if hasChanges {
+		msg += " with local changes"
+	}
+
+	out.Notification("Upgrading Installation from " + currentVersion + " to " + msg + "...")
 
 	if len(version) > 0 {
 		out.Notification("Setting local vroomy repo to: " + version + "...")
@@ -186,13 +190,13 @@ func upgrade(cmd *flag.Command) (err error) {
 		lib.File.RunCmd("sudo", "chown", "-R", usr.Name, path.Join(usr.HomeDir, "go", "pkg"))
 	}
 
-	out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n`./vroomy/bin/codesign <signing identity> ~/go/bin/vroomy` (mac)\n`./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
+	out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n  `./vroomy/bin/codesign \"signing identity\" ~/go/bin/vroomy` (mac)\n  `./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
 
 	if len(originalBranch) > 0 {
 		lib.File.CheckoutBranch(originalBranch)
 	}
 
-	out.Success("Installed Successfully!")
+	out.Successf("Installed vroomy %s successfully!", version)
 
 	return
 }
