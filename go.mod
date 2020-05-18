@@ -9,4 +9,3 @@ require (
 	github.com/hatchify/scribe v0.4.78
 	github.com/vroomy/service v0.0.6
 )
-
