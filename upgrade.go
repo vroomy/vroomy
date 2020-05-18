@@ -190,7 +190,7 @@ func upgrade(cmd *flag.Command) (err error) {
 		lib.File.RunCmd("sudo", "chown", "-R", usr.Name, path.Join(usr.HomeDir, "go", "pkg"))
 	}
 
-	out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n  `./vroomy/bin/codesign \"signing identity\" ~/go/bin/vroomy` (mac)\n  `./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
+	out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n  `./vroomy/bin/codesign \"signing identity\" ~/go/bin/vroomy` (macosx - read CODESIGN.md for more info)\n  `./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
 
 	if len(originalBranch) > 0 {
 		lib.File.CheckoutBranch(originalBranch)
