@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo codesign -f -s $1 $2

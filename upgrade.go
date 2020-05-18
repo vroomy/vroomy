@@ -49,7 +49,7 @@ func upgrade(cmd *flag.Command) (err error) {
 		version = cmd.StringFrom("-branch")
 	}
 
-	lib.File.Output("Checking Installation...")
+	out.Notification("Checking vroomy installation...")
 	currentVersion, _ = lib.File.CmdOutput("vroomy", "version")
 	originalBranch, _ = lib.File.CurrentBranch()
 	hasChanges = lib.File.HasChanges()
@@ -62,7 +62,7 @@ func upgrade(cmd *flag.Command) (err error) {
 		if len(currentVersion) > 0 && currentVersion == version {
 			if output, err = lib.File.CmdOutput("git", "rev-list", "-n", "1", version); err != nil {
 				// No tag set. skip tag
-				lib.File.Output("No revision history. Skipping tag.")
+				out.Notification("No revision history. Skipping tag.")
 				return
 			}
 
@@ -70,7 +70,7 @@ func upgrade(cmd *flag.Command) (err error) {
 
 			if output, err = lib.File.CmdOutput("git", "rev-parse", "HEAD"); err != nil {
 				// No tag set. skip tag
-				lib.File.Output("No revision head. Skipping tag.")
+				out.Notification("No revision head. Skipping tag.")
 				return
 			}
 
@@ -78,13 +78,13 @@ func upgrade(cmd *flag.Command) (err error) {
 
 			if tagCommit == headCommit {
 				if hasChanges {
-					lib.File.Output("There appears to be local changes...")
+					out.Notification("There appears to be local changes...")
 				} else {
-					lib.File.Output("Version is up to date!")
+					out.Notification("Version is up to date!")
 					return
 				}
 			} else {
-				lib.File.Output("There appears to be an untagged commit...")
+				out.Notification("There appears to be an untagged commit...")
 			}
 		}
 	}
@@ -95,23 +95,23 @@ func upgrade(cmd *flag.Command) (err error) {
 		msg = "latest"
 	}
 
-	lib.File.Output("Upgrading Installation from " + currentVersion + " to " + version + "...")
+	out.Notification("Upgrading Installation from " + currentVersion + " to " + version + "...")
 
 	if len(version) > 0 {
-		lib.File.Output("Setting local vroomy repo to: " + version + "...")
+		out.Notification("Setting local vroomy repo to: " + version + "...")
 
 		if err = lib.File.CheckoutBranch(version); err != nil {
-			lib.File.Output("Failed to checkout " + version + " :(")
+			out.Notification("Failed to checkout " + version + " :(")
 			return
 		}
 
 		lib.File.Pull()
 
 	} else {
-		lib.File.Output("Updating source...")
+		out.Notification("Updating source...")
 
 		if lib.File.Pull() != nil {
-			lib.File.Output("Failed to update source :(")
+			out.Notification("Failed to update source :(")
 		}
 	}
 
@@ -124,7 +124,7 @@ func upgrade(cmd *flag.Command) (err error) {
 
 			if err != nil {
 				// No tag set. skip tag
-				lib.File.Output("No revision history. Skipping tag.")
+				out.Notification("No revision history. Skipping tag.")
 
 				if len(originalBranch) > 0 {
 					lib.File.CheckoutBranch(originalBranch)
@@ -139,7 +139,7 @@ func upgrade(cmd *flag.Command) (err error) {
 			output, err = lib.File.CmdOutput("git", "rev-parse", "HEAD")
 
 			if err != nil {
-				lib.File.Output("No revision head. Cannot checkout version.")
+				out.Error("No revision head. Cannot checkout version.")
 
 				if len(originalBranch) > 0 {
 					lib.File.CheckoutBranch(originalBranch)
@@ -158,7 +158,7 @@ func upgrade(cmd *flag.Command) (err error) {
 
 	if currentVersion == version && tagCommit == headCommit {
 		if !hasChanges {
-			lib.File.Output("Version is up to date!")
+			out.Success("Version is up to date!")
 
 			if len(originalBranch) > 0 {
 				lib.File.CheckoutBranch(originalBranch)
@@ -168,13 +168,13 @@ func upgrade(cmd *flag.Command) (err error) {
 		}
 	}
 
-	lib.File.Output("Installing " + version + "...")
+	out.Notification("Installing " + version + "...")
 
 	if err = lib.File.RunCmd("./bin/install", version); err != nil {
 		// Try again with permissions
 		err = nil
 		if err = lib.File.RunCmd("sudo", "./bin/install", version); err != nil {
-			lib.File.Output("Failed to install :(")
+			out.Notification("Failed to install :(")
 
 			if len(originalBranch) > 0 {
 				lib.File.CheckoutBranch(originalBranch)
@@ -186,11 +186,13 @@ func upgrade(cmd *flag.Command) (err error) {
 		lib.File.RunCmd("sudo", "chown", "-R", usr.Name, path.Join(usr.HomeDir, "go", "pkg"))
 	}
 
-	lib.File.Output("Installed Successfully!")
+	out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n`./vroomy/bin/codesign <signing identity> ~/go/bin/vroomy` (mac)\n`./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
 
 	if len(originalBranch) > 0 {
 		lib.File.CheckoutBranch(originalBranch)
 	}
+
+	out.Success("Installed Successfully!")
 
 	return
 }
