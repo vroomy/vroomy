@@ -206,6 +206,7 @@ func upgrade(cmd *flag.Command) (err error) {
 		}
 	} else if lib.File.RunCmd("which", "codesign") == nil {
 		if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin", "codesign"), "vroomySigner", path.Join(homeDir, "go", "bin", "vroomy")); err == nil {
+			setcap = true
 		} else if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin", "codesign"), "Development", path.Join(homeDir, "go", "bin", "vroomy")); err == nil {
 			setcap = true
 		} else {
