@@ -204,8 +204,8 @@ func upgrade(cmd *flag.Command) (err error) {
 			setcap = true
 		}
 	} else if lib.File.RunCmd("which", "codesign") == nil {
-		if err = lib.File.RunCmd("sudo", "./bin/codesign", "vroomySigner", "~/go/bin/vroomy"); err == nil {
-		} else if err = lib.File.RunCmd("sudo", "./bin/codesign", "Development", "~/go/bin/vroomy"); err == nil {
+		if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin", "codesign"), "vroomySigner", path.Join(homeDir, "go", "bin", "vroomy")); err == nil {
+		} else if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin", "codesign"), "Development", path.Join(homeDir, "go", "bin", "vroomy")); err == nil {
 			setcap = true
 		} else {
 			out.Warningf("Unable to codesign vroomy: %v", err)
