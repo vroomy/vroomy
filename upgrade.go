@@ -37,6 +37,7 @@ func upgrade(cmd *flag.Command) (err error) {
 	}
 
 	lib := gomu.LibraryFromPath(path.Join(usr.HomeDir, "go", "src", "github.com", "vroomy", "vroomy"))
+	lib.File.Fetch()
 
 	if len(cmd.Arguments) > 0 {
 		// Set version from args
@@ -183,7 +184,7 @@ func upgrade(cmd *flag.Command) (err error) {
 			if len(originalBranch) > 0 {
 				lib.File.CheckoutBranch(originalBranch)
 			}
-			return err
+			return
 		}
 
 		// Fix pkg permission issues
@@ -193,23 +194,29 @@ func upgrade(cmd *flag.Command) (err error) {
 	var setcap = false
 	if lib.File.RunCmd("which", "setcap") == nil {
 		// We can setcap! Let's move to /usr/local/bin and run setcap
-		if lib.File.RunCmd("sudo", "mv", "~/go/bin/vroomy", "/usr/local/bin") == nil {
-			if lib.File.RunCmd("sudo", "./bin/setcap", "/usr/local/bin/vroomy") == nil {
-				setcap = true
-			}
+		if err = lib.File.RunCmd("sudo", "mv", "~/go/bin/vroomy", "/usr/local/bin/"); err != nil {
+			out.Warningf("Unable to move vroomy to /usr/local/bin: %v", err)
+		} else if err = lib.File.RunCmd("sudo", "./bin/setcap", "/usr/local/bin/vroomy"); err != nil {
+			out.Warningf("Unable to set cap on vroomy: %v", err)
+			out.Notification("Note - you can grant vroomy permission to bind on reserved ports using setcap on linux:\n  `./vroomy/bin/setcap /usr/local/bin/vroomy` (linux)")
+		} else {
+			setcap = true
 		}
 	} else if lib.File.RunCmd("which", "codesign") == nil {
-		if lib.File.RunCmd("sudo", "./bin/codesign", "vroomySigner", "~/go/bin/vroomy") == nil {
+		if err = lib.File.RunCmd("sudo", "./bin/codesign", "vroomySigner", "~/go/bin/vroomy"); err == nil {
+		} else if err = lib.File.RunCmd("sudo", "./bin/codesign", "Development", "~/go/bin/vroomy"); err == nil {
 			setcap = true
-		} else if lib.File.RunCmd("sudo", "./bin/codesign", "Development", "~/go/bin/vroomy") == nil {
-			setcap = true
+		} else {
+			out.Warningf("Unable to codesign vroomy: %v", err)
+			out.Notification("Note - you can grant vroomy permission to bind on reserved with codesign:\n  `./vroomy/bin/codesign \"signing identity\" ~/go/bin/vroomy` (macosx - read CODESIGN.md for more info)")
 		}
+
+	} else {
+		out.Notification("No codesigning or set cap available to grant permission for port binding.")
 	}
 
 	if setcap {
 		out.Notification("Granted permission for port binding.")
-	} else {
-		out.Notification("Note - you can grant vroomy permission to bind on reserved ports:\n  `./vroomy/bin/codesign \"signing identity\" ~/go/bin/vroomy` (macosx - read CODESIGN.md for more info)\n  `./vroomy/bin/setcap ~/go/bin/vroomy` (linux)")
 	}
 
 	if len(originalBranch) > 0 {
@@ -217,6 +224,6 @@ func upgrade(cmd *flag.Command) (err error) {
 	}
 
 	out.Successf("Installed vroomy %s successfully!", version)
-
+	err = nil
 	return
 }
