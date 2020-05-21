@@ -17,11 +17,11 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 
 	p.AddHandler("help", showHelp, "Prints available commands and flags.\n  Use `vroomy help <command>` or `vroomy help <-flag>` to get more specific info.")
 	p.AddHandler("version", printVersion, "Prints current version of vroomy installation.\n  Use `vroomy version`")
-	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation itself.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade branch`")
+	p.AddHandler("upgrade", upgrade, "Upgrades vroomy installation itself.\n  Skips if version is up to date.\n  Use `vroomy upgrade` or `vroomy upgrade <branch>`")
 
 	p.AddGlobalFlag(parg.Flag{
 		Name:        "require",
-		Help:        "Initializes only the specified \"required\" plugins.\n  Allows optimized custom commands.\n  Use `vroomy -init <plugin> <plugin>`",
+		Help:        "Initializes only the specified \"required\" plugins.\n  Allows optimized custom commands.\n  Use `vroomy -r <plugin> <plugin>`",
 		Identifiers: []string{"-require", "-r"},
 		Type:        parg.STRINGS,
 	})

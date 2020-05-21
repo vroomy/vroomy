@@ -101,7 +101,9 @@ usage = "Set the seed file (i.e. \"custom.json\" when you want to run a custom s
 ```
 
 ## Default Commands
+
 These are provided by default and are "reserved" commands. They cannot be used in dynamic configs.
+:: vroomy :: Usage ::
 
 ### vroomy
   :: Runs vroomy server.
@@ -110,7 +112,7 @@ These are provided by default and are "reserved" commands. They cannot be used i
 
 ### vroomy test
   :: Tests the currently built plugins for compatibility.
-  Closes service upon successful execution.
+  Closes service upon successful execution. Avoids port binding.
   Use `vroomy test`
 
 ### vroomy help
@@ -122,6 +124,13 @@ These are provided by default and are "reserved" commands. They cannot be used i
   Use `vroomy version`
 
 ### vroomy upgrade
-  :: Upgrades vroomy installation.
+  :: Upgrades vroomy installation itself.
   Skips if version is up to date.
-  Use `vroomy upgrade` or `vroomy upgrade branch`
+  Use `vroomy upgrade` or `vroomy upgrade <branch>`
+
+## Flags
+
+### [-require -r]
+  :: Initializes only the specified "required" plugins.
+  Allows optimized custom commands.
+  Use `vroomy test -r <plugin> <plugin>`
