@@ -7,5 +7,5 @@ require (
 	github.com/hatchify/mod-utils v0.5.54
 	github.com/hatchify/parg v0.1.26
 	github.com/hatchify/scribe v0.4.78
-	github.com/vroomy/service v0.0.6
+	github.com/vroomy/service v0.0.7
 )
