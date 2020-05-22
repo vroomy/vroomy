@@ -1,11 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/hatchify/closer"
-	flag "github.com/hatchify/parg"
 	"github.com/hatchify/scribe"
 	"github.com/vroomy/service"
 )
@@ -19,33 +15,16 @@ var (
 
 	clsr *closer.Closer
 
-	out *scribe.Scribe
+	out  *scribe.Scribe
+	outW *scribe.Stdout
 )
 
 func main() {
-	outW := scribe.NewStdout()
-	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
-	out = scribe.NewWithWriter(outW, "")
-	out.Notification("Hello there! :: One moment, please... ::")
+	// Get runtime commmand
+	cmd := setupRuntime()
 
-	configLocation := os.Getenv("VROOMY_CONFIG")
-	if len(configLocation) == 0 {
-		configLocation = DefaultConfigLocation
-	}
-
-	var err error
-	if cfg, err = service.NewConfig(configLocation); err != nil {
-		err = fmt.Errorf("error encountered while reading configuration: %v", err)
-		return
-	}
-
-	var cmd *flag.Command
-	if cmd, err = commandFromArgs(); err != nil {
-		help(cmd)
-		handleError(err)
-	}
-
-	if err = cmd.Exec(); err != nil {
+	// Run specified action
+	if err := cmd.Exec(); err != nil {
 		handleError(err)
 	}
 }
