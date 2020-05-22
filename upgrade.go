@@ -194,11 +194,11 @@ func upgrade(cmd *flag.Command) (err error) {
 	var setcap = false
 	var homeDir = usr.HomeDir
 	if lib.File.RunCmd("which", "setcap") == nil {
-		// We can setcap! Let's move to /usr/local/bin and run setcap
-		out.Notification("Moving vroomy to /usr/local/bin for SELinux compatibility (ensure /usr/local/bin is in your PATH!)")
-		if err = lib.File.RunCmd("sudo", "mv", path.Join(homeDir, "go", "bin", "vroomy"), "/usr/local/bin/vroomy"); err != nil {
+		// We can setcap! Let's move to /usr/bin and run setcap
+		out.Notification("Moving vroomy to /usr/bin for SELinux compatibility (ensure /usr/bin is in your PATH!)")
+		if err = lib.File.RunCmd("sudo", "mv", path.Join(homeDir, "go", "bin", "vroomy"), "/usr/bin/vroomy"); err != nil {
 			out.Warningf("Unable to move vroomy to /usr/local/bin: %v", err)
-		} else if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin/setcap"), "/usr/local/bin/vroomy"); err != nil {
+		} else if err = lib.File.RunCmd("sudo", path.Join(lib.File.AbsPath(), "bin/setcap"), "/usr/bin/vroomy"); err != nil {
 			out.Warningf("Unable to set cap on vroomy: %v", err)
 			out.Notification("Note - you can grant vroomy permission to bind on reserved ports using setcap on linux:\n  `./vroomy/bin/setcap /usr/local/bin/vroomy` (linux)")
 		} else {
