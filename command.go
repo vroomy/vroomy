@@ -40,13 +40,15 @@ func addDynamicActions(p *parg.Parg) (err error) {
 
 	if cfg.CommandEntries != nil {
 		// Handle config commands
+		var dynamic *dynamicHandler
 		for _, c := range cfg.CommandEntries {
 			if _, ok := p.GetAllowedCommands()[c.Name]; ok {
 				err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
 				return
 			}
 
-			p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
+			dynamic = &dynamicHandler{prehook: c.Prehook, handler: c.Handler, posthook: c.Posthook}
+			p.AddHandler(c.Name, dynamic.handle, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
 		}
 	}
 
