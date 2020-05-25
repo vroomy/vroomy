@@ -172,7 +172,7 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 		grp = match.G
 	}
 
-	group.G = grp.Group(group.HTTPPath, group.HttpHandlers...)
+	group.G = grp.Group(group.HTTPPath, group.HTTPHandlers...)
 	return
 }
 
@@ -231,7 +231,7 @@ func (s *Service) initRoutes() (err error) {
 			fn = grp.GET
 		}
 
-		fn(r.HTTPPath, r.HttpHandlers...)
+		fn(r.HTTPPath, r.HTTPHandlers...)
 	}
 
 	return
