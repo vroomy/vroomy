@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	parg "github.com/hatchify/parg"
-	"github.com/vroomy/service"
+	"github.com/vroomy/config"
 )
 
 type dynamicHandler struct {
@@ -13,13 +13,8 @@ type dynamicHandler struct {
 }
 
 func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
-	var serviceName = cfg.Name
-	if serviceName == "" {
-		serviceName = "service"
-	}
-
 	if err = initService(); err != nil {
-		err = fmt.Errorf("error encountered while initializing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while initializing %s: %v", cfg.Name, err)
 		handleError(err)
 	}
 
@@ -50,7 +45,7 @@ func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
 		handlerErr = fn(cfg.Flags, cfg.Environment)
 	case func(env map[string]string) error:
 		handlerErr = fn(cfg.Environment)
-	case func(cfg *service.Config) error:
+	case func(cfg *config.Config) error:
 		handlerErr = fn(cfg)
 	case func() error:
 		handlerErr = fn()
@@ -65,7 +60,7 @@ func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
 	out.Notification("Closing...")
 
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while closing %s: %v", cfg.Name, err)
 		return
 	}
 

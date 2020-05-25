@@ -9,7 +9,7 @@ import (
 
 	flag "github.com/hatchify/parg"
 	"github.com/hatchify/scribe"
-	"github.com/vroomy/service"
+	"github.com/vroomy/config"
 )
 
 // Load the action and config environment
@@ -27,7 +27,7 @@ func setupRuntime() (cmd *flag.Command) {
 
 	// Parse config
 	var cfgErr error
-	cfg, cfgErr = service.NewConfig(configLocation)
+	cfg, cfgErr = config.NewConfig(configLocation)
 
 	// Load command (apply config if available)
 	var err error
@@ -36,24 +36,24 @@ func setupRuntime() (cmd *flag.Command) {
 		handleError(err)
 	}
 
+	if cfg == nil {
+		// Use default cfg for vroomy-based commands
+		cfg = &config.Config{}
+	}
+
+	if cfg.Name == "" {
+		cfg.Name = "vroomy service"
+	}
+
 	switch cmd.Action {
 	case "version", "upgrade":
-		if cfg == nil {
-			// Use default cfg for vroomy-based commands
-			cfg = &service.Config{Name: "vroomy"}
-		}
 	default:
-		// Parse flags into config
-		if cfg == nil {
-			if cmd.Action == "help" {
-				// Use global cfg
-				cfg = &service.Config{Name: "vroomy"}
-			} else {
-				// This is a problem
-				handleError(cfgErr)
-			}
+		// We can ignore config errors if we're asking for help
+		if cfgErr != nil && cmd.Action != "help" {
+			handleError(cfgErr)
 		}
 
+		// Parse flags into config
 		if err = parseConfigFlagsFrom(cmd); err != nil {
 			showHelp(cmd)
 
@@ -66,13 +66,9 @@ func setupRuntime() (cmd *flag.Command) {
 
 // Starts server
 func initService() (err error) {
-	if len(cfg.Name) > 0 {
-		out.Notificationf("Starting %s...", cfg.Name)
-	} else {
-		out.Notification("Starting vroomy service...")
-	}
+	out.Notificationf("Starting %s...", cfg.Name)
 
-	if svc, err = service.New(cfg); err != nil {
+	if svc, err = New(cfg, "data"); err != nil {
 		err = fmt.Errorf("error encountered while initializing service: %v", err)
 		return
 	}
@@ -175,4 +171,20 @@ func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 	}
 
 	return
+}
+
+func initDir(loc string) (err error) {
+	if err = os.Mkdir(loc, 0744); err == nil {
+		return
+	}
+
+	if os.IsExist(err) {
+		return nil
+	}
+
+	return
+}
+
+type listener interface {
+	Listen(port uint16) error
 }

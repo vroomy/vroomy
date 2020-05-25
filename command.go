@@ -76,12 +76,7 @@ func addDynamicActions(p *parg.Parg) (err error) {
 }
 
 func runService(cmd *parg.Command) (err error) {
-	var serviceName = cfg.Name
-	if serviceName == "" {
-		serviceName = "service"
-	}
-
-	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", serviceName)
+	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
 
 	if err = initService(); err != nil {
 		handleError(err)
@@ -98,11 +93,11 @@ func runService(cmd *parg.Command) (err error) {
 
 	out.Notification("Close request received. One moment please...")
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while closing %s: %v", cfg.Name, err)
 		handleError(err)
 	}
 
-	out.Successf("Successfully closed %s!", serviceName)
+	out.Successf("Successfully closed %s!", cfg.Name)
 	os.Exit(0)
 	return
 }

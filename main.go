@@ -3,15 +3,15 @@ package main
 import (
 	"github.com/hatchify/closer"
 	"github.com/hatchify/scribe"
-	"github.com/vroomy/service"
+	"github.com/vroomy/config"
 )
 
 // DefaultConfigLocation is the default configuration location
 const DefaultConfigLocation = "./config.toml"
 
 var (
-	svc *service.Service
-	cfg *service.Config
+	svc *Service
+	cfg *config.Config
 
 	clsr *closer.Closer
 
