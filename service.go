@@ -67,6 +67,12 @@ func New(cfg *config.Config, dataDir string) (sp *Service, err error) {
 		return
 	}
 
+	// TODO: Move this to docs/testing only?
+	if err = s.initRouteExamples(); err != nil {
+		err = fmt.Errorf("error initializing routes: %v", err)
+		return
+	}
+
 	sp = &s
 	return
 }
@@ -232,6 +238,66 @@ func (s *Service) initRoutes() (err error) {
 		}
 
 		fn(r.HTTPPath, r.HTTPHandlers...)
+	}
+
+	return
+}
+
+func (s *Service) initRouteExamples() (err error) {
+	s.cfg.ExampleResponses = make(map[string]*config.Response)
+	var needsParentRes = []*config.Response{}
+	for _, res := range s.cfg.Responses {
+		s.cfg.ExampleResponses[res.Name] = res
+		if len(strings.TrimSpace(res.Parent)) > 0 {
+			needsParentRes = append(needsParentRes, res)
+		}
+	}
+
+	for _, res := range needsParentRes {
+		if _, ok := s.cfg.ExampleResponses[res.Parent]; ok {
+			res.InheritFrom(s.cfg.ExampleResponses)
+		} else {
+			out.Warningf("Unable to find parent (%s) for response: %s", res.Parent, res.Name)
+		}
+	}
+
+	s.cfg.ExampleRequests = make(map[string]*config.Request)
+	var needsParentReq = []*config.Request{}
+	for _, req := range s.cfg.Requests {
+		s.cfg.ExampleRequests[req.Name] = req
+
+		if len(req.Group) > 0 {
+			var g *config.Group
+			if g, err = s.cfg.GetGroup(req.Group); err != nil {
+				out.Warningf("Unable to find group (%s) for request: ", req.Name)
+			}
+
+			if g.Requests == nil {
+				g.Requests = make(map[string]*config.Request)
+			}
+
+			g.Requests[req.Name] = req
+		}
+
+		if len(strings.TrimSpace(req.Parent)) > 0 {
+			needsParentReq = append(needsParentReq, req)
+		}
+
+		for _, resName := range req.Responses {
+			if res, ok := s.cfg.ExampleResponses[resName]; ok {
+				req.ResponseExamples = append(req.ResponseExamples, res)
+			} else {
+				out.Warningf("Unable to find response (%s) for request: %s", resName, req.Name)
+			}
+		}
+	}
+
+	for _, req := range needsParentReq {
+		if _, ok := s.cfg.ExampleRequests[req.Parent]; ok {
+			req.InheritFrom(s.cfg.ExampleRequests)
+		} else {
+			out.Warningf("Unable to find parent (%s) for request: %s", req.Parent, req.Name)
+		}
 	}
 
 	return
