@@ -16,7 +16,7 @@ type dynamicHandler struct {
 	posthook string
 }
 
-func (dh *dynamicHandler) run(cmd string) (err error) {
+func (dh *dynamicHandler) runHook(cmd string) (err error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return
@@ -40,12 +40,12 @@ func (dh *dynamicHandler) run(cmd string) (err error) {
 
 func (dh *dynamicHandler) runPrehook() (err error) {
 	out.Notificationf("Running prehook: %s", dh.prehook)
-	return dh.run(dh.prehook)
+	return dh.runHook(dh.prehook)
 }
 
 func (dh *dynamicHandler) runPosthook() (err error) {
 	out.Notificationf("Running posthook: %s", dh.posthook)
-	return dh.run(dh.posthook)
+	return dh.runHook(dh.posthook)
 }
 
 func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
@@ -113,7 +113,7 @@ func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 		return handlerErr
 	}
 
-	if len(dh.prehook) > 0 {
+	if len(dh.posthook) > 0 {
 		if err = dh.runPosthook(); err != nil {
 			err = fmt.Errorf("error: could not run posthoook `%s` for cmd %s: %+v", dh.posthook, cmd.Action, err)
 			return
