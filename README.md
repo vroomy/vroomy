@@ -8,15 +8,24 @@ Installing by compilation is very straight forward. The following dependencies a
 - Go
 - GCC
 
-### Method 1 - Download and install
+### Method 1 - Fresh Install
+If you need to install vroomy:
 ```bash
-curl -s https://raw.githubusercontent.com/vroomy/vroomy/master/install | bash -s
+go get github.com/vroomy/vpm
+go get github.com/vroomy/vroomy
+
+cd ~/go/src/github.com/vroomy/vroomy
+go install -trimpath
+
+cd ~/go/src/github.com/vroomy/vpm
+go install -trimpath
 ```
 
-### Method 2 - Bash script
+### Method 2 - Self Upgrade
+If you already have vroomy installed:
 ```bash
-#!/bin/bash
-go get -u github.com/vroomy/vpm && go get -u github.com/vroomy/vroomy;
+vroomy upgrade && vpm upgrade
+
 ```
 
 ## Usage
