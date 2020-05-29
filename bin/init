@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd ~/
+
+go get github.com/vroomy/vpm
+go get github.com/vroomy/vroomy
+
+cd ~/go/src/github.com/vroomy/vroomy
+go install -trimpath
+
+cd ~/go/src/github.com/vroomy/vpm
+go install -trimpath
