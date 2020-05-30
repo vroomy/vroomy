@@ -36,6 +36,12 @@ func setupRuntime() (cmd *flag.Command) {
 		handleError(err)
 	}
 
+	if customCfg := cmd.StringFrom("config"); customCfg != "" {
+		fmt.Println("CustomConfig: " + customCfg)
+		configLocation = customCfg
+		cfg, cfgErr = service.NewConfig(configLocation)
+	}
+
 	switch cmd.Action {
 	case "version", "upgrade":
 		if cfg == nil {

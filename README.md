@@ -8,17 +8,16 @@ Installing by compilation is very straight forward. The following dependencies a
 - Go
 - GCC
 
-### Method 1 - Fresh Install
-If you need to install vroomy use this method! (NOTE: this will not assign version numbers)
+### Fresh Install
+If you need to install vroomy use this method! (This installs vroomy, vpm, and all of their dependencies)
 ```bash
 curl -s https://raw.githubusercontent.com/vroomy/vroomy/master/bin/init | bash -s
 ```
 
-### Method 2 - Self Upgrade
+### Self Upgrade
 If you already have vroomy installed, it can upgrade itself! (NOTE: this will attempt to self-sign vroomy on osx and support setcap for selinux. For more info, check the directions during install process)
 ```bash
 vroomy upgrade && vpm upgrade
-
 ```
 
 ## Usage
@@ -136,3 +135,7 @@ These are provided by default and are "reserved" commands. They cannot be used i
   :: Initializes only the specified "required" plugins.
   Allows optimized custom commands.
   Use `vroomy test -r <plugin> <plugin>`
+
+### [-config]
+  :: Initializes vroomy with specified config file.
+  Use `vroomy -config "config.example.toml"`
