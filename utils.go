@@ -36,13 +36,10 @@ func setupRuntime() (cmd *flag.Command) {
 		handleError(err)
 	}
 
-	if cfg == nil {
-		// Use default cfg for vroomy-based commands
-		cfg = &config.Config{}
-	}
-
-	if cfg.Name == "" {
-		cfg.Name = "vroomy service"
+	if customCfg := cmd.StringFrom("config"); customCfg != "" {
+		fmt.Println("CustomConfig: " + customCfg)
+		configLocation = customCfg
+		cfg, cfgErr = config.NewConfig(configLocation)
 	}
 
 	switch cmd.Action {

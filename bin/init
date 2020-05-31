@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cd ~/
+
+go get github.com/vroomy/git-tagger
+
+go get github.com/vroomy/vroomy
+vroomy upgrade
+
+go get github.com/vroomy/vpm
+vpm upgrade
