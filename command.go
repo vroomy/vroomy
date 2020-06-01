@@ -46,13 +46,15 @@ func addDynamicActions(p *parg.Parg) (err error) {
 
 	if cfg.CommandEntries != nil {
 		// Handle config commands
+		var dynamic *dynamicHandler
 		for _, c := range cfg.CommandEntries {
 			if _, ok := p.GetAllowedCommands()[c.Name]; ok {
 				err = fmt.Errorf("error: duplicate command with name: %s", c.Name)
 				return
 			}
 
-			p.AddHandler(c.Name, dynamicHandler{handler: c.Handler}.handleDynamicCmd, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
+			dynamic = &dynamicHandler{prehook: c.Prehook, handler: c.Handler, posthook: c.Posthook}
+			p.AddHandler(c.Name, dynamic.handle, c.Usage+"\n  (Dynamically handled by "+c.Handler+")")
 		}
 	}
 
@@ -82,12 +84,7 @@ func addDynamicActions(p *parg.Parg) (err error) {
 }
 
 func runService(cmd *parg.Command) (err error) {
-	var serviceName = cfg.Name
-	if serviceName == "" {
-		serviceName = "service"
-	}
-
-	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", serviceName)
+	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
 
 	if err = initService(); err != nil {
 		handleError(err)
@@ -104,11 +101,11 @@ func runService(cmd *parg.Command) (err error) {
 
 	out.Notification("Close request received. One moment please...")
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while closing %s: %v", cfg.Name, err)
 		handleError(err)
 	}
 
-	out.Successf("Successfully closed %s!", serviceName)
+	out.Successf("Successfully closed %s!", cfg.Name)
 	os.Exit(0)
 	return
 }

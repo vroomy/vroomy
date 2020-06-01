@@ -2,24 +2,62 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 
 	parg "github.com/hatchify/parg"
-	"github.com/vroomy/service"
+	"github.com/vroomy/config"
 )
 
 type dynamicHandler struct {
-	handler string
+	prehook  string
+	handler  string
+	posthook string
 }
 
-func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
-	var serviceName = cfg.Name
-	if serviceName == "" {
-		serviceName = "service"
+func (dh *dynamicHandler) runHook(cmd string) (err error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return
+	}
+
+	comps := strings.Split(cmd, " ")
+	var args []string
+	if len(comps) > 1 {
+		args = comps[1:]
+	}
+
+	hook := exec.Command(comps[0], args...)
+	hook.Dir = pwd
+
+	if err = hook.Run(); err != nil {
+		return
+	}
+
+	return
+}
+
+func (dh *dynamicHandler) runPrehook() (err error) {
+	out.Notificationf("Running prehook: %s", dh.prehook)
+	return dh.runHook(dh.prehook)
+}
+
+func (dh *dynamicHandler) runPosthook() (err error) {
+	out.Notificationf("Running posthook: %s", dh.posthook)
+	return dh.runHook(dh.posthook)
+}
+
+func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
+	if len(dh.prehook) > 0 {
+		if err = dh.runPrehook(); err != nil {
+			err = fmt.Errorf("error: could not run prehoook `%s` for cmd %s: %+v", dh.prehook, cmd.Action, err)
+			return
+		}
 	}
 
 	if err = initService(); err != nil {
-		err = fmt.Errorf("error encountered while initializing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while initializing %s: %v", cfg.Name, err)
 		handleError(err)
 	}
 
@@ -50,7 +88,7 @@ func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
 		handlerErr = fn(cfg.Flags, cfg.Environment)
 	case func(env map[string]string) error:
 		handlerErr = fn(cfg.Environment)
-	case func(cfg *service.Config) error:
+	case func(cfg *config.Config) error:
 		handlerErr = fn(cfg)
 	case func() error:
 		handlerErr = fn()
@@ -65,7 +103,7 @@ func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
 	out.Notification("Closing...")
 
 	if err = svc.Close(); err != nil {
-		err = fmt.Errorf("error encountered while closing %s: %v", serviceName, err)
+		err = fmt.Errorf("error encountered while closing %s: %v", cfg.Name, err)
 		return
 	}
 
@@ -73,6 +111,13 @@ func (dh dynamicHandler) handleDynamicCmd(cmd *parg.Command) (err error) {
 
 	if handlerErr != nil {
 		return handlerErr
+	}
+
+	if len(dh.posthook) > 0 {
+		if err = dh.runPosthook(); err != nil {
+			err = fmt.Errorf("error: could not run posthoook `%s` for cmd %s: %+v", dh.posthook, cmd.Action, err)
+			return
+		}
 	}
 
 	out.Successf("Executed %s!", cmd.Action)
