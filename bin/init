@@ -2,10 +2,13 @@
 
 cd ~/
 
-go get github.com/vroomy/git-tagger
+go get github.com/hatchify/git-tagger
+go install github.com/hatchify/git-tagger
 
 go get github.com/vroomy/vroomy
+go install -trimpath github.com/vroomy/vroomy
 vroomy upgrade
 
 go get github.com/vroomy/vpm
+go install -trimpath github.com/vroomy/vpm
 vpm upgrade
