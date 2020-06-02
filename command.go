@@ -26,12 +26,6 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 		Type:        parg.STRINGS,
 	})
 
-	p.AddGlobalFlag(parg.Flag{
-		Name:        "config",
-		Help:        "Initializes vroomy with specified config file.\n  Use `vroomy -config \"config.example.toml\"`",
-		Identifiers: []string{"-config"},
-	})
-
 	addDynamicActions(p)
 
 	cmd, err = parg.Validate()

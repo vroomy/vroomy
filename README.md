@@ -21,21 +21,49 @@ vroomy upgrade && vpm upgrade
 ```
 
 ## Usage
+
+### Test vroomy (run without http listen)
+```bash
+# Set custom config location (remember to revert if desired)
+vroomy test
+```
+
 ### Start (with default config)
 ```bash
 # With default config (./config.toml)
 vroomy
 ```
 
-### Start (with custom config)
+### Start with custom config
 ```bash
-# With custom config
-vroomy --config custom.toml
+# Set custom config location (remember to revert if desired)
+export VROOMY_CONFIG="custom.toml"
+vroomy
 ```
 
 ### Update plugins
 ```bash
 vpm update
+```
+
+### Update plugins with custom config
+```bash
+vpm update -config custom.toml
+```
+
+### Update plugins with branch/channel
+```bash
+vpm update -b staging
+```
+
+### Update filtered plugins
+```bash
+vpm update plugin1 plugin2
+```
+
+### Update specific plugin at specific version
+```bash
+vpm update plugin1 -b v0.1.0
 ```
 
 ## Example configuration
@@ -92,8 +120,10 @@ Commands and flags can be added in config.toml and will automatically print in `
 Example: 
 [[command]]
 name = "seed"
+prehook = "cmd to exec before initializing plugins (such as backing up data directory)"
 usage = "Use `vroomy seed` to execute the seed plugin handler\n  Accepts flag -seedfile <filepath>"
 handler = "seed.Reseed"
+posthook = "cmd to exec after closing plugins (such as backing archiving backup, or rolling back data)"
 
 [[flag]]
 name = "seedfile"
@@ -135,7 +165,3 @@ These are provided by default and are "reserved" commands. They cannot be used i
   :: Initializes only the specified "required" plugins.
   Allows optimized custom commands.
   Use `vroomy test -r <plugin> <plugin>`
-
-### [-config]
-  :: Initializes vroomy with specified config file.
-  Use `vroomy -config "config.example.toml"`

@@ -31,23 +31,22 @@ func setupRuntime() (cmd *flag.Command) {
 
 	// Load command (apply config if available)
 	var err error
-	if cmd, err = commandFromArgs(); err != nil {
-		showHelp(cmd)
-		handleError(err)
-	}
-
-	if customCfg := cmd.StringFrom("config"); customCfg != "" {
-		fmt.Println("CustomConfig: " + customCfg)
-		configLocation = customCfg
-		cfg, cfgErr = config.NewConfig(configLocation)
-	}
+	cmd, err = commandFromArgs()
 
 	switch cmd.Action {
 	case "version", "upgrade":
+		// Global actions
 	default:
-		// We can ignore config errors if we're asking for help
-		if cfgErr != nil && cmd.Action != "help" {
-			handleError(cfgErr)
+		if cfgErr != nil {
+			out.Warning("Warning :: No config set.")
+
+			if cmd.Action == "help" {
+				// We can ignore config errors if we're asking for help. Use default
+				cfg = &config.Config{Name: "vroomy service"}
+			} else {
+				// Config is required
+				handleError(cfgErr)
+			}
 		}
 
 		// Parse flags into config
