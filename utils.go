@@ -32,6 +32,11 @@ func setupRuntime() (cmd *flag.Command) {
 	// Load command (apply config if available)
 	var err error
 	cmd, err = commandFromArgs()
+	if err != nil {
+		showHelp(nil)
+		handleError(err)
+		return
+	}
 
 	switch cmd.Action {
 	case "version", "upgrade":
