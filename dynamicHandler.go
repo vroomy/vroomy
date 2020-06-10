@@ -51,8 +51,8 @@ func (dh *dynamicHandler) runPosthook() (err error) {
 func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 	if len(dh.prehook) > 0 {
 		if err = dh.runPrehook(); err != nil {
-			err = fmt.Errorf("error: could not run prehoook `%s` for cmd %s: %+v", dh.prehook, cmd.Action, err)
-			return
+			out.Warningf("error: could not run prehoook `%s` for cmd %s: %+v", dh.prehook, cmd.Action, err)
+			err = nil
 		}
 	}
 
@@ -115,8 +115,8 @@ func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 
 	if len(dh.posthook) > 0 {
 		if err = dh.runPosthook(); err != nil {
-			err = fmt.Errorf("error: could not run posthoook `%s` for cmd %s: %+v", dh.posthook, cmd.Action, err)
-			return
+			out.Warningf("error: could not run posthook `%s` for cmd %s: %+v", dh.prehook, cmd.Action, err)
+			err = nil
 		}
 	}
 
