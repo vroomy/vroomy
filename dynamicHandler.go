@@ -58,7 +58,7 @@ func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 
 	if err = initService(); err != nil {
 		err = fmt.Errorf("error encountered while initializing %s: %v", cfg.Name, err)
-		handleError(err)
+		return
 	}
 
 	out.Notificationf("Handling dynamic command: %s", dh.handler)

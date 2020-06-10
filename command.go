@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hatchify/closer"
 	parg "github.com/hatchify/parg"
@@ -81,7 +80,7 @@ func runService(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
 
 	if err = initService(); err != nil {
-		handleError(err)
+		return
 	}
 	defer svc.Close()
 
@@ -90,17 +89,16 @@ func runService(cmd *parg.Command) (err error) {
 	go notifyOfListening()
 
 	if err = clsr.Wait(); err != nil {
-		handleError(err)
+		return
 	}
 
 	out.Notification("Close request received. One moment please...")
 	if err = svc.Close(); err != nil {
 		err = fmt.Errorf("error encountered while closing %s: %v", cfg.Name, err)
-		handleError(err)
+		return
 	}
 
 	out.Successf("Successfully closed %s!", cfg.Name)
-	os.Exit(0)
 	return
 }
 
