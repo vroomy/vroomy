@@ -18,10 +18,10 @@ import (
 const (
 	// ErrInvalidTLSDirectory is returned when a tls directory is unset when the tls port has been set
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
-	// ErrInvalidInitializationFunc is returned when an unsupported initialization function is encountered
-	ErrInvalidInitializationFunc = errors.Error("unsupported header for OnInit func encountered")
 	// ErrInvalidPreInitializationFunc is returned when an unsupported pre initialization function is encountered
-	ErrInvalidPreInitializationFunc = errors.Error("unsupported header for PreInit func encountered")
+	ErrInvalidPreInitializationFunc = errors.Error("unsupported header for Init func encountered")
+	// ErrInvalidInitializationFunc is returned when an unsupported initialization function is encountered
+	ErrInvalidInitializationFunc = errors.Error("unsupported header for Configure func encountered")
 )
 
 // New will return a new instance of service
@@ -44,7 +44,7 @@ func New(cfg *config.Config) (sp *Service, err error) {
 	}
 
 	if err = initDir("build"); err != nil {
-		err = fmt.Errorf("error changing plugins directory: %v", err)
+		err = fmt.Errorf("error initializing plugin build directory: %v", err)
 		return
 	}
 
@@ -125,9 +125,6 @@ func (s *Service) loadPlugins() (err error) {
 			err = fmt.Errorf("error creating new plugin for key \"%s\": %v", pluginKey, err)
 			return
 		}
-
-		// Run Pre-Init func
-		s.preInitPlugin(key)
 
 		s.cfg.PluginKeys = append(s.cfg.PluginKeys, key)
 	}
@@ -310,7 +307,16 @@ func (s *Service) initRouteExamples() (err error) {
 
 func (s *Service) initPlugins() (err error) {
 	for _, pluginKey := range s.cfg.PluginKeys {
+		// Run init first to set data/env/flags and external deps
 		if err = s.initPlugin(pluginKey); err != nil {
+			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
+			return
+		}
+	}
+
+	for _, pluginKey := range s.cfg.PluginKeys {
+		// Run configure after all plugins init to set intra-service deps
+		if err = s.configurePlugin(pluginKey); err != nil {
 			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
 			return
 		}
@@ -319,14 +325,14 @@ func (s *Service) initPlugins() (err error) {
 	return
 }
 
-func (s *Service) preInitPlugin(pluginKey string) (err error) {
+func (s *Service) initPlugin(pluginKey string) (err error) {
 	var p *plugin.Plugin
 	if p, err = s.Plugins.Get(pluginKey); err != nil {
 		return
 	}
 
 	var sym plugin.Symbol
-	if sym, err = p.Lookup("PreInit"); err != nil {
+	if sym, err = p.Lookup("Init"); err != nil {
 		err = nil
 		return
 	}
@@ -344,16 +350,19 @@ func (s *Service) preInitPlugin(pluginKey string) (err error) {
 	}
 }
 
-func (s *Service) initPlugin(pluginKey string) (err error) {
+func (s *Service) configurePlugin(pluginKey string) (err error) {
 	var p *plugin.Plugin
 	if p, err = s.Plugins.Get(pluginKey); err != nil {
 		return
 	}
 
 	var sym plugin.Symbol
-	if sym, err = p.Lookup("OnInit"); err != nil {
-		err = nil
-		return
+	if sym, err = p.Lookup("Configure"); err != nil {
+		// Legacy plugin support
+		if sym, err = p.Lookup("OnInit"); err != nil {
+			err = nil
+			return
+		}
 	}
 
 	switch fn := sym.(type) {

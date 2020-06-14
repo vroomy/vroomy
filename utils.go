@@ -75,6 +75,11 @@ func setupRuntime() (cmd *flag.Command) {
 func initService() (err error) {
 	out.Notificationf("Starting %s...", cfg.Name)
 
+	if _, ok := cfg.Environment["dataDir"]; !ok {
+		// Default if not set elsewhere
+		cfg.Environment["dataDir"] = "data"
+	}
+
 	if svc, err = New(cfg); err != nil {
 		err = fmt.Errorf("error encountered while initializing service: %v", err)
 		return
