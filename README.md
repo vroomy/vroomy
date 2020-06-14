@@ -165,3 +165,9 @@ These are provided by default and are "reserved" commands. They cannot be used i
   :: Initializes only the specified "required" plugins.
   Allows optimized custom commands.
   Use `vroomy test -r <plugin> <plugin>`
+
+### [-dataDir -d]
+  :: Initializes backends in provided directory.
+  Overrides value set in config and default values.
+  Ignored when testing in favor of dir "testData".  
+  Use `vroomy -d <dir>`

@@ -27,7 +27,7 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 
 	p.AddGlobalFlag(parg.Flag{
 		Name:        "dataDir",
-		Help:        "Initializes backends in provided directory.\n  Overrides value set in config and default values.\n  Ignored when testing in favor of dir \"testData\".  Use `vroomy -d <dir>`",
+		Help:        "Initializes backend data in provided directory.\n  Overrides default dir as well as value set in config.\n  Ignored when executing tests.\n  Use `vroomy -d <path_to_directory>`",
 		Identifiers: []string{"-dataDir", "-d"},
 	})
 
