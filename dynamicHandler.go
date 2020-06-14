@@ -56,6 +56,11 @@ func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 		}
 	}
 
+	if _, ok := svc.cfg.Environment["dataDir"]; !ok {
+		// Default if not set elsewhere
+		svc.cfg.Environment["dataDir"] = "data"
+	}
+
 	if err = initService(); err != nil {
 		err = fmt.Errorf("error encountered while initializing %s: %v", cfg.Name, err)
 		return

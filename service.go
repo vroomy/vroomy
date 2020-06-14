@@ -19,11 +19,13 @@ const (
 	// ErrInvalidTLSDirectory is returned when a tls directory is unset when the tls port has been set
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
 	// ErrInvalidInitializationFunc is returned when an unsupported initialization function is encountered
-	ErrInvalidInitializationFunc = errors.Error("unsupported initialization func encountered")
+	ErrInvalidInitializationFunc = errors.Error("unsupported header for OnInit func encountered")
+	// ErrInvalidPreInitializationFunc is returned when an unsupported pre initialization function is encountered
+	ErrInvalidPreInitializationFunc = errors.Error("unsupported header for PreInit func encountered")
 )
 
 // New will return a new instance of service
-func New(cfg *config.Config, dataDir string) (sp *Service, err error) {
+func New(cfg *config.Config) (sp *Service, err error) {
 	var s Service
 	s.cfg = cfg
 
@@ -36,7 +38,7 @@ func New(cfg *config.Config, dataDir string) (sp *Service, err error) {
 		return
 	}
 
-	if err = initDir(dataDir); err != nil {
+	if err = initDir(s.cfg.Environment["dataDir"]); err != nil {
 		err = fmt.Errorf("error initializing data directory: %v", err)
 		return
 	}
@@ -123,6 +125,9 @@ func (s *Service) loadPlugins() (err error) {
 			err = fmt.Errorf("error creating new plugin for key \"%s\": %v", pluginKey, err)
 			return
 		}
+
+		// Run Pre-Init func
+		s.preInitPlugin(key)
 
 		s.cfg.PluginKeys = append(s.cfg.PluginKeys, key)
 	}
@@ -314,6 +319,31 @@ func (s *Service) initPlugins() (err error) {
 	return
 }
 
+func (s *Service) preInitPlugin(pluginKey string) (err error) {
+	var p *plugin.Plugin
+	if p, err = s.Plugins.Get(pluginKey); err != nil {
+		return
+	}
+
+	var sym plugin.Symbol
+	if sym, err = p.Lookup("PreInit"); err != nil {
+		err = nil
+		return
+	}
+
+	switch fn := sym.(type) {
+	case func(flags, env map[string]string) error:
+		return fn(s.cfg.Flags, s.cfg.Environment)
+	case func(env map[string]string) error:
+		return fn(s.cfg.Environment)
+	case func() error:
+		return fn()
+
+	default:
+		return ErrInvalidInitializationFunc
+	}
+}
+
 func (s *Service) initPlugin(pluginKey string) (err error) {
 	var p *plugin.Plugin
 	if p, err = s.Plugins.Get(pluginKey); err != nil {
@@ -331,6 +361,10 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 		return fn(s.Plugins, s.cfg.Flags, s.cfg.Environment)
 	case func(p common.Plugins, env map[string]string) error:
 		return fn(s.Plugins, s.cfg.Environment)
+	case func(p common.Plugins) error:
+		return fn(s.Plugins)
+	case func() error:
+		return fn()
 
 	default:
 		return ErrInvalidInitializationFunc

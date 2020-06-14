@@ -60,6 +60,12 @@ func setupRuntime() (cmd *flag.Command) {
 
 			handleError(err)
 		}
+
+		var dataDir = cmd.StringFrom("dataDir")
+		if len(dataDir) > 0 {
+			// Override config
+			cfg.Environment["dataDir"] = dataDir
+		}
 	}
 
 	return
@@ -69,7 +75,7 @@ func setupRuntime() (cmd *flag.Command) {
 func initService() (err error) {
 	out.Notificationf("Starting %s...", cfg.Name)
 
-	if svc, err = New(cfg, "data"); err != nil {
+	if svc, err = New(cfg); err != nil {
 		err = fmt.Errorf("error encountered while initializing service: %v", err)
 		return
 	}
@@ -175,6 +181,10 @@ func parseConfigFlagsFrom(cmd *flag.Command) (err error) {
 }
 
 func initDir(loc string) (err error) {
+	if len(loc) == 0 {
+		return
+	}
+
 	if err = os.Mkdir(loc, 0744); err == nil {
 		return
 	}

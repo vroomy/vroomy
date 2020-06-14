@@ -79,6 +79,11 @@ func addDynamicActions(p *parg.Parg) (err error) {
 func runService(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
 
+	if _, ok := svc.cfg.Environment["dataDir"]; !ok {
+		// Default if not set elsewhere
+		svc.cfg.Environment["dataDir"] = "data"
+	}
+
 	if err = initService(); err != nil {
 		return
 	}
@@ -130,6 +135,9 @@ func test(cmd *parg.Command) (err error) {
 	}
 
 	out.Notificationf("Hello there! :: Testing %s Compatibility :: One moment, please... ::", serviceName)
+
+	// Override for tests
+	svc.cfg.Environment["dataDir"] = "testData"
 
 	if err = initService(); err != nil {
 		out.Error("Init test failed :(")
