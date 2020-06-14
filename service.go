@@ -346,7 +346,7 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 		return fn()
 
 	default:
-		return ErrInvalidInitializationFunc
+		return ErrInvalidPreInitializationFunc
 	}
 }
 
