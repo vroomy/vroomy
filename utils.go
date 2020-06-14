@@ -79,6 +79,7 @@ func initService() (err error) {
 		// Default if not set elsewhere
 		cfg.Environment["dataDir"] = "data"
 	}
+	out.Notificationf("Setting data directory: %s", cfg.Environment["dataDir"])
 
 	if svc, err = New(cfg); err != nil {
 		err = fmt.Errorf("error encountered while initializing service: %v", err)

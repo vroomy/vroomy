@@ -56,6 +56,11 @@ func (dh *dynamicHandler) handle(cmd *parg.Command) (err error) {
 		}
 	}
 
+	var dataDir = cmd.StringFrom("dataDir")
+	if dataDir != "" {
+		cfg.Environment["dataDir"] = dataDir
+	}
+
 	if err = initService(); err != nil {
 		err = fmt.Errorf("error encountered while initializing %s: %v", cfg.Name, err)
 		return

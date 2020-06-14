@@ -25,6 +25,12 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 		Type:        parg.STRINGS,
 	})
 
+	p.AddGlobalFlag(parg.Flag{
+		Name:        "dataDir",
+		Help:        "Initializes backends in provided directory.\n  Overrides value set in config and default values.\n  Ignored when testing in favor of dir \"testData\".  Use `vroomy -d <dir>`",
+		Identifiers: []string{"-dataDir", "-d"},
+	})
+
 	addDynamicActions(p)
 
 	cmd, err = parg.Validate()
@@ -78,6 +84,11 @@ func addDynamicActions(p *parg.Parg) (err error) {
 
 func runService(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
+
+	var dataDir = cmd.StringFrom("dataDir")
+	if dataDir != "" {
+		cfg.Environment["dataDir"] = dataDir
+	}
 
 	if err = initService(); err != nil {
 		return
