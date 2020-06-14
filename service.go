@@ -316,7 +316,7 @@ func (s *Service) initPlugins() (err error) {
 
 	for _, pluginKey := range s.cfg.PluginKeys {
 		// Run configure after all plugins init to set intra-service deps
-		if err = s.configurePlugin(pluginKey); err != nil {
+		if err = s.loadPlugin(pluginKey); err != nil {
 			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
 			return
 		}
@@ -350,14 +350,14 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 	}
 }
 
-func (s *Service) configurePlugin(pluginKey string) (err error) {
+func (s *Service) loadPlugin(pluginKey string) (err error) {
 	var p *plugin.Plugin
 	if p, err = s.Plugins.Get(pluginKey); err != nil {
 		return
 	}
 
 	var sym plugin.Symbol
-	if sym, err = p.Lookup("Configure"); err != nil {
+	if sym, err = p.Lookup("Load"); err != nil {
 		// Legacy plugin support
 		if sym, err = p.Lookup("OnInit"); err != nil {
 			err = nil
