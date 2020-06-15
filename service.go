@@ -49,12 +49,12 @@ func New(cfg *config.Config) (sp *Service, err error) {
 	}
 
 	s.srv = httpserve.New()
-	if err = s.loadPlugins(); err != nil {
+	if err = s.initPlugins(); err != nil {
 		err = fmt.Errorf("error loading plugins: %v", err)
 		return
 	}
 
-	if err = s.initPlugins(); err != nil {
+	if err = s.loadPlugins(); err != nil {
 		err = fmt.Errorf("error initializing plugins: %v", err)
 		return
 	}
@@ -104,7 +104,7 @@ func pluginName(key string) (name string) {
 	return
 }
 
-func (s *Service) loadPlugins() (err error) {
+func (s *Service) initPlugins() (err error) {
 	if s.Plugins, err = plugins.New("build"); err != nil {
 		err = fmt.Errorf("error initializing plugins manager: %v", err)
 		return
@@ -132,6 +132,15 @@ func (s *Service) loadPlugins() (err error) {
 	if err = s.Plugins.Initialize(); err != nil {
 		err = fmt.Errorf("error initializing plugins: %v", err)
 		return
+	}
+
+	// Call Init(flags, env) for each initialized plugin
+	for _, pluginKey := range s.cfg.PluginKeys {
+		// Run init first to set data/env/flags and external deps
+		if err = s.initPlugin(pluginKey); err != nil {
+			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
+			return
+		}
 	}
 
 	return
@@ -305,19 +314,12 @@ func (s *Service) initRouteExamples() (err error) {
 	return
 }
 
-func (s *Service) initPlugins() (err error) {
-	for _, pluginKey := range s.cfg.PluginKeys {
-		// Run init first to set data/env/flags and external deps
-		if err = s.initPlugin(pluginKey); err != nil {
-			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
-			return
-		}
-	}
-
+func (s *Service) loadPlugins() (err error) {
+	// Call Load(p common.Plugins) for each loaded plugin
 	for _, pluginKey := range s.cfg.PluginKeys {
 		// Run configure after all plugins init to set intra-service deps
 		if err = s.loadPlugin(pluginKey); err != nil {
-			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
+			err = fmt.Errorf("error loading %s: %v", pluginKey, err)
 			return
 		}
 	}
@@ -363,13 +365,24 @@ func (s *Service) loadPlugin(pluginKey string) (err error) {
 			err = nil
 			return
 		}
+
+		// Legacy init functions
+		switch fn := sym.(type) {
+		case func(p common.Plugins, flags, env map[string]string) error:
+			return fn(s.Plugins, s.cfg.Flags, s.cfg.Environment)
+		case func(p common.Plugins, env map[string]string) error:
+			return fn(s.Plugins, s.cfg.Environment)
+		case func(p common.Plugins) error:
+			return fn(s.Plugins)
+		case func() error:
+			return fn()
+
+		default:
+			return ErrInvalidInitializationFunc
+		}
 	}
 
 	switch fn := sym.(type) {
-	case func(p common.Plugins, flags, env map[string]string) error:
-		return fn(s.Plugins, s.cfg.Flags, s.cfg.Environment)
-	case func(p common.Plugins, env map[string]string) error:
-		return fn(s.Plugins, s.cfg.Environment)
 	case func(p common.Plugins) error:
 		return fn(s.Plugins)
 	case func() error:
