@@ -18,10 +18,10 @@ import (
 const (
 	// ErrInvalidTLSDirectory is returned when a tls directory is unset when the tls port has been set
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
-	// ErrInvalidPreInitializationFunc is returned when an unsupported pre initialization function is encountered
-	ErrInvalidPreInitializationFunc = errors.Error("unsupported header for Init func encountered")
-	// ErrInvalidInitializationFunc is returned when an unsupported initialization function is encountered
-	ErrInvalidInitializationFunc = errors.Error("unsupported header for Configure func encountered")
+	// ErrInvalidPreInitFunc is returned when an unsupported pre initialization function is encountered
+	ErrInvalidPreInitFunc = errors.Error("unsupported header for Init func encountered")
+	// ErrInvalidLoadFunc is returned when an unsupported initialization function is encountered
+	ErrInvalidLoadFunc = errors.Error("unsupported header for Load func encountered")
 )
 
 // New will return a new instance of service
@@ -141,6 +141,8 @@ func (s *Service) initPlugins() (err error) {
 			err = fmt.Errorf("error initializing %s: %v", pluginKey, err)
 			return
 		}
+
+		out.Notificationf("Initialized %s", pluginKey)
 	}
 
 	return
@@ -322,6 +324,8 @@ func (s *Service) loadPlugins() (err error) {
 			err = fmt.Errorf("error loading %s: %v", pluginKey, err)
 			return
 		}
+
+		out.Successf("Loaded %s", pluginKey)
 	}
 
 	return
@@ -348,7 +352,8 @@ func (s *Service) initPlugin(pluginKey string) (err error) {
 		return fn()
 
 	default:
-		return ErrInvalidPreInitializationFunc
+		return ErrInvalidPreInitFunc
+
 	}
 }
 
@@ -378,7 +383,7 @@ func (s *Service) loadPlugin(pluginKey string) (err error) {
 			return fn()
 
 		default:
-			return ErrInvalidInitializationFunc
+			return ErrInvalidLoadFunc
 		}
 	}
 
@@ -389,7 +394,7 @@ func (s *Service) loadPlugin(pluginKey string) (err error) {
 		return fn()
 
 	default:
-		return ErrInvalidInitializationFunc
+		return ErrInvalidLoadFunc
 	}
 }
 
