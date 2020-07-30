@@ -31,6 +31,12 @@ func commandFromArgs() (cmd *parg.Command, err error) {
 		Identifiers: []string{"-dataDir", "-d"},
 	})
 
+	p.AddGlobalFlag(parg.Flag{
+		Name:        "config",
+		Help:        "Initializes with config at specified location.\n  Overrides default config.\n  Use `vroomy -c <path_to_config>`",
+		Identifiers: []string{"-config", "-c"},
+	})
+
 	addDynamicActions(p)
 
 	cmd, err = parg.Validate()

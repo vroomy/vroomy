@@ -38,6 +38,12 @@ func setupRuntime() (cmd *flag.Command) {
 		return
 	}
 
+	if customConfig := cmd.StringFrom("config"); customConfig != "" {
+		// Parse config
+		cfgErr = nil
+		cfg, cfgErr = config.NewConfig(customConfig)
+	}
+
 	switch cmd.Action {
 	case "version", "upgrade":
 		// Global actions

@@ -4,7 +4,7 @@ import (
 	"os/user"
 	"path"
 
-	gomu "github.com/hatchify/mod-utils"
+	gomu "github.com/gomuserver/mod-utils"
 	flag "github.com/hatchify/parg"
 	"github.com/hatchify/scribe"
 )
