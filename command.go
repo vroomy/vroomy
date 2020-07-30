@@ -91,10 +91,6 @@ func addDynamicActions(p *parg.Parg) (err error) {
 func runService(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Starting %s :: One moment, please... ::", cfg.Name)
 
-	if cfg.Environment == nil {
-		cfg.Environment = make(map[string]string, 0)
-	}
-
 	var dataDir = cmd.StringFrom("dataDir")
 	if dataDir != "" {
 		cfg.Environment["dataDir"] = dataDir
