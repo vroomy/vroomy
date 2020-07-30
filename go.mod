@@ -11,6 +11,6 @@ require (
 	github.com/hatchify/parg v0.1.27
 	github.com/hatchify/scribe v0.4.80
 	github.com/vroomy/common v0.1.1
-	github.com/vroomy/config v0.0.9
+	github.com/vroomy/config v0.0.10
 	github.com/vroomy/plugins v0.4.92
 )
