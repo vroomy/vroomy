@@ -44,6 +44,10 @@ func setupRuntime() (cmd *flag.Command) {
 		cfg, cfgErr = config.NewConfig(customConfig)
 	}
 
+	if cfg.Environment == nil {
+		cfg.Environment = make(map[string]string)
+	}
+
 	switch cmd.Action {
 	case "version", "upgrade":
 		// Global actions
