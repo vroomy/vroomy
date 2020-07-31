@@ -104,6 +104,21 @@ func pluginName(key string) (name string) {
 	return
 }
 
+func pluginAlias(key string) (name string) {
+	comps := strings.Split(key, " as ")
+	if len(comps) > 1 {
+		return comps[1]
+	}
+
+	key = strings.Split(key, "#")[0]
+	key = strings.Split(key, "@")[0]
+	key = strings.Split(key, "-")[0]
+	_, key = path.Split(key)
+
+	name = key
+	return
+}
+
 func (s *Service) initPlugins() (err error) {
 	if s.Plugins, err = plugins.New("build"); err != nil {
 		err = fmt.Errorf("error initializing plugins manager: %v", err)
@@ -116,7 +131,7 @@ func (s *Service) initPlugins() (err error) {
 
 	filter, ok := s.cfg.Flags["require"]
 	for _, pluginKey := range s.cfg.Plugins {
-		if ok && !strings.Contains(filter, pluginName(pluginKey)) {
+		if ok && !strings.Contains(filter, pluginAlias(pluginKey)) && !strings.Contains(filter, pluginName(pluginKey)) {
 			continue
 		}
 
