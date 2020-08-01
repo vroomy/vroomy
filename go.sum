@@ -32,7 +32,7 @@ github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
 github.com/vroomy/common v0.1.2 h1:NYh8l/T8yd8bxwBNwPytahY+EgQrBfLxUVAvb76qXxE=
 github.com/vroomy/common v0.1.2/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
-github.com/vroomy/config v0.0.13 h1:Eh+u7jq78OWhxiHphnPHXzgld0MPj0/C8TrAT+XJq0g=
-github.com/vroomy/config v0.0.13/go.mod h1:ZGAzSYSLJV8NONhpor9KBlJsAqowRcjC1kG5RkbSqK4=
-github.com/vroomy/plugins v0.4.94 h1:snYlBqq7pKUmIRh3NEYITXj3nTle/cdKTqivD5n5aCU=
-github.com/vroomy/plugins v0.4.94/go.mod h1:GBjEA/KNCNPDa1xeFoDyI70cDxm0cVkLeJVRWuGrH2A=
+github.com/vroomy/config v0.0.14 h1:+SSFAh9UQ//yYCswDDp5yaCJXzFlRTFMFxg7Z/F2Tr8=
+github.com/vroomy/config v0.0.14/go.mod h1:bv9wgA5JHHPVedoTeEWME4dfa6CKw9UU/FWoFDfspXA=
+github.com/vroomy/plugins v0.4.95 h1:fs0MIzUK+mnuun7XVwSEc0FvPnacMhotKBW8D08Zrkw=
+github.com/vroomy/plugins v0.4.95/go.mod h1:GBjEA/KNCNPDa1xeFoDyI70cDxm0cVkLeJVRWuGrH2A=
