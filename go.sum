@@ -12,8 +12,8 @@ github.com/Hatch1fy/httpserve v0.4.86 h1:XmMvQuVnzU7OXsQJGeooMLv1PfCCYTflTrEkRgg
 github.com/Hatch1fy/httpserve v0.4.86/go.mod h1:gOg7Hxa8CFrbJANVU1ryn2wbkDMD6zEct3Z3SRVt134=
 github.com/Hatch1fy/poller v0.4.86 h1:D78sEGGjUZz5W/EADWf6NEh0DrDFnOpU7JDD8/9HbzQ=
 github.com/Hatch1fy/poller v0.4.86/go.mod h1:S+5Zrcn1mtfAtPkcaM5TKFei0j4ALaKc7OXeg75DMGw=
-github.com/gomuserver/mod-utils v0.0.5 h1:a+oV//zGDqEaGOo7acvgnS0LWejeWwLYLG4BcnGrbLw=
-github.com/gomuserver/mod-utils v0.0.5/go.mod h1:Pq+AZqTm09me3PLvXluiAfTEhxs95mSf9SAn4Pv3cCs=
+github.com/gomuserver/mod-utils v0.0.6 h1:wCcyiBtI0biTZU0AaGoSLpjY6iZer8T/5kS5OAJQfFA=
+github.com/gomuserver/mod-utils v0.0.6/go.mod h1:Pq+AZqTm09me3PLvXluiAfTEhxs95mSf9SAn4Pv3cCs=
 github.com/hatchify/atoms v0.4.79 h1:LGH5CYcOi8peub2rSBzebjgODEiR8LBMxjWCQZaKygA=
 github.com/hatchify/atoms v0.4.79/go.mod h1:rj5Oi/MmC4N5juGypB+qZnBTxTJF8ywfykfpSkE/kBU=
 github.com/hatchify/closer v0.4.81 h1:LfnpPdkymn8+kHnGXX+rXptgnnyR7qRx/uBZqR2Rmkk=

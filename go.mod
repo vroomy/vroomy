@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Hatch1fy/errors v0.4.80
 	github.com/Hatch1fy/httpserve v0.4.86
-	github.com/gomuserver/mod-utils v0.0.5
+	github.com/gomuserver/mod-utils v0.0.6
 	github.com/hatchify/atoms v0.4.79
 	github.com/hatchify/closer v0.4.81
 	github.com/hatchify/parg v0.1.29
