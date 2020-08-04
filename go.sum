@@ -36,3 +36,5 @@ github.com/vroomy/config v0.0.15 h1:vsd2CEv9mb7dDz29xNKkoMHGthdHgxnKgZLGYGBYpvU=
 github.com/vroomy/config v0.0.15/go.mod h1:WbwkkHewxq1nhysu0wdQYS/ByqKC8VT+Uqs82y3uC9g=
 github.com/vroomy/plugins v0.4.96 h1:nqt3rSySgXjw1bWSAPfPW7kxISbocoTfB02lQxbO7Xs=
 github.com/vroomy/plugins v0.4.96/go.mod h1:vTF7AwT7QDdnTsYpFOP0fnEa5EWd2FlJsW8RM0wPcFY=
+github.com/vroomy/plugins v0.4.98 h1:HSZvWqpB7rYNwGGGHZC9RjeRrdTSTjeG106JaItyUK4=
+github.com/vroomy/plugins v0.4.98/go.mod h1:vTF7AwT7QDdnTsYpFOP0fnEa5EWd2FlJsW8RM0wPcFY=

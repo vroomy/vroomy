@@ -12,5 +12,5 @@ require (
 	github.com/hatchify/scribe v0.4.84
 	github.com/vroomy/common v0.1.2
 	github.com/vroomy/config v0.0.15
-	github.com/vroomy/plugins v0.4.96
+	github.com/vroomy/plugins v0.4.98
 )
