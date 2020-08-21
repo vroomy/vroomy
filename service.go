@@ -7,9 +7,9 @@ import (
 	"plugin"
 	"strings"
 
-	"github.com/Hatch1fy/errors"
 	"github.com/Hatch1fy/httpserve"
 	"github.com/hatchify/atoms"
+	"github.com/hatchify/errors"
 	"github.com/vroomy/common"
 	"github.com/vroomy/config"
 	"github.com/vroomy/plugins"
