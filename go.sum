@@ -6,8 +6,8 @@ github.com/Hatch1fy/filecacher v0.4.89 h1:47m3AboY+feePWUHOjblVnD/m5uOFA7ibpyXJ7
 github.com/Hatch1fy/filecacher v0.4.89/go.mod h1:1JY6uO3MlUjaGtEDvKNIapY13jeyx9S8QByzznvXznc=
 github.com/Hatch1fy/fileserver v0.4.89 h1:yRJqB3K4+FdH54/5SznPtus0AcRNqj77TFxomc2zFok=
 github.com/Hatch1fy/fileserver v0.4.89/go.mod h1:vo2rR44WdVbAtFscfvec0Da27nREe+gyI7y6HKikY1M=
-github.com/Hatch1fy/httpserve v0.4.87 h1:8+QYlHVmXfYAhrYThgtxfqRAYCHWPrRqGDGL5PX4w2s=
-github.com/Hatch1fy/httpserve v0.4.87/go.mod h1:1EzI0TnjpTTltDN8zIkWqT8gavOEcnp6D0ksv917/bs=
+github.com/Hatch1fy/httpserve v0.4.88 h1:bFGqIyUa8rKjE/gZfP9G4OCyIuLqS5t5yCy3m8RFCJE=
+github.com/Hatch1fy/httpserve v0.4.88/go.mod h1:1EzI0TnjpTTltDN8zIkWqT8gavOEcnp6D0ksv917/bs=
 github.com/Hatch1fy/poller v0.4.87 h1:lK9gPrBBY8w6RWL9kERGf8c4GMV5HRgnFoZydul9Rd8=
 github.com/Hatch1fy/poller v0.4.87/go.mod h1:kdNUo1RE2WVPMSgnYBGLtDpYqITyXybzTe8IM5DzS9k=
 github.com/gomuserver/mod-utils v0.0.6 h1:wCcyiBtI0biTZU0AaGoSLpjY6iZer8T/5kS5OAJQfFA=
@@ -30,9 +30,9 @@ github.com/hatchify/simply v0.0.18 h1:mmcVtI655SinqE8m55QEjzD8uvBv8K6UVlc4O9Sfyh
 github.com/hatchify/simply v0.0.18/go.mod h1:Zt75bbQLhETkkPSie6LEtRr13bt0cy4YzQrUoOH+xbI=
 github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7Kyl5E=
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
-github.com/vroomy/common v0.1.2 h1:NYh8l/T8yd8bxwBNwPytahY+EgQrBfLxUVAvb76qXxE=
-github.com/vroomy/common v0.1.2/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
-github.com/vroomy/config v0.0.18 h1:J0noDQNzhzTagUNPFh5jNfp3o2CA7vu3fqr68M6/wEI=
-github.com/vroomy/config v0.0.18/go.mod h1:fb2+GsPLm6GtHxbpcJiyFjvdmlLVYGPiRvfev0vriYY=
+github.com/vroomy/common v0.1.3 h1:Gbgb0/yKinBvQXo79UqJncCAR8QO8RZKrNQY/RgHs7w=
+github.com/vroomy/common v0.1.3/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
+github.com/vroomy/config v0.0.19 h1:ts5zdBHYBg/JAxMm3U+1oCtydf86nJhCk0leKLYdVr0=
+github.com/vroomy/config v0.0.19/go.mod h1:ZjG6rVp7eazf9lqCV+baGU6Bzbxndkt9M6hc4PyzBV4=
 github.com/vroomy/plugins v0.4.100 h1:ov8qPfeOPZYUzj5XpcE9jaK37/PDAu/mSnkXkrpoVRY=
 github.com/vroomy/plugins v0.4.100/go.mod h1:6VeVHsbWqSLS2Xjs2bawlZcnYPJLtQg6tSDWWP9yK3M=
