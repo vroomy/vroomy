@@ -10,7 +10,7 @@ require (
 	github.com/hatchify/errors v0.4.82
 	github.com/hatchify/parg v0.1.29
 	github.com/hatchify/scribe v0.4.85
-	github.com/vroomy/common v0.1.3
+	github.com/vroomy/common v0.1.5
 	github.com/vroomy/config v0.0.19
 	github.com/vroomy/plugins v0.4.100
 )
