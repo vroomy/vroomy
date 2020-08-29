@@ -3,7 +3,6 @@ module github.com/vroomy/vroomy
 go 1.14
 
 require (
-	github.com/Hatch1fy/httpserve v0.4.88
 	github.com/gomuserver/mod-utils v0.0.6
 	github.com/hatchify/atoms v0.4.79
 	github.com/hatchify/closer v0.4.81
@@ -11,6 +10,7 @@ require (
 	github.com/hatchify/parg v0.1.29
 	github.com/hatchify/scribe v0.4.85
 	github.com/vroomy/common v0.1.5
-	github.com/vroomy/config v0.0.19
+	github.com/vroomy/config v0.0.21
+	github.com/vroomy/httpserve v0.4.89
 	github.com/vroomy/plugins v0.4.100
 )
