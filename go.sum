@@ -30,9 +30,9 @@ github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
 github.com/vroomy/common v0.1.6 h1:zJrOPruEpq03AJcgGEoACJPFwIfsX1L7OqaaSkq/xl4=
 github.com/vroomy/common v0.1.6/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
-github.com/vroomy/config v0.0.24 h1:Nt4lQdbt+PfpAnVrzOPoRwwOuiSw35RrLlW322CKLqU=
-github.com/vroomy/config v0.0.24/go.mod h1:zJgVRm0L0+Ij2WGzBocAR7h9AY+635j5PtZ1ZsMJyvg=
+github.com/vroomy/config v0.0.25 h1:5eLzWYQX3dWDmVv56bzyUAbTp5t0lDMmrI66sxShGio=
+github.com/vroomy/config v0.0.25/go.mod h1:kmSaXtD5RXOpoT7UXtvpxTrbVojqqUxtr91XIa+INbw=
 github.com/vroomy/httpserve v0.4.92 h1:4LHoheWkocQ48VwsAcwMmJaq6mM5l7kn3O+pp/MlPQ8=
 github.com/vroomy/httpserve v0.4.92/go.mod h1:NxZVeXBQi8hAQrBE4+yUx2J/KZcw588EepuJJhi3Zi8=
-github.com/vroomy/plugins v0.4.100 h1:ov8qPfeOPZYUzj5XpcE9jaK37/PDAu/mSnkXkrpoVRY=
-github.com/vroomy/plugins v0.4.100/go.mod h1:6VeVHsbWqSLS2Xjs2bawlZcnYPJLtQg6tSDWWP9yK3M=
+github.com/vroomy/plugins v0.4.101 h1:Nzkio4tCrxZ6jZjLSTGNtw/4XVY2Di9SO8hzBbFwYpI=
+github.com/vroomy/plugins v0.4.101/go.mod h1:6VeVHsbWqSLS2Xjs2bawlZcnYPJLtQg6tSDWWP9yK3M=
