@@ -28,12 +28,11 @@ github.com/hatchify/simply v0.0.18 h1:mmcVtI655SinqE8m55QEjzD8uvBv8K6UVlc4O9Sfyh
 github.com/hatchify/simply v0.0.18/go.mod h1:Zt75bbQLhETkkPSie6LEtRr13bt0cy4YzQrUoOH+xbI=
 github.com/remeh/sizedwaitgroup v1.0.0 h1:VNGGFwNo/R5+MJBf6yrsr110p0m4/OX4S3DCy7Kyl5E=
 github.com/remeh/sizedwaitgroup v1.0.0/go.mod h1:3j2R4OIe/SeS6YDhICBy22RWjJC5eNCJ1V+9+NVNYlo=
-github.com/vroomy/common v0.1.5/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
 github.com/vroomy/common v0.1.6 h1:zJrOPruEpq03AJcgGEoACJPFwIfsX1L7OqaaSkq/xl4=
 github.com/vroomy/common v0.1.6/go.mod h1:NROW9LhlSXaMhmp0/pRyJRtUD51A7q6mVPgFFh62t1c=
-github.com/vroomy/config v0.0.22 h1:ppLiUqoNgp5xw5sROdWFEDufD2XXlSGlOWZZ717QyqE=
-github.com/vroomy/config v0.0.22/go.mod h1:JzowT4zvgg9PrVZ9iDAnKuKfkPoIzX9MCyrsP0BwwGQ=
-github.com/vroomy/httpserve v0.4.90 h1:nYrWBAYz5tBOiPGwBntJni3RTl6amzDpZ62SSBwu164=
-github.com/vroomy/httpserve v0.4.90/go.mod h1:ccukNAKgHRBuSQCqSA/R5MT6HbW07Sq9pj5WDx/4kfU=
+github.com/vroomy/config v0.0.23 h1:FoVS+LmyZSp+rc5GfBACoedsEUjEd0x6gVLDmw837DI=
+github.com/vroomy/config v0.0.23/go.mod h1:tk8R9gD3/QiloU7ABtigr/rd+RW8T45rZyCTlIoYnyU=
+github.com/vroomy/httpserve v0.4.91 h1:5FPk3S5uwhwOVwdw82X+WaMZ2LeFrcWwe1w9WopzV0M=
+github.com/vroomy/httpserve v0.4.91/go.mod h1:Wn8dW3jOgaYbK6IDH/g+T1FoQOHa2+D8h81NnXsgRr8=
 github.com/vroomy/plugins v0.4.100 h1:ov8qPfeOPZYUzj5XpcE9jaK37/PDAu/mSnkXkrpoVRY=
 github.com/vroomy/plugins v0.4.100/go.mod h1:6VeVHsbWqSLS2Xjs2bawlZcnYPJLtQg6tSDWWP9yK3M=
