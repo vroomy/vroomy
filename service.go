@@ -9,7 +9,6 @@ import (
 
 	"github.com/hatchify/atoms"
 	"github.com/hatchify/errors"
-	"github.com/hatchify/scribe"
 	"github.com/vroomy/common"
 	"github.com/vroomy/config"
 	"github.com/vroomy/httpserve"
@@ -207,7 +206,6 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 		grp = match.G
 	}
 
-	scribe.New("Group").Notificationf("Handlers for group %s: %v", group.Name, group.HTTPHandlers)
 	group.G = grp.Group(group.HTTPPath, group.HTTPHandlers...)
 	return
 }
