@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/hatchify/closer"
 	parg "github.com/hatchify/parg"
@@ -149,11 +150,7 @@ func test(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Testing %s Compatibility :: One moment, please... ::", serviceName)
 
 	// Override for tests
-	if len(cfg.Environment["testDir"]) > 0 {
-		cfg.Environment["dataDir"] = cfg.Environment["testDir"]
-	} else {
-		cfg.Environment["dataDir"] = "testData"
-	}
+	cfg.Environment["dataDir"] = path.Join(cfg.Environment["testDir"], "testData")
 
 	if err = initService(); err != nil {
 		out.Error("Init test failed :(")
