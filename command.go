@@ -149,7 +149,11 @@ func test(cmd *parg.Command) (err error) {
 	out.Notificationf("Hello there! :: Testing %s Compatibility :: One moment, please... ::", serviceName)
 
 	// Override for tests
-	cfg.Environment["dataDir"] = "testData"
+	if len(cfg.Environment["testDir"]) > 0 {
+		cfg.Environment["dataDir"] = cfg.Environment["testDir"]
+	} else {
+		cfg.Environment["dataDir"] = "testData"
+	}
 
 	if err = initService(); err != nil {
 		out.Error("Init test failed :(")
