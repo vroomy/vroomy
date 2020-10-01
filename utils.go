@@ -9,7 +9,15 @@ import (
 
 	flag "github.com/hatchify/parg"
 	"github.com/hatchify/scribe"
+	"github.com/vroomy/common"
 	"github.com/vroomy/config"
+	"github.com/vroomy/httpserve"
+)
+
+const (
+	errInvalidRedirectValueFmt = "invalid redirect value type, expected %T and received %T"
+	errInvalidTextValueFmt     = "invalid text value type, expected %T or %T and received %T"
+	errInvalidXMLValueFmt      = "invalid XML value type, expected %T and received %T"
 )
 
 // Load the action and config environment
@@ -210,4 +218,46 @@ func initDir(loc string) (err error) {
 
 type listener interface {
 	Listen(port uint16) error
+}
+
+func toHandlers(cs []common.Handler) (hs []httpserve.Handler) {
+	hs = make([]httpserve.Handler, 0, len(cs))
+	for _, c := range cs {
+		fn := newHandler(c)
+		hs = append(hs, fn)
+	}
+
+	return
+}
+
+func newHandler(c common.Handler) httpserve.Handler {
+	return func(ctx *httpserve.Context) httpserve.Response {
+		resp := c(ctx)
+		switch {
+		case resp == nil:
+			return nil
+		case resp.Adopted:
+			return httpserve.NewAdoptResponse()
+		}
+
+		switch resp.StatusCode {
+		case 204:
+			return httpserve.NewNoContentResponse()
+		case 301, 302:
+			return redirectHandler(resp)
+		}
+
+		switch resp.ContentType {
+		case "json":
+			return httpserve.NewJSONResponse(resp.StatusCode, resp.Value)
+		case "jsonp":
+			return httpserve.NewJSONResponse(resp.StatusCode, resp.Value)
+		case "text":
+			return textHandler(resp)
+		case "xml":
+			return xmlHandler(resp)
+		}
+
+		return nil
+	}
 }
