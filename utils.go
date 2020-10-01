@@ -9,18 +9,8 @@ import (
 
 	flag "github.com/hatchify/parg"
 	"github.com/hatchify/scribe"
-	"github.com/vroomy/common"
 	"github.com/vroomy/config"
-	"github.com/vroomy/httpserve"
 )
-
-const (
-	errInvalidRedirectValueFmt = "invalid redirect value type, expected %T and received %T"
-	errInvalidTextValueFmt     = "invalid text value type, expected %T or %T and received %T"
-	errInvalidXMLValueFmt      = "invalid XML value type, expected %T and received %T"
-)
-
-var exampleCommonHandler common.Handler = func(common.Context) *common.Response { return nil }
 
 // Load the action and config environment
 func setupRuntime() (cmd *flag.Command) {
@@ -220,57 +210,4 @@ func initDir(loc string) (err error) {
 
 type listener interface {
 	Listen(port uint16) error
-}
-
-func toHandlers(cs []interface{}) (hs []httpserve.Handler, err error) {
-	hs = make([]httpserve.Handler, 0, len(cs))
-	for _, c := range cs {
-		var fn httpserve.Handler
-		switch n := c.(type) {
-		case common.Handler:
-			fn = newHandler(n)
-		case httpserve.Handler:
-			fn = n
-
-		default:
-			err = fmt.Errorf("invalid handler type, expected %T or %T and received %T", fn, exampleCommonHandler, c)
-			return
-		}
-
-		hs = append(hs, fn)
-	}
-
-	return
-}
-
-func newHandler(c common.Handler) httpserve.Handler {
-	return func(ctx *httpserve.Context) httpserve.Response {
-		resp := c(ctx)
-		switch {
-		case resp == nil:
-			return nil
-		case resp.Adopted:
-			return httpserve.NewAdoptResponse()
-		}
-
-		switch resp.StatusCode {
-		case 204:
-			return httpserve.NewNoContentResponse()
-		case 301, 302:
-			return redirectHandler(resp)
-		}
-
-		switch resp.ContentType {
-		case "json":
-			return httpserve.NewJSONResponse(resp.StatusCode, resp.Value)
-		case "jsonp":
-			return httpserve.NewJSONPResponse(resp.Callback, resp.Value)
-		case "text":
-			return textHandler(resp)
-		case "xml":
-			return xmlHandler(resp)
-		}
-
-		return nil
-	}
 }

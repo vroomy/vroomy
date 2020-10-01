@@ -206,12 +206,7 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 		grp = match.G
 	}
 
-	var hs []httpserve.Handler
-	if hs, err = toHandlers(group.HTTPHandlers); err != nil {
-		return
-	}
-
-	group.G = grp.Group(group.HTTPPath, hs...)
+	group.G = grp.Group(group.HTTPPath, group.HTTPHandlers...)
 	return
 }
 
@@ -270,12 +265,7 @@ func (s *Service) initRoutes() (err error) {
 			fn = grp.GET
 		}
 
-		var hs []httpserve.Handler
-		if hs, err = toHandlers(r.HTTPHandlers); err != nil {
-			return
-		}
-
-		fn(r.HTTPPath, hs...)
+		fn(r.HTTPPath, r.HTTPHandlers...)
 	}
 
 	return
