@@ -20,6 +20,8 @@ const (
 	errInvalidXMLValueFmt      = "invalid XML value type, expected %T and received %T"
 )
 
+var exampleCommonHandler common.Handler = func(common.Context) *common.Response { return nil }
+
 // Load the action and config environment
 func setupRuntime() (cmd *flag.Command) {
 	// Setup logging
@@ -220,10 +222,21 @@ type listener interface {
 	Listen(port uint16) error
 }
 
-func toHandlers(cs []common.Handler) (hs []httpserve.Handler) {
+func toHandlers(cs []interface{}) (hs []httpserve.Handler, err error) {
 	hs = make([]httpserve.Handler, 0, len(cs))
 	for _, c := range cs {
-		fn := newHandler(c)
+		var fn httpserve.Handler
+		switch n := c.(type) {
+		case common.Handler:
+			fn = newHandler(n)
+		case httpserve.Handler:
+			fn = n
+
+		default:
+			err = fmt.Errorf("invalid handler type, expected %T or %T and received %T", fn, exampleCommonHandler, c)
+			return
+		}
+
 		hs = append(hs, fn)
 	}
 
