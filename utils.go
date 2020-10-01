@@ -264,7 +264,7 @@ func newHandler(c common.Handler) httpserve.Handler {
 		case "json":
 			return httpserve.NewJSONResponse(resp.StatusCode, resp.Value)
 		case "jsonp":
-			return httpserve.NewJSONResponse(resp.StatusCode, resp.Value)
+			return httpserve.NewJSONPResponse(resp.Callback, resp.Value)
 		case "text":
 			return textHandler(resp)
 		case "xml":
