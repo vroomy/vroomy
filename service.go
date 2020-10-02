@@ -483,6 +483,5 @@ func (s *Service) Close() (err error) {
 
 	var errs errors.ErrorList
 	errs.Push(s.Plugins.Close())
-	errs.Push(s.plog.Close())
 	return errs.Err()
 }
