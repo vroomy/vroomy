@@ -34,5 +34,7 @@ github.com/vroomy/config v0.0.29 h1:nSyP0gJn9QJ0slOxB32UL+WVzvejsl0rn54jl3ZBPQo=
 github.com/vroomy/config v0.0.29/go.mod h1:+c3hbV06/PtLH3wB87Z6kyAHg3bphTl6tFsIu0iB7X0=
 github.com/vroomy/httpserve v0.4.93 h1:gkFYuBegxCNP86Pdtj4Jsvdl4YgeMCZQC+Giz93j38Q=
 github.com/vroomy/httpserve v0.4.93/go.mod h1:NxZVeXBQi8hAQrBE4+yUx2J/KZcw588EepuJJhi3Zi8=
+github.com/vroomy/httpserve v0.4.94 h1:6wcGcQi2EvDdFPp8xHMEPzfhtQi64Z4gs5U7ys/IH5M=
+github.com/vroomy/httpserve v0.4.94/go.mod h1:NxZVeXBQi8hAQrBE4+yUx2J/KZcw588EepuJJhi3Zi8=
 github.com/vroomy/plugins v0.4.103 h1:icKG/yDraRT3dmh2A1cXOKx/4ufohalnGf0puNFMBQc=
 github.com/vroomy/plugins v0.4.103/go.mod h1:+9nXXAjynk3vaQWvvmjawRnvtYA52AU/tWrKasq/xwM=
