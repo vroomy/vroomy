@@ -249,7 +249,7 @@ func (s *Service) initRoutes() (err error) {
 			grp = match.G
 		}
 
-		var fn func(string, ...common.Handler)
+		var fn func(string, ...httpserve.Handler)
 		switch strings.ToLower(r.Method) {
 		case "put":
 			fn = grp.PUT
