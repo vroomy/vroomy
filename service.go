@@ -5,10 +5,12 @@ import (
 	"os"
 	"path"
 	"plugin"
+	"runtime/debug"
 	"strings"
 
 	"github.com/hatchify/atoms"
 	"github.com/hatchify/errors"
+	"github.com/hatchify/scribe"
 	"github.com/vroomy/common"
 	"github.com/vroomy/config"
 	"github.com/vroomy/httpserve"
@@ -28,13 +30,9 @@ const (
 func New(cfg *config.Config) (sp *Service, err error) {
 	var s Service
 	s.cfg = cfg
-
+	s.out = scribe.New("Vroomy")
 	if err = os.Chdir(s.cfg.Dir); err != nil {
 		err = fmt.Errorf("error changing directory: %v", err)
-		return
-	}
-
-	if s.plog, err = newPanicLog(); err != nil {
 		return
 	}
 
@@ -85,7 +83,8 @@ type Service struct {
 	srv     *httpserve.Serve
 	Plugins *plugins.Plugins
 
-	plog *panicLog
+	out *scribe.Scribe
+
 	// Closed state
 	closed atoms.Bool
 }
@@ -212,7 +211,7 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 
 func (s *Service) initRoutes() (err error) {
 	// Set panic func
-	s.srv.SetPanic(s.plog.Write)
+	s.srv.SetPanic(s.handlePanic)
 
 	filter, ok := s.cfg.Flags["require"]
 	for i, r := range s.cfg.Routes {
@@ -453,6 +452,10 @@ func (s *Service) listenHTTPS(errC chan error) {
 	errC <- s.srv.ListenTLS(s.cfg.TLSPort, s.cfg.TLSDir)
 }
 
+func (s *Service) handlePanic(v interface{}) {
+	s.out.Errorf("Panic caught:\n%v\n%s\n\n", v, string(debug.Stack()))
+}
+
 // Listen will listen to the configured port
 func (s *Service) Listen() (err error) {
 	// Initialize error channel
@@ -483,6 +486,5 @@ func (s *Service) Close() (err error) {
 
 	var errs errors.ErrorList
 	errs.Push(s.Plugins.Close())
-	errs.Push(s.plog.Close())
 	return errs.Err()
 }
