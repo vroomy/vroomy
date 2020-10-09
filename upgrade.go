@@ -4,9 +4,9 @@ import (
 	"os/user"
 	"path"
 
+	"github.com/gdbu/scribe"
 	gomu "github.com/gomuserver/mod-utils"
 	flag "github.com/hatchify/parg"
-	"github.com/hatchify/scribe"
 )
 
 var version = "undefined"

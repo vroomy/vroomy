@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/gdbu/scribe"
 	"github.com/hatchify/closer"
-	"github.com/hatchify/scribe"
 	"github.com/vroomy/config"
 )
 

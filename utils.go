@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gdbu/scribe"
 	flag "github.com/hatchify/parg"
-	"github.com/hatchify/scribe"
 	"github.com/vroomy/config"
 )
 

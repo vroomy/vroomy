@@ -8,9 +8,9 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/hatchify/atoms"
+	"github.com/gdbu/atoms"
+	"github.com/gdbu/scribe"
 	"github.com/hatchify/errors"
-	"github.com/hatchify/scribe"
 	"github.com/vroomy/common"
 	"github.com/vroomy/config"
 	"github.com/vroomy/httpserve"
