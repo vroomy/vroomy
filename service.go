@@ -183,7 +183,9 @@ func (s *Service) initGroups() (err error) {
 			}
 		}
 
-		s.initGroup(group)
+		if err = s.initGroup(group); err != nil {
+			return
+		}
 	}
 
 	return
@@ -191,6 +193,7 @@ func (s *Service) initGroups() (err error) {
 
 func (s *Service) initGroup(group *config.Group) (err error) {
 	if err = group.Init(s.Plugins); err != nil {
+		fmt.Println("Group init error", err)
 		return
 	}
 
@@ -199,11 +202,14 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 		grp   httpserve.Group = s.srv
 	)
 
+	fmt.Println("Group name", group.Group)
 	if match, err = s.cfg.GetGroup(group.Group); err != nil {
 		return
 	} else if match != nil {
 		grp = match.G
 	}
+
+	fmt.Printf("Match! %+v\n", match)
 
 	group.G = grp.Group(group.HTTPPath, group.HTTPHandlers...)
 	return
