@@ -204,7 +204,10 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 	if match, err = s.cfg.GetGroup(group.Group); err != nil {
 		return
 	} else if match != nil {
-		grp = match.G
+		if grp = match.G; grp == nil {
+			err = fmt.Errorf("parent group \"%s\" has not yet been initialized", match.Name)
+			return
+		}
 	}
 
 	group.G = grp.Group(group.HTTPPath, group.HTTPHandlers...)
