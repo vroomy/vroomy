@@ -198,7 +198,7 @@ func (s *Service) initGroup(group *config.Group) (err error) {
 
 	var (
 		match *config.Group
-		grp   httpserve.Group = s.srv
+		grp   common.Group = s.srv
 	)
 
 	if match, err = s.cfg.GetGroup(group.Group); err != nil {
@@ -240,7 +240,7 @@ func (s *Service) initRoutes() (err error) {
 
 		var (
 			match *config.Group
-			grp   httpserve.Group = s.srv
+			grp   common.Group = s.srv
 		)
 
 		if match, err = s.cfg.GetGroup(r.Group); err != nil {
@@ -253,7 +253,7 @@ func (s *Service) initRoutes() (err error) {
 			grp = match.G
 		}
 
-		var fn func(string, ...httpserve.Handler)
+		var fn func(string, ...common.Handler)
 		switch strings.ToLower(r.Method) {
 		case "put":
 			fn = grp.PUT
