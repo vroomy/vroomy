@@ -4,7 +4,6 @@ import (
 	"os/user"
 	"path"
 
-	"github.com/gdbu/scribe"
 	gomu "github.com/gomuserver/mod-utils"
 	flag "github.com/hatchify/parg"
 )
@@ -12,9 +11,7 @@ import (
 var version = "undefined"
 
 func printVersion(cmd *flag.Command) (err error) {
-	outW.SetTypePrefix(scribe.TypeNotification, "")
 	out.Notification(version)
-
 	return
 }
 

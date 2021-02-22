@@ -14,10 +14,7 @@ import (
 
 // Load the action and config environment
 func setupRuntime() (cmd *flag.Command) {
-	// Setup logging
-	outW = scribe.NewStdout()
-	outW.SetTypePrefix(scribe.TypeNotification, ":: vroomy :: ")
-	out = scribe.NewWithWriter(outW, "")
+	out = scribe.New("vroomy")
 
 	// Load config location
 	configLocation := os.Getenv("VROOMY_CONFIG")

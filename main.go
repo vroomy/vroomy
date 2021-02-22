@@ -15,8 +15,7 @@ var (
 
 	clsr *closer.Closer
 
-	out  *scribe.Scribe
-	outW *scribe.Stdout
+	out *scribe.Scribe
 )
 
 func main() {
