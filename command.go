@@ -9,8 +9,7 @@ import (
 )
 
 func commandFromArgs() (cmd *parg.Command, err error) {
-	var p *parg.Parg
-	p = parg.New()
+	p := parg.New()
 
 	p.AddHandler("", runService, "Runs vroomy server.\n  Accepts flags specified in config.toml.\n  Use `vroomy` or `vroomy -<flag>`")
 	p.AddHandler("test", test, "Tests the currently built plugins for compatibility.\n  Closes service upon successful execution.\n  Use `vroomy test`")
