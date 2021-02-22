@@ -247,7 +247,9 @@ func (s *Service) initRoutes() (err error) {
 			return
 		} else if match != nil {
 			if match.G == nil {
-				s.initGroup(match)
+				if err = s.initGroup(match); err != nil {
+					return
+				}
 			}
 
 			grp = match.G
