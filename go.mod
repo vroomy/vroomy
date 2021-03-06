@@ -11,6 +11,6 @@ require (
 	github.com/hatchify/parg v0.1.29
 	github.com/vroomy/common v0.5.2
 	github.com/vroomy/config v0.3.2
-	github.com/vroomy/httpserve v0.7.5
+	github.com/vroomy/httpserve v0.7.6
 	github.com/vroomy/plugins v0.4.104
 )
