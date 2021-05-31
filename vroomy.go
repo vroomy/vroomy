@@ -1,6 +1,7 @@
 package vroomy
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -380,15 +381,20 @@ func (v *Vroomy) handlePanic(in interface{}) {
 }
 
 // Listen will listen to the configured port
-func (v *Vroomy) Listen() (err error) {
+func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	// Initialize error channel
 	errC := make(chan error, 2)
 	// Listen to HTTP (if needed)
 	go v.listenHTTP(errC)
 	// Listen to HTTPS (if needed)
 	go v.listenHTTPS(errC)
-	// Return any error which may come down the error channel
-	return <-errC
+
+	select {
+	case err = <-errC:
+		return
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Port will return the current HTTP port
