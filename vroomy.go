@@ -240,7 +240,6 @@ func (v *Vroomy) initRoutes() (err error) {
 }
 
 func (v *Vroomy) initRoute(r *config.Route) (err error) {
-	fmt.Println("initing route", r)
 	for _, handlerKey := range r.Handlers {
 		var h common.Handler
 		if h, err = getHandler(handlerKey); err != nil {
