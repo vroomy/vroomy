@@ -329,7 +329,7 @@ func (v *Vroomy) loadPlugins(pluginList map[string]plugins.Plugin) (err error) {
 			return
 		}
 
-		v.out.Notificationf("Initialized %s", pluginKey)
+		v.out.Notificationf("Loaded %s", pluginKey)
 	}
 
 	return
