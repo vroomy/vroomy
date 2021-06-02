@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/gdbu/atoms"
 	"github.com/gdbu/scribe"
@@ -111,7 +112,7 @@ func (v *Vroomy) initPlugins(pluginList map[string]plugins.Plugin) (err error) {
 			return
 		}
 
-		v.out.Notificationf("Initialized %s", pluginKey)
+		v.out.Successf("Initialized %s", pluginKey)
 	}
 
 	return
@@ -329,7 +330,7 @@ func (v *Vroomy) loadPlugins(pluginList map[string]plugins.Plugin) (err error) {
 			return
 		}
 
-		v.out.Notificationf("Loaded %s", pluginKey)
+		v.out.Successf("Loaded %s", pluginKey)
 	}
 
 	return
@@ -388,6 +389,24 @@ func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	// Listen to HTTPS (if needed)
 	go v.listenHTTPS(errC)
 
+	timer := time.NewTimer(time.Millisecond * 100)
+
+	// Wait for one of the following:
+	// - Timer to end, which means we are listening succesfully
+	// - Error to come down error channel, which means an error occurred during listening
+	// - Context is finished, which means the caller no longer needing this action to continue
+	select {
+	case <-timer.C:
+		v.listenNotification()
+	case err = <-errC:
+		return
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	// Wait for one of the following:
+	// - Error to come down error channel, which means an error occurred during listening
+	// - Context is finished, which means the caller no longer needing this action to continue
 	select {
 	case err = <-errC:
 		return
@@ -415,4 +434,18 @@ func (v *Vroomy) Close() (err error) {
 	var errs errors.ErrorList
 	errs.Push(v.srv.Close())
 	return errs.Err()
+}
+
+func (v *Vroomy) listenNotification() {
+	var msg string
+	switch {
+	case v.TLSPort() > 0 && v.Port() > 0:
+		msg = fmt.Sprintf("Listening on ports %d (HTTPS) and %d (HTTP)", v.TLSPort(), v.Port())
+	case v.TLSPort() > 0:
+		msg = fmt.Sprintf("Listening on port %d (HTTPS)", v.TLSPort())
+	case v.Port() > 0:
+		msg = fmt.Sprintf("Listening on port %d (HTTP)", v.Port())
+	}
+
+	v.out.Success(msg)
 }
