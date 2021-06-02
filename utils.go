@@ -93,9 +93,8 @@ func getHandler(handlerKey string) (h common.Handler, err error) {
 		h = val
 		return
 
-	case func(args ...string) common.Handler:
-		h = val(args...)
-		return
+	case func(args ...string) (common.Handler, error):
+		return val(args...)
 
 	default:
 		err = fmt.Errorf("invalid handler type, expected common.Handler and received %T", val)
