@@ -8,6 +8,6 @@ require (
 	github.com/hatchify/errors v0.4.82
 	github.com/vroomy/common v0.5.2
 	github.com/vroomy/config v0.4.0
-	github.com/vroomy/httpserve v0.7.6
+	github.com/vroomy/httpserve v0.7.7
 	github.com/vroomy/plugins v0.6.2
 )
