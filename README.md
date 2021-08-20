@@ -3,7 +3,7 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-![billboard](https://github.com/vroomy/vroomy/blob/master/vroomy-billboard.png?raw=true "Vroomy billboard")
+![billboard](https://github.com/vroomy/vroomy/blob/main/vroomy-billboard.png?raw=true "Vroomy billboard")
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
@@ -14,7 +14,7 @@ Installing by compilation is very straight forward. The following dependencies a
 ### Fresh Install
 If you need to install vroomy use this method! (This installs vroomy, vpm, and all of their dependencies)
 ```bash
-curl -s https://raw.githubusercontent.com/vroomy/vroomy/master/bin/init | bash -s
+curl -s https://raw.githubusercontent.com/vroomy/vroomy/main/bin/init | bash -s
 ```
 
 ### Self Upgrade
