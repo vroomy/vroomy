@@ -65,12 +65,10 @@ func NewWithConfig(cfg *config.Config) (vp *Vroomy, err error) {
 	pluginList := plugins.Loaded()
 
 	if err = v.initPlugins(pluginList); err != nil {
-		err = fmt.Errorf("error loading plugins: %v", err)
 		return
 	}
 
 	if err = v.loadPlugins(pluginList); err != nil {
-		err = fmt.Errorf("error initializing plugins: %v", err)
 		return
 	}
 
@@ -109,6 +107,7 @@ func (v *Vroomy) initPlugins(pluginList map[string]plugins.Plugin) (err error) {
 	// Call Init(flags, env) for each initialized plugin
 	for pluginKey, plugin := range pluginList {
 		if err = plugin.Init(v.cfg.Environment); err != nil {
+			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
 			return
 		}
 
@@ -327,6 +326,7 @@ func (v *Vroomy) loadPlugins(pluginList map[string]plugins.Plugin) (err error) {
 	// Call Init(flags, env) for each initialized plugin
 	for pluginKey, plugin := range pluginList {
 		if err = plugin.Load(); err != nil {
+			err = fmt.Errorf("error initializing plugin <%s>: %v", pluginKey, err)
 			return
 		}
 
