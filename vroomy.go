@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/vroomy/common"
 	"github.com/vroomy/config"
 	"github.com/vroomy/httpserve"
-	"github.com/vroomy/plugins"
 )
 
 const (
@@ -24,6 +24,16 @@ const (
 	ErrInvalidPreInitFunc = errors.Error("unsupported header for Init func encountered")
 	// ErrInvalidLoadFunc is returned when an unsupported initialization function is encountered
 	ErrInvalidLoadFunc = errors.Error("unsupported header for Load func encountered")
+	// ErrNotAddressable is returned when a plugin is not addressable
+	ErrNotAddressable = errors.Error("provided backend must be addressable")
+	// ErrInvalidDir is returned when a directory is empty
+	ErrInvalidDir = errors.Error("invalid directory, cannot be empty")
+	// ErrPluginKeyExists is returned when a plugin cannot be added because it already exists
+	ErrPluginKeyExists = errors.Error("plugin cannot be added, key already exists")
+	// ErrPluginNotLoaded is returned when a plugin namespace is provided that has not been loaded
+	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
+	// ErrExpectedEndParen is returned when an ending parenthesis is missing
+	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
 )
 
 // New will return a new instance of service
@@ -62,13 +72,13 @@ func NewWithConfig(cfg *config.Config) (vp *Vroomy, err error) {
 	}
 
 	v.srv = httpserve.New()
-	pluginList := plugins.Loaded()
+	v.pm = p.Loaded()
 
-	if err = v.initPlugins(pluginList); err != nil {
+	if err = v.initPlugins(); err != nil {
 		return
 	}
 
-	if err = v.loadPlugins(pluginList); err != nil {
+	if err = v.loadPlugins(); err != nil {
 		return
 	}
 
@@ -99,13 +109,15 @@ type Vroomy struct {
 
 	out *scribe.Scribe
 
+	pm map[string]Plugin
+
 	// Closed state
 	closed atoms.Bool
 }
 
-func (v *Vroomy) initPlugins(pluginList map[string]plugins.Plugin) (err error) {
+func (v *Vroomy) initPlugins() (err error) {
 	// Call Init(flags, env) for each initialized plugin
-	for pluginKey, plugin := range pluginList {
+	for pluginKey, plugin := range v.pm {
 		if err = plugin.Init(v.cfg.Environment); err != nil {
 			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
 			return
@@ -322,16 +334,105 @@ func (v *Vroomy) initRouteExamples() (err error) {
 	return
 }
 
-func (v *Vroomy) loadPlugins(pluginList map[string]plugins.Plugin) (err error) {
-	// Call Init(flags, env) for each initialized plugin
-	for pluginKey, plugin := range pluginList {
-		if err = plugin.Load(); err != nil {
-			err = fmt.Errorf("error initializing plugin <%s>: %v", pluginKey, err)
+func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error) {
+	var pi Plugin
+	if pi, err = v.getPlugin(pluginKey); err != nil {
+		return
+	}
+
+	rval := reflect.ValueOf(pi)
+	if rval.Kind() == reflect.Ptr {
+		rval = rval.Elem()
+	}
+
+	for depKey, index := range dm {
+		field := rval.Field(index)
+		if field.CanAddr() {
+			field = field.Addr()
+		}
+
+		if err = v.setBackend(field, depKey); err != nil {
+			return
+		}
+	}
+
+	return pi.Load()
+}
+
+func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
+	var ok bool
+	if pi, ok = v.pm[key]; !ok {
+		err = fmt.Errorf("plugin with key of <%s> has not been registered", key)
+		return
+	}
+
+	return
+}
+
+func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
+	var pi Plugin
+	if pi, err = v.getPlugin(key); err != nil {
+		return
+	}
+
+	if reference = pi.Backend(); reference == nil {
+		// The provided value isn't an exact match, nor does it match the provided interface
+		err = fmt.Errorf("cannot call backend for plugin <%s>, provided value is nil", key)
+		return
+	}
+
+	return
+}
+
+func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
+	elem := backend.Elem()
+	if !elem.CanSet() {
+		return ErrNotAddressable
+	}
+
+	var reference interface{}
+	if reference, err = v.getReference(key); err != nil {
+		return
+	}
+
+	beVal := reflect.ValueOf(reference)
+	if err = canSet(elem, beVal); err != nil {
+		return
+	}
+
+	elem.Set(beVal)
+	return
+}
+
+func (v *Vroomy) loadPlugins() (err error) {
+	dms := makeDependenciesMap(v.pm)
+	if err = dms.Validate(); err != nil {
+		return
+	}
+
+	var count int
+	if err = dms.Load(func(pluginKey string, dm dependencyMap) (err error) {
+		if err = v.setDependencies(pluginKey, dm); err != nil {
+			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
 			return
 		}
 
-		v.out.Successf("Loaded %s", pluginKey)
+		count++
+		v.out.Successf("Loaded %s (%d/%d)", pluginKey, count, len(dms))
+		return
+	}); err != nil {
+		return
 	}
+
+	// Call Init(flags, env) for each initialized plugin
+	//for pluginKey, plugin := range pluginList {
+	//	if err = plugin.Load(); err != nil {
+	//		err = fmt.Errorf("error initializing plugin <%s>: %v", pluginKey, err)
+	//		return
+	//	}
+	//
+	//	v.out.Successf("Loaded %s", pluginKey)
+	//}
 
 	return
 }
@@ -448,4 +549,9 @@ func (v *Vroomy) listenNotification() {
 	}
 
 	v.out.Success(msg)
+}
+
+// Register will register a plugin with a given key
+func Register(key string, pi Plugin) error {
+	return p.Register(key, pi)
 }
