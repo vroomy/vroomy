@@ -6,14 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hatchify/errors"
 	"github.com/vroomy/common"
-	"github.com/vroomy/plugins"
-)
-
-const (
-	// ErrExpectedEndParen is returned when an ending parenthesis is missing
-	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
 )
 
 type listener interface {
@@ -75,12 +68,12 @@ func getHandler(handlerKey string) (h common.Handler, err error) {
 		return
 	}
 
-	var p plugins.Plugin
-	if p, err = plugins.Get(key); err != nil {
+	var plugin Plugin
+	if plugin, err = p.Get(key); err != nil {
 		return
 	}
 
-	reflected := reflect.ValueOf(p).MethodByName(handler)
+	reflected := reflect.ValueOf(plugin).MethodByName(handler)
 	if reflected.Kind() == reflect.Invalid {
 		err = fmt.Errorf("method of <%s> not found within plugin <%s>", handler, key)
 		return
@@ -100,4 +93,19 @@ func getHandler(handlerKey string) (h common.Handler, err error) {
 		err = fmt.Errorf("invalid handler type, expected common.Handler and received %T", val)
 		return
 	}
+}
+
+func canSet(a, b reflect.Value) (err error) {
+	switch {
+	// Check to see if the types match exactly
+	case a.Type() == b.Type():
+	// Check to see if the backend type implements the provided interface
+	case b.Type().Implements(a.Type()):
+
+	default:
+		// The provided value isn't an exact match, nor does it match the provided interface
+		return fmt.Errorf("invalid type, expected %v and received %v", a.Type(), b.Type())
+	}
+
+	return
 }
