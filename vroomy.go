@@ -356,7 +356,7 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 		}
 	}
 
-	return pi.Load()
+	return pi.Load(v.cfg.Environment)
 }
 
 func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
