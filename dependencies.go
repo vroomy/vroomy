@@ -82,6 +82,10 @@ func (d dependenciesMap) Load(fn func(pluginKey string, dm dependencyMap) error)
 	for len(loaded) < len(d) {
 		var passCount int
 		for key, dm := range d {
+			if loaded.Has(key) {
+				continue
+			}
+
 			if !dm.isReady(loaded) {
 				continue
 			}
