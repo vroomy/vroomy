@@ -125,7 +125,7 @@ func (d dependencyMap) validateRegistration(dm dependenciesMap) (err error) {
 }
 
 func (d dependencyMap) isReady(loaded stringset.Map) (isReady bool) {
-	for key := range loaded {
+	for key := range d {
 		if !loaded.Has(key) {
 			return false
 		}
