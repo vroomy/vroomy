@@ -4,11 +4,11 @@ var _ Plugin = &BasePlugin{}
 
 type BasePlugin struct{}
 
-func (b *BasePlugin) Init(env map[string]string) error {
+func (b *BasePlugin) Init(env Environment) error {
 	return nil
 }
 
-func (b *BasePlugin) Load(env map[string]string) error {
+func (b *BasePlugin) Load(env Environment) error {
 	return nil
 }
 
