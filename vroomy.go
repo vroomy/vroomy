@@ -72,6 +72,7 @@ func NewWithConfig(cfg *config.Config) (vp *Vroomy, err error) {
 	}
 
 	v.srv = httpserve.New()
+	v.srv.SetOnError(v.cfg.ErrorLogger)
 	v.pm = p.Loaded()
 
 	if err = v.initPlugins(); err != nil {
