@@ -100,7 +100,7 @@ func canSet(a, b reflect.Value) (err error) {
 	// Check to see if the types match exactly
 	case a.Type() == b.Type():
 	// Check to see if the backend type implements the provided interface
-	case b.Type().Implements(a.Type()):
+	case a.Kind() == reflect.Interface && b.Type().Implements(a.Type()):
 
 	default:
 		// The provided value isn't an exact match, nor does it match the provided interface
