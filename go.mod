@@ -10,5 +10,5 @@ require (
 	github.com/hatchify/errors v0.4.82
 	github.com/vroomy/common v0.6.0
 	github.com/vroomy/config v0.4.1
-	github.com/vroomy/httpserve v0.8.1
+	github.com/vroomy/httpserve v0.8.2
 )
