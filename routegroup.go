@@ -2,7 +2,7 @@ package vroomy
 
 import (
 	"github.com/hatchify/errors"
-	"github.com/vroomy/common"
+	"github.com/vroomy/httpserve"
 )
 
 const (
@@ -22,7 +22,7 @@ type RouteGroup struct {
 	// Plugin handlers
 	Handlers []string `toml:"handlers"`
 
-	HTTPHandlers []common.Handler `toml:"-"`
+	HTTPHandlers []httpserve.Handler `toml:"-"`
 
-	G common.Group `toml:"-"`
+	G httpserve.Group `toml:"-"`
 }

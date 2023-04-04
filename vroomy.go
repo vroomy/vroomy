@@ -12,7 +12,6 @@ import (
 	"github.com/gdbu/atoms"
 	"github.com/gdbu/scribe"
 	"github.com/hatchify/errors"
-	"github.com/vroomy/common"
 	"github.com/vroomy/httpserve"
 )
 
@@ -157,7 +156,7 @@ func (v *Vroomy) initGroups() (err error) {
 
 func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	for _, handlerKey := range g.Handlers {
-		var h common.Handler
+		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			return
 		}
@@ -167,7 +166,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 
 	var (
 		match *RouteGroup
-		grp   common.Group = v.srv
+		grp   httpserve.Group = v.srv
 	)
 
 	if match, err = v.cfg.GetRouteGroup(g.Group); err != nil {
@@ -210,7 +209,7 @@ func (v *Vroomy) initRoutes() (err error) {
 
 		var (
 			match *RouteGroup
-			grp   common.Group = v.srv
+			grp   httpserve.Group = v.srv
 		)
 
 		if match, err = v.cfg.GetRouteGroup(r.Group); err != nil {
@@ -225,7 +224,7 @@ func (v *Vroomy) initRoutes() (err error) {
 			grp = match.G
 		}
 
-		var fn func(string, ...common.Handler)
+		var fn func(string, ...httpserve.Handler) error
 		switch strings.ToLower(r.Method) {
 		case "put":
 			fn = grp.PUT
@@ -241,7 +240,9 @@ func (v *Vroomy) initRoutes() (err error) {
 			fn = grp.GET
 		}
 
-		fn(r.HTTPPath, r.HTTPHandlers...)
+		if err = fn(r.HTTPPath, r.HTTPHandlers...); err != nil {
+			return
+		}
 	}
 
 	return
@@ -249,7 +250,7 @@ func (v *Vroomy) initRoutes() (err error) {
 
 func (v *Vroomy) initRoute(r *Route) (err error) {
 	for _, handlerKey := range r.Handlers {
-		var h common.Handler
+		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			return
 		}

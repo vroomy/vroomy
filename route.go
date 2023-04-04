@@ -3,13 +3,13 @@ package vroomy
 import (
 	"fmt"
 
-	"github.com/vroomy/common"
+	"github.com/vroomy/httpserve"
 )
 
 // Route represents a listening route
 type Route struct {
 	// Target plug-in handler
-	HTTPHandlers []common.Handler `toml:"-"`
+	HTTPHandlers []httpserve.Handler `toml:"-"`
 
 	// Route name/description
 	Name string `toml:"name"`
