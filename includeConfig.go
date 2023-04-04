@@ -2,6 +2,9 @@ package vroomy
 
 // IncludeConfig will include routes
 type IncludeConfig struct {
+	AutoCertHosts []string `toml:"autoCertHosts"`
+	AutoCertDir   string   `toml:"autoCertDir"`
+
 	// Application environment
 	Environment map[string]string `toml:"env"`
 
@@ -37,4 +40,9 @@ func (i *IncludeConfig) merge(merge *IncludeConfig) {
 
 	i.Groups = append(i.Groups, merge.Groups...)
 	i.Routes = append(i.Routes, merge.Routes...)
+
+	if len(merge.AutoCertDir) > 0 {
+		i.AutoCertDir = merge.AutoCertDir
+		i.AutoCertHosts = merge.AutoCertHosts
+	}
 }
