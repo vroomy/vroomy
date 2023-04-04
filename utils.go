@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/vroomy/common"
+	"github.com/vroomy/httpserve"
 )
 
 type listener interface {
@@ -57,7 +57,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 	return
 }
 
-func getHandler(handlerKey string) (h common.Handler, err error) {
+func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	var (
 		key     string
 		handler string
@@ -82,15 +82,15 @@ func getHandler(handlerKey string) (h common.Handler, err error) {
 	toAssert := reflected.Interface()
 
 	switch val := toAssert.(type) {
-	case func(common.Context):
+	case func(*httpserve.Context):
 		h = val
 		return
 
-	case func(args ...string) (common.Handler, error):
+	case func(args ...string) (httpserve.Handler, error):
 		return val(args...)
 
 	default:
-		err = fmt.Errorf("invalid handler type, expected common.Handler and received %T", val)
+		err = fmt.Errorf("invalid handler type, expected Handler and received %T", val)
 		return
 	}
 }

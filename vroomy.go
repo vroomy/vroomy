@@ -12,8 +12,6 @@ import (
 	"github.com/gdbu/atoms"
 	"github.com/gdbu/scribe"
 	"github.com/hatchify/errors"
-	"github.com/vroomy/common"
-	"github.com/vroomy/config"
 	"github.com/vroomy/httpserve"
 )
 
@@ -34,12 +32,14 @@ const (
 	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
 	// ErrExpectedEndParen is returned when an ending parenthesis is missing
 	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
+	// ErrInvalidPluginHandler is returned when a plugin handler is not valid
+	ErrInvalidPluginHandler = errors.Error("plugin handler not valid")
 )
 
 // New will return a new instance of service
 func New(configLocation string) (sp *Vroomy, err error) {
-	var cfg *config.Config
-	if cfg, err = config.NewConfig(configLocation); err != nil {
+	var cfg *Config
+	if cfg, err = NewConfig(configLocation); err != nil {
 		return
 	}
 
@@ -52,7 +52,7 @@ func New(configLocation string) (sp *Vroomy, err error) {
 }
 
 // NewWithConfig will return a new instance of service with a provided config
-func NewWithConfig(cfg *config.Config) (vp *Vroomy, err error) {
+func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 	var v Vroomy
 	v.cfg = cfg
 	v.out = scribe.New("Vroomy")
@@ -93,19 +93,13 @@ func NewWithConfig(cfg *config.Config) (vp *Vroomy, err error) {
 		return
 	}
 
-	// TODO: Move this to docs/testing only?
-	if err = v.initRouteExamples(); err != nil {
-		err = fmt.Errorf("error initializing routes: %v", err)
-		return
-	}
-
 	vp = &v
 	return
 }
 
 // Vroomy manages the web service
 type Vroomy struct {
-	cfg *config.Config
+	cfg *Config
 	srv *httpserve.Serve
 
 	out *scribe.Scribe
@@ -152,7 +146,7 @@ func (v *Vroomy) initGroups() (err error) {
 		//	}
 		//}
 
-		if err = v.initGroup(group); err != nil {
+		if err = v.initRouteGroup(group); err != nil {
 			return
 		}
 	}
@@ -160,9 +154,9 @@ func (v *Vroomy) initGroups() (err error) {
 	return
 }
 
-func (v *Vroomy) initGroup(g *config.Group) (err error) {
+func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	for _, handlerKey := range g.Handlers {
-		var h common.Handler
+		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			return
 		}
@@ -171,11 +165,11 @@ func (v *Vroomy) initGroup(g *config.Group) (err error) {
 	}
 
 	var (
-		match *config.Group
-		grp   common.Group = v.srv
+		match *RouteGroup
+		grp   httpserve.Group = v.srv
 	)
 
-	if match, err = v.cfg.GetGroup(g.Group); err != nil {
+	if match, err = v.cfg.GetRouteGroup(g.Group); err != nil {
 		return
 	} else if match != nil {
 		if grp = match.G; grp == nil {
@@ -214,15 +208,15 @@ func (v *Vroomy) initRoutes() (err error) {
 		}
 
 		var (
-			match *config.Group
-			grp   common.Group = v.srv
+			match *RouteGroup
+			grp   httpserve.Group = v.srv
 		)
 
-		if match, err = v.cfg.GetGroup(r.Group); err != nil {
+		if match, err = v.cfg.GetRouteGroup(r.Group); err != nil {
 			return
 		} else if match != nil {
 			if match.G == nil {
-				if err = v.initGroup(match); err != nil {
+				if err = v.initRouteGroup(match); err != nil {
 					return
 				}
 			}
@@ -230,7 +224,7 @@ func (v *Vroomy) initRoutes() (err error) {
 			grp = match.G
 		}
 
-		var fn func(string, ...common.Handler)
+		var fn func(string, ...httpserve.Handler) error
 		switch strings.ToLower(r.Method) {
 		case "put":
 			fn = grp.PUT
@@ -246,15 +240,17 @@ func (v *Vroomy) initRoutes() (err error) {
 			fn = grp.GET
 		}
 
-		fn(r.HTTPPath, r.HTTPHandlers...)
+		if err = fn(r.HTTPPath, r.HTTPHandlers...); err != nil {
+			return
+		}
 	}
 
 	return
 }
 
-func (v *Vroomy) initRoute(r *config.Route) (err error) {
+func (v *Vroomy) initRoute(r *Route) (err error) {
 	for _, handlerKey := range r.Handlers {
-		var h common.Handler
+		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			return
 		}
@@ -270,66 +266,6 @@ func (v *Vroomy) initRoute(r *config.Route) (err error) {
 	if len(r.Target) == 0 {
 		// No target is set, bail out now
 		return
-	}
-
-	return
-}
-
-func (v *Vroomy) initRouteExamples() (err error) {
-	v.cfg.ExampleResponses = make(map[string]*config.Response)
-	var needsParentRes = []*config.Response{}
-	for _, res := range v.cfg.Responses {
-		v.cfg.ExampleResponses[res.Name] = res
-		if len(strings.TrimSpace(res.Parent)) > 0 {
-			needsParentRes = append(needsParentRes, res)
-		}
-	}
-
-	for _, res := range needsParentRes {
-		if _, ok := v.cfg.ExampleResponses[res.Parent]; ok {
-			res.InheritFrom(v.cfg.ExampleResponses)
-		} else {
-			v.out.Warningf("Unable to find parent (%s) for response: %s", res.Parent, res.Name)
-		}
-	}
-
-	v.cfg.ExampleRequests = make(map[string]*config.Request)
-	var needsParentReq = []*config.Request{}
-	for _, req := range v.cfg.Requests {
-		v.cfg.ExampleRequests[req.Name] = req
-
-		if len(req.Group) > 0 {
-			var g *config.Group
-			if g, err = v.cfg.GetGroup(req.Group); err != nil {
-				v.out.Warningf("Unable to find group (%s) for request: ", req.Name)
-			}
-
-			if g.Requests == nil {
-				g.Requests = make(map[string]*config.Request)
-			}
-
-			g.Requests[req.Name] = req
-		}
-
-		if len(strings.TrimSpace(req.Parent)) > 0 {
-			needsParentReq = append(needsParentReq, req)
-		}
-
-		for _, resName := range req.Responses {
-			if res, ok := v.cfg.ExampleResponses[resName]; ok {
-				req.ResponseExamples = append(req.ResponseExamples, res)
-			} else {
-				v.out.Warningf("Unable to find response (%s) for request: %s", resName, req.Name)
-			}
-		}
-	}
-
-	for _, req := range needsParentReq {
-		if _, ok := v.cfg.ExampleRequests[req.Parent]; ok {
-			req.InheritFrom(v.cfg.ExampleRequests)
-		} else {
-			v.out.Warningf("Unable to find parent (%s) for request: %s", req.Parent, req.Name)
-		}
 	}
 
 	return
