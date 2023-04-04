@@ -9,5 +9,5 @@ require (
 	github.com/gdbu/scribe v0.5.3
 	github.com/gdbu/stringset v0.1.7
 	github.com/hatchify/errors v0.4.82
-	github.com/vroomy/httpserve v0.9.0
+	github.com/vroomy/httpserve v0.10.0
 )
