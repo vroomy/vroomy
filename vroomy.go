@@ -158,6 +158,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	for _, handlerKey := range g.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
+			err = fmt.Errorf("initRouteGroup(): error getting handler for key of <%s>: %v", handlerKey, err)
 			return
 		}
 
@@ -252,6 +253,7 @@ func (v *Vroomy) initRoute(r *Route) (err error) {
 	for _, handlerKey := range r.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
+			err = fmt.Errorf("initRoute(): error getting handler for key of <%s>: %v", handlerKey, err)
 			return
 		}
 
@@ -404,14 +406,19 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 		return
 	}
 
-	if len(v.cfg.TLSDir) == 0 {
+	switch {
+	case v.cfg.hasTLSDir():
+		// Attempt to listen to HTTPS with the configured tls port and directory
+		errC <- v.srv.ListenTLS(v.cfg.TLSPort, v.cfg.TLSDir)
+	case v.cfg.hasAutoCert():
+		// Attempt to listen to HTTPS with the configured tls port and directory
+		errC <- v.srv.ListenAutoCertTLS(v.cfg.TLSPort, v.cfg.autoCertConfig())
+	default:
 		// Cannot serve TLS without a tls directory, send error down channel and return
 		errC <- ErrInvalidTLSDirectory
 		return
-	}
 
-	// Attempt to listen to HTTPS with the configured tls port and directory
-	errC <- v.srv.ListenTLS(v.cfg.TLSPort, v.cfg.TLSDir)
+	}
 }
 
 func (v *Vroomy) handlePanic(in interface{}) {

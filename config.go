@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/hatchify/errors"
+	"github.com/vroomy/httpserve"
 )
 
 const (
@@ -44,10 +45,14 @@ func NewConfig(loc string) (cfg *Config, err error) {
 type Config struct {
 	Name string `toml:"name"`
 
-	Dir     string `toml:"dir"`
-	Port    uint16 `toml:"port"`
+	Dir  string `toml:"dir"`
+	Port uint16 `toml:"port"`
+	// TLSPort to listen on. To use TLS one of the two must be set:
+	//	- TLSDir
+	//	- AutoCertHosts/AutoCertDir
 	TLSPort uint16 `toml:"tlsPort"`
-	TLSDir  string `toml:"tlsDir"`
+
+	TLSDir string `toml:"tlsDir"`
 
 	IncludeConfig
 
@@ -57,6 +62,22 @@ type Config struct {
 	PluginKeys []string
 
 	ErrorLogger func(error)
+}
+
+func (c *Config) hasTLSDir() (ok bool) {
+	return len(c.TLSDir) > 0
+}
+
+func (c *Config) hasAutoCert() (ok bool) {
+	switch {
+	case len(c.AutoCertDir) == 0:
+		return false
+	case len(c.AutoCertHosts) == 0:
+		return false
+
+	default:
+		return true
+	}
 }
 
 func (c *Config) loadIncludes() (err error) {
@@ -115,5 +136,11 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	}
 
 	err = ErrGroupNotFound
+	return
+}
+
+func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig) {
+	ac.DirCache = c.AutoCertDir
+	ac.Hosts = c.AutoCertHosts
 	return
 }
