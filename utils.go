@@ -109,3 +109,9 @@ func canSet(a, b reflect.Value) (err error) {
 
 	return
 }
+
+func copySlice[T any](in []T) (out []T) {
+	out = make([]T, len(in))
+	copy(out, in)
+	return
+}
