@@ -20,33 +20,68 @@ func Test_makeDependencyMap(t *testing.T) {
 		B B `vroomy:"b"`
 	}
 
+	type Foo struct {
+	}
+
+	type D struct {
+		C
+		Foo Foo `vroomy:"foo"`
+	}
+
+	type Offset struct {
+		Foo int
+		Bar string
+
+		Baz struct{} `vroomy:"baz"`
+		*C
+	}
+
 	type testcase struct {
 		val  interface{}
-		want map[string]int
+		want map[string][]int
 	}
 
 	var (
 		a A
 		b B
 		c C
+		d D
+
+		offset = Offset{C: &C{}}
 	)
 
 	tcs := []testcase{
 		{
 			val:  a,
-			want: map[string]int{},
+			want: map[string][]int{},
 		},
 		{
 			val: b,
-			want: map[string]int{
-				"a": 0,
+			want: map[string][]int{
+				"a": {0},
 			},
 		},
 		{
 			val: c,
-			want: map[string]int{
-				"a": 0,
-				"b": 1,
+			want: map[string][]int{
+				"a": {0},
+				"b": {1},
+			},
+		},
+		{
+			val: d,
+			want: map[string][]int{
+				"a":   {0, 0},
+				"b":   {0, 1},
+				"foo": {1},
+			},
+		},
+		{
+			val: offset,
+			want: map[string][]int{
+				"a":   {3, 0},
+				"b":   {3, 1},
+				"baz": {2},
 			},
 		},
 	}
@@ -156,7 +191,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			want: dependenciesMap{
 				"a": dependencyMap{},
 				"b": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 			},
 			wantErr: nil,
@@ -170,11 +205,11 @@ func Test_makeDependenciesMap(t *testing.T) {
 			want: dependenciesMap{
 				"a": dependencyMap{},
 				"b": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"c": dependencyMap{
-					"a": 1,
-					"b": 2,
+					"a": []int{1},
+					"b": []int{2},
 				},
 			},
 			wantErr: nil,
@@ -190,17 +225,17 @@ func Test_makeDependenciesMap(t *testing.T) {
 			want: dependenciesMap{
 				"a": dependencyMap{},
 				"b": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"c": dependencyMap{
-					"a": 1,
-					"b": 2,
+					"a": []int{1},
+					"b": []int{2},
 				},
 				"d": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"e": dependencyMap{
-					"c": 1,
+					"c": []int{1},
 				},
 			},
 			wantErr: nil,
@@ -217,20 +252,20 @@ func Test_makeDependenciesMap(t *testing.T) {
 			want: dependenciesMap{
 				"a": dependencyMap{},
 				"b": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"c": dependencyMap{
-					"a": 1,
-					"b": 2,
+					"a": []int{1},
+					"b": []int{2},
 				},
 				"d": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"e": dependencyMap{
-					"c": 1,
+					"c": []int{1},
 				},
 				"f": dependencyMap{
-					"g": 1,
+					"g": []int{1},
 				},
 			},
 			wantErr: errors.Error("dependency with key of <g> not found in dependencies map"),
@@ -248,23 +283,23 @@ func Test_makeDependenciesMap(t *testing.T) {
 			want: dependenciesMap{
 				"a": dependencyMap{},
 				"b": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"c": dependencyMap{
-					"a": 1,
-					"b": 2,
+					"a": []int{1},
+					"b": []int{2},
 				},
 				"d": dependencyMap{
-					"a": 1,
+					"a": []int{1},
 				},
 				"e": dependencyMap{
-					"c": 1,
+					"c": []int{1},
 				},
 				"f": dependencyMap{
-					"g": 1,
+					"g": []int{1},
 				},
 				"g": dependencyMap{
-					"f": 1,
+					"f": []int{1},
 				},
 			},
 			wantErr: makeErrorsList(
@@ -280,13 +315,13 @@ func Test_makeDependenciesMap(t *testing.T) {
 			},
 			want: dependenciesMap{
 				"h": dependencyMap{
-					"j": 1,
+					"j": []int{1},
 				},
 				"i": dependencyMap{
-					"h": 1,
+					"h": []int{1},
 				},
 				"j": dependencyMap{
-					"i": 1,
+					"i": []int{1},
 				},
 			},
 			wantErr: makeErrorsList(
@@ -382,7 +417,7 @@ func dependencyMapEqual(a, b dependencyMap) (equal bool) {
 	}
 
 	for k, v := range a {
-		if v != b[k] {
+		if !intSliceEqual(v, b[k]) {
 			return
 		}
 	}
@@ -401,5 +436,19 @@ func dependenciesMapEqual(a, b dependenciesMap) (equal bool) {
 		}
 	}
 
+	return true
+}
+
+func intSliceEqual(a, b []int) (equal bool) {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, aV := range a {
+		bV := b[i]
+		if aV != bV {
+			return false
+		}
+	}
 	return true
 }

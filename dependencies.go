@@ -16,14 +16,31 @@ func makeDependencyMap(val interface{}) (m dependencyMap) {
 
 	numFields := rtype.NumField()
 	m = make(dependencyMap, numFields)
+	appendDependencyMap(m, nil, rtype)
+	return
+}
+
+func appendDependencyMap(m dependencyMap, prefix []int, rtype reflect.Type) {
+	if rtype.Kind() == reflect.Pointer {
+		rtype = rtype.Elem()
+	}
+
+	numFields := rtype.NumField()
 	for i := 0; i < numFields; i++ {
 		field := rtype.Field(i)
 		fieldValue := field.Tag.Get("vroomy")
-		if fieldValue == "" {
+		switch {
+		case field.Anonymous:
+			copied := copySlice(prefix)
+			copied = append(copied, i)
+			appendDependencyMap(m, copied, field.Type)
+		case fieldValue == "":
 			continue
+		default:
+			copied := copySlice(prefix)
+			m[fieldValue] = append(copied, i)
 		}
 
-		m[fieldValue] = i
 	}
 
 	return
@@ -116,7 +133,7 @@ func (d dependenciesMap) validateDependency(key string, dm dependencyMap) (err e
 	return
 }
 
-type dependencyMap map[string]int
+type dependencyMap map[string][]int
 
 func (d dependencyMap) validateRegistration(dm dependenciesMap) (err error) {
 	for key := range d {
