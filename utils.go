@@ -115,3 +115,19 @@ func copySlice[T any](in []T) (out []T) {
 	copy(out, in)
 	return
 }
+
+func getField(rval reflect.Value, indices []int) (field reflect.Value) {
+	for _, index := range indices {
+		if rval.Kind() == reflect.Ptr {
+			rval = reflect.Indirect(rval.Elem())
+		}
+
+		rval = rval.Field(index)
+	}
+
+	if rval.CanAddr() {
+		rval = rval.Addr()
+	}
+
+	return rval
+}
