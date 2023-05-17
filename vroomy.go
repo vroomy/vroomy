@@ -284,12 +284,8 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 		rval = rval.Elem()
 	}
 
-	for depKey, index := range dm {
-		field := rval.Field(index)
-		if field.CanAddr() {
-			field = field.Addr()
-		}
-
+	for depKey, indices := range dm {
+		field := getField(rval, indices)
 		if err = v.setBackend(field, depKey); err != nil {
 			return
 		}

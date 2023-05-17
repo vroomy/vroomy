@@ -109,3 +109,25 @@ func canSet(a, b reflect.Value) (err error) {
 
 	return
 }
+
+func copySlice[T any](in []T) (out []T) {
+	out = make([]T, len(in))
+	copy(out, in)
+	return
+}
+
+func getField(rval reflect.Value, indices []int) (field reflect.Value) {
+	for _, index := range indices {
+		if rval.Kind() == reflect.Ptr {
+			rval = reflect.Indirect(rval.Elem())
+		}
+
+		rval = rval.Field(index)
+	}
+
+	if rval.CanAddr() {
+		rval = rval.Addr()
+	}
+
+	return rval
+}
