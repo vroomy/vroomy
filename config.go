@@ -2,9 +2,10 @@ package vroomy
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/hatchify/errors"
@@ -37,6 +38,7 @@ func NewConfig(loc string) (cfg *Config, err error) {
 		c.Environment = make(map[string]string)
 	}
 
+	c.populateFromOSEnv()
 	cfg = &c
 	return
 }
@@ -103,8 +105,8 @@ func (c *Config) loadInclude(include string) (err error) {
 		c.IncludeConfig.merge(&icfg)
 	} else {
 		// Attempt to parse directory
-		var files []os.FileInfo
-		if files, err = ioutil.ReadDir(include); err != nil {
+		var files []fs.DirEntry
+		if files, err = os.ReadDir(include); err != nil {
 			return fmt.Errorf("%s is not a .toml file or directory", include)
 		}
 
@@ -143,4 +145,21 @@ func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
 	return
+}
+
+func (c *Config) populateFromOSEnv() {
+	for _, kv := range os.Environ() {
+		spl := strings.Split(kv, "=")
+		if len(spl) < 2 {
+			continue
+		}
+
+		key := spl[0]
+		value := spl[1]
+		if _, ok := c.Environment[key]; ok {
+			continue
+		}
+
+		c.Environment[key] = value
+	}
 }

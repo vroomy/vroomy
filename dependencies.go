@@ -42,8 +42,6 @@ func appendDependencyMap(m dependencyMap, prefix []int, rtype reflect.Type) {
 		}
 
 	}
-
-	return
 }
 
 func makeDependenciesMap(ps map[string]Plugin) (dm dependenciesMap) {
