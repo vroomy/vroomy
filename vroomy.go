@@ -474,6 +474,12 @@ func (v *Vroomy) Close() (err error) {
 
 	var errs errors.ErrorList
 	errs.Push(v.srv.Close())
+	for key, p := range v.pm {
+		if err := p.Close(); err != nil {
+			err = fmt.Errorf("error closing <%s>: %v", key, err)
+			errs.Push(err)
+		}
+	}
 	return errs.Err()
 }
 
