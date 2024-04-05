@@ -31,8 +31,8 @@ type Plugins struct {
 
 // New will load a new plugin by plugin key
 // The following formats are accepted as keys:
-//	- path/to/file/plugin.so
-//	- github.com/username/repository/pluginDir
+//   - path/to/file/plugin.so
+//   - github.com/username/repository/pluginDir
 func (p *Plugins) Register(key string, pi Plugin) (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
