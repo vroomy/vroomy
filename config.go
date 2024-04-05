@@ -12,11 +12,14 @@ import (
 	"github.com/vroomy/httpserve"
 )
 
+// RouteFmt specifies expected route definition syntax
+const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
+
 const (
-	// RouteFmt specifies expected route definition syntax
-	routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 	// ErrProtectedFlag is returned when a protected flag is used
 	ErrProtectedFlag = errors.Error("cannot use protected flag")
+	// ErrInvalidHostPolicy is returned when the HostPolicy does not match the intended signature
+	ErrInvalidHostPolicy = errors.Error("invalid HostPolicy handler within the autocert plugin")
 )
 
 // NewConfig will return a new configuration
@@ -141,9 +144,10 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	return
 }
 
-func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig) {
+func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig, err error) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
+	ac.HostPolicy, err = getHostPolicy()
 	return
 }
 
