@@ -1,6 +1,7 @@
 package vroomy
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/hatchify/errors"
 	"github.com/vroomy/httpserve"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // RouteFmt specifies expected route definition syntax
@@ -147,7 +149,30 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig, err error) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
-	ac.HostPolicy, err = getHostPolicy()
+	ac.HostPolicy, err = c.getHostPolicy()
+	return
+}
+
+func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
+	var primary autocert.HostPolicy
+	if primary, err = getHostPolicy(); err != nil {
+		return
+	}
+
+	backup := autocert.HostWhitelist(c.AutoCertHosts...)
+	hp = func(ctx context.Context, host string) (err error) {
+		if err = primary(ctx, host); err == nil {
+			return
+		}
+
+		if err := backup(ctx, host); err == nil {
+			fmt.Printf("Config.getHostPolicy(): failing HostPolicy lookup of <%s>, matched with backup whitelist\n", host)
+			return nil
+		}
+
+		return
+	}
+
 	return
 }
 
