@@ -1,6 +1,7 @@
 package vroomy
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -168,7 +169,7 @@ func isUnregisteredPluginError(err error) bool {
 
 func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
 	var ok bool
-	hp, ok = fn.(autocert.HostPolicy)
+	hp, ok = fn.(func(ctx context.Context, host string) error)
 	if !ok {
 		err = ErrInvalidHostPolicy
 		return
