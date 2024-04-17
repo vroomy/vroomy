@@ -407,8 +407,13 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 		// Attempt to listen to HTTPS with the configured tls port and directory
 		errC <- v.srv.ListenTLS(v.cfg.TLSPort, v.cfg.TLSDir)
 	case v.cfg.hasAutoCert():
+		ac, err := v.cfg.autoCertConfig()
+		if err != nil {
+			errC <- err
+		}
+
 		// Attempt to listen to HTTPS with the configured tls port and directory
-		errC <- v.srv.ListenAutoCertTLS(v.cfg.TLSPort, v.cfg.autoCertConfig())
+		errC <- v.srv.ListenAutoCertTLS(v.cfg.TLSPort, ac)
 	default:
 		// Cannot serve TLS without a tls directory, send error down channel and return
 		errC <- ErrInvalidTLSDirectory

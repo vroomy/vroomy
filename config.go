@@ -1,6 +1,7 @@
 package vroomy
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -10,13 +11,17 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/hatchify/errors"
 	"github.com/vroomy/httpserve"
+	"golang.org/x/crypto/acme/autocert"
 )
 
+// RouteFmt specifies expected route definition syntax
+const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
+
 const (
-	// RouteFmt specifies expected route definition syntax
-	routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 	// ErrProtectedFlag is returned when a protected flag is used
 	ErrProtectedFlag = errors.Error("cannot use protected flag")
+	// ErrInvalidHostPolicy is returned when the HostPolicy does not match the intended signature
+	ErrInvalidHostPolicy = errors.Error("invalid HostPolicy handler within the autocert plugin")
 )
 
 // NewConfig will return a new configuration
@@ -141,9 +146,33 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	return
 }
 
-func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig) {
+func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig, err error) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
+	ac.HostPolicy, err = c.getHostPolicy()
+	return
+}
+
+func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
+	var primary autocert.HostPolicy
+	if primary, err = getHostPolicy(); err != nil {
+		return
+	}
+
+	backup := autocert.HostWhitelist(c.AutoCertHosts...)
+	hp = func(ctx context.Context, host string) (err error) {
+		if err = primary(ctx, host); err == nil {
+			return
+		}
+
+		if err := backup(ctx, host); err == nil {
+			fmt.Printf("Config.getHostPolicy(): failing HostPolicy lookup of <%s>, matched with backup whitelist\n", host)
+			return nil
+		}
+
+		return
+	}
+
 	return
 }
 

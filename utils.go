@@ -1,12 +1,14 @@
 package vroomy
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
 
 	"github.com/vroomy/httpserve"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type listener interface {
@@ -57,6 +59,35 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 	return
 }
 
+func getHostPolicy() (hp autocert.HostPolicy, err error) {
+	var method interface{}
+	method, err = getPluginMethod("autocert", "HostPolicy")
+	switch {
+	case err == nil:
+		return assertAsHostPolicy(method)
+	case isUnregisteredPluginError(err):
+		return nil, nil
+	default:
+		return
+	}
+}
+
+func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
+	var plugin Plugin
+	if plugin, err = p.Get(pluginKey); err != nil {
+		return
+	}
+
+	reflected := reflect.ValueOf(plugin).MethodByName(method)
+	if reflected.Kind() == reflect.Invalid {
+		err = fmt.Errorf("method of <%s> not found within plugin <%s>", method, pluginKey)
+		return
+	}
+
+	out = reflected.Interface()
+	return
+}
+
 func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	var (
 		key     string
@@ -68,18 +99,10 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 		return
 	}
 
-	var plugin Plugin
-	if plugin, err = p.Get(key); err != nil {
+	var toAssert interface{}
+	if toAssert, err = getPluginMethod(key, handler); err != nil {
 		return
 	}
-
-	reflected := reflect.ValueOf(plugin).MethodByName(handler)
-	if reflected.Kind() == reflect.Invalid {
-		err = fmt.Errorf("method of <%s> not found within plugin <%s>", handler, key)
-		return
-	}
-
-	toAssert := reflected.Interface()
 
 	switch val := toAssert.(type) {
 	case func(*httpserve.Context):
@@ -130,4 +153,27 @@ func getField(rval reflect.Value, indices []int) (field reflect.Value) {
 	}
 
 	return rval
+}
+
+func isUnregisteredPluginError(err error) bool {
+	str := err.Error()
+	switch {
+	case !strings.Contains(str, "plugin with key of <"):
+		return false
+	case !strings.Contains(str, "> has not been registered"):
+		return false
+	default:
+		return true
+	}
+}
+
+func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
+	var ok bool
+	hp, ok = fn.(func(ctx context.Context, host string) error)
+	if !ok {
+		err = ErrInvalidHostPolicy
+		return
+	}
+
+	return
 }
