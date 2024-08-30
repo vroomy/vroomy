@@ -59,7 +59,8 @@ type Config struct {
 	//	- AutoCertHosts/AutoCertDir
 	TLSPort uint16 `toml:"tlsPort"`
 
-	TLSDir string `toml:"tlsDir"`
+	TLSDir      string `toml:"tlsDir"`
+	AllowNonTLS bool   `toml:"allowNonTLS"`
 
 	IncludeConfig
 
