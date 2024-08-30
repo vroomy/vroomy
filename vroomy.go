@@ -373,7 +373,7 @@ func (v *Vroomy) loadPlugins() (err error) {
 }
 
 func (v *Vroomy) getHTTPListener() (l listener) {
-	if v.cfg.TLSPort > 0 {
+	if v.cfg.TLSPort > 0 && !v.cfg.AllowNonTLS {
 		// TLS port exists, return a new upgrader pointing to the configured tls port
 		return httpserve.NewUpgrader(v.cfg.TLSPort)
 	}
