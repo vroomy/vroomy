@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"reflect"
 	"runtime/debug"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gdbu/atoms"
@@ -461,6 +463,21 @@ func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	}
 }
 
+// Listen will listen to the configured port
+func (v *Vroomy) ListenUntilSignal(ctx context.Context) (err error) {
+	vctx, cancel := context.WithCancel(ctx)
+	go v.onClose(cancel)
+
+	if err = v.Listen(vctx); err == context.Canceled {
+		err = nil
+	}
+
+	var errs errors.ErrorList
+	errs.Push(err)
+	errs.Push(v.Close())
+	return errs.Err()
+}
+
 // Port will return the current HTTP port
 func (v *Vroomy) Port() uint16 {
 	return v.cfg.Port
@@ -500,6 +517,18 @@ func (v *Vroomy) listenNotification() {
 	}
 
 	v.out.Success(msg)
+}
+
+// listenForClose will listen for closing signals (interrupt, terminate, abort, quit) and call close
+func (v *Vroomy) onClose(fn func()) {
+	// sc represents the signal channel
+	sc := make(chan os.Signal, 1)
+	// Listen for signal notifications
+	// Discussion topic: Should we include SIGQUIT? If we catch the signal, we won't get to see the unwind
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT)
+	// Signal received
+	<-sc
+	fn()
 }
 
 // Register will register a plugin with a given key
