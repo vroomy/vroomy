@@ -7,21 +7,8 @@
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
-Installing by compilation is very straight forward. The following dependencies are required:
-- Go
-- GCC
-
-### Fresh Install
-If you need to install vroomy use this method! (This installs vroomy, vpm, and all of their dependencies)
-```bash
-curl -s https://raw.githubusercontent.com/vroomy/vroomy/main/bin/init | bash -s
-```
-
-### Self Upgrade
-If you already have vroomy installed, it can upgrade itself! (NOTE: this will attempt to self-sign vroomy on osx and support setcap for selinux. For more info, check the directions during install process)
-```bash
-vroomy upgrade && vpm upgrade
-```
+To add `vroomy` to your Go project, just call:
+`go get github.com/vroomy/vroomy` 
 
 ## Usage
 
