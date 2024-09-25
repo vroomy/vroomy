@@ -25,48 +25,199 @@ vroomy upgrade && vpm upgrade
 
 ## Usage
 
-### Test vroomy (run without http listen)
-```bash
-# Set custom config location (remember to revert if desired)
-vroomy test
+### Environment.Get
+```go
+func ExampleEnvironment_Get() {
+	val := exampleEnvironment.Get("foo")
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Start (with default config)
-```bash
-# With default config (./config.toml)
-vroomy
+### Environment.GetInt
+```go
+func ExampleEnvironment_GetInt() {
+	var (
+		val int
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetInt("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Start with custom config
-```bash
-# Set custom config location (remember to revert if desired)
-export VROOMY_CONFIG="custom.toml"
-vroomy
+### Environment.GetInt64
+```go
+func ExampleEnvironment_GetInt64() {
+	var (
+		val int64
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetInt64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Update plugins
-```bash
-vpm update
+### Environment.GetFloat64
+```go
+func ExampleEnvironment_GetFloat64() {
+	var (
+		val float64
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetFloat64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Update plugins with custom config
-```bash
-vpm update -config custom.toml
+### Environment.GetTime
+```go
+func ExampleEnvironment_GetTime() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetTime("foo", "2006-01-02"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Update plugins with branch/channel
-```bash
-vpm update -b staging
+### Environment.GetTimeInLocation
+```go
+func ExampleEnvironment_GetTimeInLocation() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Update filtered plugins
-```bash
-vpm update plugin1 plugin2
+### Environment.Must
+```go
+func ExampleEnvironment_Must() {
+	var (
+		val string
+		err error
+	)
+
+	if val, err = exampleEnvironment.Must("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
-### Update specific plugin at specific version
-```bash
-vpm update plugin1 -b v0.1.0
+### Environment.MustInt
+```go
+func ExampleEnvironment_MustInt() {
+	var (
+		val int
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustInt("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+```
+
+### Environment.MustInt64
+```go
+func ExampleEnvironment_MustInt64() {
+	var (
+		val int64
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustInt64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+```
+
+### Environment.MustFloat64
+```go
+func ExampleEnvironment_MustFloat64() {
+	var (
+		val float64
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustFloat64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+```
+
+### Environment.MustTime
+```go
+func ExampleEnvironment_MustTime() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustTime("foo", "2006-01-02"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+```
+
+### Environment.MustTimeInLocation
+```go
+func ExampleEnvironment_MustTimeInLocation() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
 ```
 
 ## Example configuration
