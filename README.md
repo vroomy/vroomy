@@ -7,21 +7,8 @@
 Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
 
 ## Installation
-Installing by compilation is very straight forward. The following dependencies are required:
-- Go
-- GCC
-
-### Fresh Install
-If you need to install vroomy use this method! (This installs vroomy, vpm, and all of their dependencies)
-```bash
-curl -s https://raw.githubusercontent.com/vroomy/vroomy/main/bin/init | bash -s
-```
-
-### Self Upgrade
-If you already have vroomy installed, it can upgrade itself! (NOTE: this will attempt to self-sign vroomy on osx and support setcap for selinux. For more info, check the directions during install process)
-```bash
-vroomy upgrade && vpm upgrade
-```
+To add `vroomy` to your Go project, just call:
+`go get github.com/vroomy/vroomy` 
 
 ## Usage
 
@@ -223,8 +210,11 @@ func ExampleEnvironment_MustTimeInLocation() {
 ## Example configuration
 ```toml
 port = 8080
-tlsPort = 10443 
+tlsPort = 10443
 tlsDir = "./tls"
+
+[env]
+fqdn = "https://myserver.org"
 
 [[route]]
 httpPath = "/"
@@ -240,31 +230,6 @@ target = "./public_html/css"
 ```
 
 *Note: Please see config.example.toml for a more in depth example*
-
-### Performance
-```bash
-# nginx
-$ wrk -c60 -d20s https://josh.usehatchapp.com
-Running 20s test @ https://josh.usehatchapp.com
-  2 threads and 60 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    17.66ms    1.59ms  30.31ms   88.20%
-    Req/Sec     1.68k   102.72     1.91k    85.43%
-  66500 requests in 20.01s, 7.44GB read
-Requests/sec:   3323.69
-Transfer/sec:    380.91MB
-
-# vroomy
-$ wrk -c60 -d20s https://josh.usehatchapp.com
-Running 20s test @ https://josh.usehatchapp.com
-  2 threads and 60 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    14.28ms    9.45ms  98.77ms   73.79%
-    Req/Sec     2.17k   304.46     3.03k    76.52%
-  86013 requests in 20.01s, 9.62GB read
-Requests/sec:   4297.88
-Transfer/sec:    492.22MB
-```
 
 ## Flags
 
