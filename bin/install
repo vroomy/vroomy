@@ -1,3 +1,0 @@
-#!/bin/bash
-
-go install -i -v -ldflags="-X main.version=$1" -trimpath || exit 1
