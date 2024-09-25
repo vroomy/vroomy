@@ -1,9 +1,12 @@
 package vroomy
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
+
+var exampleEnvironment Environment
 
 func TestEnvironment_Get(t *testing.T) {
 	type args struct {
@@ -747,4 +750,163 @@ func TestEnvironment_MustTimeInLocation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ExampleEnvironment_Get() {
+	val := exampleEnvironment.Get("foo")
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_GetInt() {
+	var (
+		val int
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetInt("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_GetInt64() {
+	var (
+		val int64
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetInt64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_GetFloat64() {
+	var (
+		val float64
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetFloat64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_GetTime() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetTime("foo", "2006-01-02"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_GetTimeInLocation() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.GetTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_Must() {
+	var (
+		val string
+		err error
+	)
+
+	if val, err = exampleEnvironment.Must("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_MustInt() {
+	var (
+		val int
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustInt("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_MustInt64() {
+	var (
+		val int64
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustInt64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_MustFloat64() {
+	var (
+		val float64
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustFloat64("foo"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_MustTime() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustTime("foo", "2006-01-02"); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
+}
+
+func ExampleEnvironment_MustTimeInLocation() {
+	var (
+		val time.Time
+		err error
+	)
+
+	if val, err = exampleEnvironment.MustTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
+		// Handle error here
+		return
+	}
+
+	fmt.Println("Value of foo is", val)
 }
