@@ -1,3 +1,0 @@
-#!/bin/bash
-
-codesign -f -s $1 $2
