@@ -1,18 +1,18 @@
 port = 8080
-tlsPort = 10443 
+tlsPort = 10443
 tlsDir = "./tls"
 
-plugins = [
-	"github.com/user/repo as csv",
-]
+[env]
+fqdn = "https://myserver.org"
 
-include = [
-	"./env.toml",
-	"./routes/api.toml",
+[[route]]
+httpPath = "/"
+target = "./public_html/index.html"
 
-]
+[[route]]
+httpPath = "/js/*"
+target = "./public_html/js"
 
-[[flag]]
-name = "seed"
-defaultValue = "false"
-usage = "Set to true when you want to re-seed the service"
+[[route]]
+httpPath = "/css/*"
+target = "./public_html/css"
