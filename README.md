@@ -10,6 +10,62 @@ Vroomy is a plugin-based server. Vroomy can be used for anything, from a static 
 To add `vroomy` to your Go project, just call:
 `go get github.com/vroomy/vroomy` 
 
+## Getting started
+### Example Configuration
+```toml
+port = 8080
+tlsPort = 10443
+tlsDir = "./tls"
+
+[env]
+fqdn = "https://myserver.org"
+
+[[route]]
+httpPath = "/"
+target = "./public_html/index.html"
+
+[[route]]
+httpPath = "/js/*"
+target = "./public_html/js"
+
+[[route]]
+httpPath = "/css/*"
+target = "./public_html/css"
+```
+
+*Note: Please see config.example.toml for a more in depth example*
+
+### Using the library
+Getting started with `vroomy` is quite easy! Call `vroomy.New` with the location of your configuration file. For a more in-depth explanation, please check out our [hello-world](https://github.com/vroomy/hello-world) repository.
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	"github.com/vroomy/vroomy"
+
+	_ "github.com/vroomy/hello-world/plugins/companies"
+)
+
+func main() {
+	var (
+		svc *vroomy.Vroomy
+		err error
+	)
+
+	if svc, err = vroomy.New("./config.toml"); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = svc.ListenUntilSignal(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
 ## Usage
 
 ### Environment.Get
@@ -206,30 +262,6 @@ func ExampleEnvironment_MustTimeInLocation() {
 	fmt.Println("Value of foo is", val)
 }
 ```
-
-## Example configuration
-```toml
-port = 8080
-tlsPort = 10443
-tlsDir = "./tls"
-
-[env]
-fqdn = "https://myserver.org"
-
-[[route]]
-httpPath = "/"
-target = "./public_html/index.html"
-
-[[route]]
-httpPath = "/js/*"
-target = "./public_html/js"
-
-[[route]]
-httpPath = "/css/*"
-target = "./public_html/css"
-```
-
-*Note: Please see config.example.toml for a more in depth example*
 
 ## Flags
 
