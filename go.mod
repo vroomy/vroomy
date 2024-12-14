@@ -9,7 +9,7 @@ require (
 	github.com/gdbu/scribe v0.5.3
 	github.com/gdbu/stringset v0.4.0
 	github.com/hatchify/errors v0.4.82
-	github.com/vroomy/httpserve v0.12.1
+	github.com/vroomy/httpserve v0.12.2
 	golang.org/x/crypto v0.26.0
 )
 
