@@ -69,7 +69,7 @@ type Config struct {
 	// Plugin keys as they are referenced by the plugins store
 	PluginKeys []string
 
-	ErrorLogger func(error)
+	ErrorLogger func(error) `toml:"-"`
 }
 
 func (c *Config) hasTLSDir() (ok bool) {
