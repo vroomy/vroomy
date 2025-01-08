@@ -68,11 +68,6 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 		return
 	}
 
-	if err = initDir("build"); err != nil {
-		err = fmt.Errorf("error initializing plugin build directory: %v", err)
-		return
-	}
-
 	v.srv = httpserve.New()
 	v.srv.SetOnError(v.cfg.ErrorLogger)
 	v.pm = p.Loaded()
