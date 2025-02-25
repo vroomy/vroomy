@@ -162,7 +162,7 @@ func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
 
 	backup := autocert.HostWhitelist(c.AutoCertHosts...)
 	if primary == nil {
-		backup = primary
+		primary = backup
 	}
 
 	hp = func(ctx context.Context, host string) (err error) {
