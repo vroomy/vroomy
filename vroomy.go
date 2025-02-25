@@ -407,6 +407,7 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 		ac, err := v.cfg.autoCertConfig()
 		if err != nil {
 			errC <- err
+			return
 		}
 
 		// Attempt to listen to HTTPS with the configured tls port and directory
