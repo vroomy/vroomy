@@ -10,13 +10,13 @@ require (
 	github.com/gdbu/stringset v0.4.0
 	github.com/hatchify/errors v0.4.82
 	github.com/vroomy/httpserve v0.12.2
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.35.0
 )
 
 require (
 	github.com/gdbu/reflectio v0.1.5 // indirect
 	github.com/hatchify/colors v0.4.79 // indirect
 	github.com/hatchify/cron v0.4.82 // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )
