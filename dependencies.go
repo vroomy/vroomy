@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/gdbu/errors"
 	"github.com/gdbu/stringset"
-	"github.com/hatchify/errors"
 )
 
 func makeDependencyMap(val interface{}) (m dependencyMap) {

@@ -1,7 +1,7 @@
 package vroomy
 
 import (
-	"github.com/hatchify/errors"
+	"github.com/gdbu/errors"
 	"github.com/vroomy/httpserve"
 )
 
