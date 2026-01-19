@@ -2,27 +2,25 @@ package vroomy
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/gdbu/queue"
-	"github.com/gdbu/scribe"
 
-	"github.com/hatchify/errors"
+	"github.com/gdbu/errors"
 )
 
 var p = newPlugins()
 
 func newPlugins() *Plugins {
 	var p Plugins
-	p.out = scribe.New("Plugins")
 	p.pm = make(map[string]Plugin)
 	return &p
 }
 
 // Plugins manages loaded plugins
 type Plugins struct {
-	mu  sync.RWMutex
-	out *scribe.Scribe
+	mu sync.RWMutex
 
 	pm map[string]Plugin
 
@@ -126,14 +124,14 @@ func (p *Plugins) Close() (err error) {
 	}
 
 	var errs errors.ErrorList
-	p.out.Notification("Closing plugins")
+	log.Println("Vroomy.Plugins: Closing plugins")
 	for key, pi := range p.pm {
 		if err = pi.Close(); err != nil {
 			errs.Push(fmt.Errorf("error closing %s: %v", key, err))
 			continue
 		}
 
-		p.out.Successf("Closed %s", key)
+		log.Printf("Vroomy.Plugins: Closed %s\n", key)
 	}
 
 	p.closed = true

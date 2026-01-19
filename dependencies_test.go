@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/hatchify/errors"
+	"github.com/gdbu/errors"
 )
 
 func Test_makeDependencyMap(t *testing.T) {

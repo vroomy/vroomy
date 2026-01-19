@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/hatchify/errors"
+	"github.com/gdbu/errors"
 	"github.com/vroomy/httpserve"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -54,6 +54,7 @@ type Config struct {
 
 	Dir  string `toml:"dir"`
 	Port uint16 `toml:"port"`
+
 	// TLSPort to listen on. To use TLS one of the two must be set:
 	//	- TLSDir
 	//	- AutoCertHosts/AutoCertDir
@@ -66,10 +67,20 @@ type Config struct {
 
 	Flags map[string]string `toml:"-"`
 
-	// Plugin keys as they are referenced by the plugins store
-	PluginKeys []string
+	// Plugins to import
+	Plugins []string `toml:"plugins"`
 
 	ErrorLogger func(error) `toml:"-"`
+}
+
+func (c *Config) GetFilepath() (filepath string) {
+	dir := "."
+	configPathEnv, configPathEnvPresent := os.LookupEnv("CONFIG_PATH")
+	if configPathEnvPresent {
+		dir = configPathEnv
+	}
+
+	return path.Join(dir, "config.toml")
 }
 
 func (c *Config) hasTLSDir() (ok bool) {

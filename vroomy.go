@@ -3,6 +3,7 @@ package vroomy
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"reflect"
@@ -12,8 +13,7 @@ import (
 	"time"
 
 	"github.com/gdbu/atoms"
-	"github.com/gdbu/scribe"
-	"github.com/hatchify/errors"
+	"github.com/gdbu/errors"
 	"github.com/vroomy/httpserve"
 )
 
@@ -57,7 +57,6 @@ func New(configLocation string) (sp *Vroomy, err error) {
 func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 	var v Vroomy
 	v.cfg = cfg
-	v.out = scribe.New("Vroomy")
 	if err = os.Chdir(v.cfg.Dir); err != nil {
 		err = fmt.Errorf("error changing directory: %v", err)
 		return
@@ -99,8 +98,6 @@ type Vroomy struct {
 	cfg *Config
 	srv *httpserve.Serve
 
-	out *scribe.Scribe
-
 	pm map[string]Plugin
 
 	// Closed state
@@ -115,7 +112,7 @@ func (v *Vroomy) initPlugins() (err error) {
 			return
 		}
 
-		v.out.Successf("Initialized %s", pluginKey)
+		log.Printf("Vroomy: Initialized %s\n", pluginKey)
 	}
 
 	return
@@ -350,7 +347,7 @@ func (v *Vroomy) loadPlugins() (err error) {
 		}
 
 		count++
-		v.out.Successf("Loaded %s (%d/%d)", pluginKey, count, len(dms))
+		log.Printf("Vroomy: Loaded %s (%d/%d)\n", pluginKey, count, len(dms))
 		return
 	}); err != nil {
 		return
@@ -421,7 +418,7 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 }
 
 func (v *Vroomy) handlePanic(in interface{}) {
-	v.out.Errorf("Panic caught:\n%v\n%s\n\n", in, string(debug.Stack()))
+	log.Printf("Vroomy: Panic caught:\n%v\n%s\n\n", in, string(debug.Stack()))
 }
 
 // Listen will listen to the configured port
@@ -512,7 +509,7 @@ func (v *Vroomy) listenNotification() {
 		msg = fmt.Sprintf("Listening on port %d (HTTP)", v.Port())
 	}
 
-	v.out.Success(msg)
+	log.Printf("Vroomy: %v", msg)
 }
 
 // listenForClose will listen for closing signals (interrupt, terminate, abort, quit) and call close
