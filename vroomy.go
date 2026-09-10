@@ -340,6 +340,7 @@ func (v *Vroomy) loadPlugins() (err error) {
 	}
 
 	var count int
+
 	if err = dms.Load(func(pluginKey string, dm dependencyMap) (err error) {
 		if err = v.setDependencies(pluginKey, dm); err != nil {
 			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
