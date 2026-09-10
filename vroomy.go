@@ -18,27 +18,30 @@ import (
 )
 
 const (
-	// ErrInvalidTLSDirectory is returned when a tls directory is unset when the tls port has been set
+	// ErrInvalidTLSDirectory is returned by Listen when TLS is enabled without
+	// TLSDir or both AutoCertDir and AutoCertHosts.
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
-	// ErrInvalidPreInitFunc is returned when an unsupported pre initialization function is encountered
+	// ErrInvalidPreInitFunc is a legacy sentinel; lifecycle signatures are now
+	// enforced by the Plugin interface, and the current code does not return it.
 	ErrInvalidPreInitFunc = errors.Error("unsupported header for Init func encountered")
-	// ErrInvalidLoadFunc is returned when an unsupported initialization function is encountered
+	// ErrInvalidLoadFunc is a legacy sentinel not returned by the current code.
 	ErrInvalidLoadFunc = errors.Error("unsupported header for Load func encountered")
-	// ErrNotAddressable is returned when a plugin is not addressable
+	// ErrNotAddressable is returned when a dependency destination cannot be set.
 	ErrNotAddressable = errors.Error("provided backend must be addressable")
-	// ErrInvalidDir is returned when a directory is empty
+	// ErrInvalidDir is a legacy sentinel not returned by the current code.
 	ErrInvalidDir = errors.Error("invalid directory, cannot be empty")
-	// ErrPluginKeyExists is returned when a plugin cannot be added because it already exists
+	// ErrPluginKeyExists is a legacy sentinel; duplicate keys return a formatted error.
 	ErrPluginKeyExists = errors.Error("plugin cannot be added, key already exists")
-	// ErrPluginNotLoaded is returned when a plugin namespace is provided that has not been loaded
+	// ErrPluginNotLoaded is a legacy sentinel; missing plugins return formatted errors.
 	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
 	// ErrExpectedEndParen is returned when an ending parenthesis is missing
 	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
-	// ErrInvalidPluginHandler is returned when a plugin handler is not valid
+	// ErrInvalidPluginHandler is a legacy sentinel; invalid signatures return formatted errors.
 	ErrInvalidPluginHandler = errors.Error("plugin handler not valid")
 )
 
-// New will return a new instance of service
+// New loads a configuration file, defaults a missing dataDir environment key to
+// "data", and constructs the service with NewWithConfig. It does not start listeners.
 func New(configLocation string) (sp *Vroomy, err error) {
 	var cfg *Config
 	if cfg, err = NewConfig(configLocation); err != nil {
@@ -53,7 +56,9 @@ func New(configLocation string) (sp *Vroomy, err error) {
 	return NewWithConfig(cfg)
 }
 
-// NewWithConfig will return a new instance of service with a provided config
+// NewWithConfig changes the process working directory to cfg.Dir, initializes
+// registered plugins and dependencies, and creates routes. It retains and mutates
+// cfg without loading includes or supplying defaults. Listeners start in Listen.
 func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 	var v Vroomy
 	v.cfg = cfg
@@ -105,7 +110,7 @@ type Vroomy struct {
 }
 
 func (v *Vroomy) initPlugins() (err error) {
-	// Call Init(flags, env) for each initialized plugin
+	// Call Init(env) for each registered plugin before dependency injection.
 	for pluginKey, plugin := range v.pm {
 		if err = plugin.Init(v.cfg.Environment); err != nil {
 			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
@@ -422,7 +427,8 @@ func (v *Vroomy) handlePanic(in interface{}) {
 	log.Printf("Vroomy: Panic caught:\n%v\n%s\n\n", in, string(debug.Stack()))
 }
 
-// Listen will listen to the configured port
+// Listen starts the configured HTTP/HTTPS listeners and blocks until a listener
+// returns or ctx ends. Cancellation returns ctx.Err() without closing the service.
 func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	// Initialize error channel
 	errC := make(chan error, 2)
@@ -457,7 +463,9 @@ func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	}
 }
 
-// Listen will listen to the configured port
+// ListenUntilSignal cancels listening on SIGINT, SIGTERM, or SIGABRT, then closes
+// the service. It also closes when ctx ends or a listener returns, and suppresses
+// context.Canceled while preserving other listen and close errors.
 func (v *Vroomy) ListenUntilSignal(ctx context.Context) (err error) {
 	vctx, cancel := context.WithCancel(ctx)
 	go v.onClose(cancel)
@@ -482,7 +490,9 @@ func (v *Vroomy) TLSPort() uint16 {
 	return v.cfg.TLSPort
 }
 
-// Close will close the selected service
+// Close closes the service's HTTP server and plugins in unspecified order.
+// Repeated calls return errors.ErrIsClosed. The separate HTTPS redirect listener
+// is not retained by the service and is not closed here.
 func (v *Vroomy) Close() (err error) {
 	if !v.closed.Set(true) {
 		return errors.ErrIsClosed
@@ -513,7 +523,7 @@ func (v *Vroomy) listenNotification() {
 	log.Printf("Vroomy: %v", msg)
 }
 
-// listenForClose will listen for closing signals (interrupt, terminate, abort, quit) and call close
+// onClose waits for SIGINT, SIGTERM, or SIGABRT and invokes fn.
 func (v *Vroomy) onClose(fn func()) {
 	// sc represents the signal channel
 	sc := make(chan os.Signal, 1)
@@ -525,7 +535,8 @@ func (v *Vroomy) onClose(fn func()) {
 	fn()
 }
 
-// Register will register a plugin with a given key
+// Register adds a plugin to the process-wide registry under a unique key.
+// Register non-nil pointers to structs before constructing a service.
 func Register(key string, pi Plugin) error {
 	return p.Register(key, pi)
 }

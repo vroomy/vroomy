@@ -18,7 +18,8 @@ func newPlugins() *Plugins {
 	return &p
 }
 
-// Plugins manages loaded plugins
+// Plugins manages a plugin registry. Services use the package-level registry via
+// Register; the zero value is not ready for registration.
 type Plugins struct {
 	mu sync.RWMutex
 
@@ -27,7 +28,7 @@ type Plugins struct {
 	closed bool
 }
 
-// New will load a new plugin by key
+// Register records a plugin under a unique key without initializing it.
 func (p *Plugins) Register(key string, pi Plugin) (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -45,7 +46,7 @@ func (p *Plugins) Register(key string, pi Plugin) (err error) {
 	return
 }
 
-// Get will get a plugin by it's key
+// Get returns a plugin by its registration key.
 func (p *Plugins) Get(key string) (pi Plugin, err error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -64,6 +65,7 @@ func (p *Plugins) Get(key string) (pi Plugin, err error) {
 	return
 }
 
+// Loaded returns a copy of the registry map, sharing the same plugin instances.
 func (p *Plugins) Loaded() (pm map[string]Plugin) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
@@ -75,7 +77,7 @@ func (p *Plugins) Loaded() (pm map[string]Plugin) {
 	return
 }
 
-// Test will test all of the plugins
+// Test is unimplemented and always returns an error. Use go test for repository tests.
 func (p *Plugins) Test() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -91,7 +93,7 @@ func (p *Plugins) Test() (err error) {
 
 }
 
-// TestAsync will test all of the plugins asynchronously
+// TestAsync is unimplemented and always returns an error; q is not used.
 func (p *Plugins) TestAsync(q *queue.Queue) (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -115,7 +117,7 @@ func (p *Plugins) TestAsync(q *queue.Queue) (err error) {
 	return errors.Error("testing has not yet been implemented")
 }
 
-// Close will close plugins
+// Close closes registered plugins in unspecified order and marks the registry closed.
 func (p *Plugins) Close() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

@@ -1,6 +1,6 @@
 package vroomy
 
-// IncludeConfig will include routes
+// IncludeConfig contains the configuration fields accepted in included TOML files.
 type IncludeConfig struct {
 	AutoCertHosts []string `toml:"autoCertHosts"`
 	AutoCertDir   string   `toml:"autoCertDir"`
@@ -8,13 +8,15 @@ type IncludeConfig struct {
 	// Application environment
 	Environment map[string]string `toml:"env"`
 
-	// Allow included files to add includes
+	// Include lists paths to load. Entries merged from included files are appended
+	// but are not traversed by the current loadIncludes pass.
 	Include []string `toml:"include"`
 
-	// Specify which plugins are in scope
+	// Plugins stores included plugin entries; it does not populate the outer
+	// Config.Plugins field or limit which registered plugins run.
 	Plugins []string `toml:"plugins"`
 
-	// Flags are the dynamic flags specified in config
+	// FlagEntries stores legacy flag declarations; no flag parser consumes them.
 	FlagEntries []*Flag `toml:"flag"`
 
 	// Groups are the route groups
