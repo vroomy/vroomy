@@ -3,3 +3,4 @@ example_app/
 public_html/
 config.toml
 vroomie
+/data/
