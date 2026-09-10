@@ -110,6 +110,9 @@ file loader's defaults; set `Dir` explicitly.
   and dependency injection with complete code examples.
 - [Development guide](docs/development.md): source map, checks, test coverage,
   and known implementation gaps.
+- [Agent instructions](AGENTS.md): repository workflow and constraints for coding agents.
+- [Go style guide](STYLEGUIDE.md): code organization, declarations, returns, errors,
+  documentation, and tests.
 
 The current runtime does **not** serve files from a route's `target` field. Provide
 a handler instead. Legacy `-dataDir` / `-d` flags are not implemented; configure

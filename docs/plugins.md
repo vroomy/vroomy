@@ -74,7 +74,9 @@ handlers.
 
 The library may be a package in the same module or a separate module. Small handlers
 and special cases can keep logic in the plugin when that is clearer; this pattern
-does not require a new library for every trivial operation.
+does not require a new library for every trivial operation. See the
+[style guide](../STYLEGUIDE.md#plugin-and-library-responsibilities) for the shared
+guidance.
 
 ## Interface and lifecycle
 

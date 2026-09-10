@@ -1,6 +1,8 @@
 # Developing Vroomy
 
-Read [README.md](../README.md) for the runnable example. Documentation describes the
+Read [AGENTS.md](../AGENTS.md) for repository-wide agent instructions,
+[STYLEGUIDE.md](../STYLEGUIDE.md) for coding conventions and adoption scope, and
+[README.md](../README.md) for the runnable example. Documentation describes the
 source in this checkout.
 
 ## Setup and checks
