@@ -105,6 +105,8 @@ func (d dependenciesMap) Load(fn func(pluginKey string, dm dependencyMap) error)
 				continue
 			}
 
+			fmt.Println("Loading", key)
+
 			if err = fn(key, dm); err != nil {
 				return
 			}

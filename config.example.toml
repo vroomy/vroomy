@@ -1,18 +1,36 @@
+# Run from the repository root: go run ./examples/hello config.example.toml
+# main imports examples/hello/plugins; hello.go registers "hello" from init().
+# Full reference: docs/configuration.md
+dir = "."
 port = 8080
-tlsPort = 10443
-tlsDir = "./tls"
+
+# TLS is optional. Supply certificate pairs before enabling it.
+# tlsPort = 10443
+# tlsDir = "./tls"
+# allowNonTLS = false
+
+# Includes are read relative to the process working directory before dir is applied.
+# include = ["./config.d"]
+
+# Plugin packages must be imported by main; this metadata does not load them.
+# plugins = ["example.com/myapp/plugins"]
 
 [env]
-fqdn = "https://myserver.org"
+dataDir = "./data"
 
 [[route]]
+name = "Ping"
+method = "GET"
 httpPath = "/"
-target = "./public_html/index.html"
+handlers = ["hello.Ping"]
+
+[[group]]
+name = "api"
+httpPath = "/api"
 
 [[route]]
-httpPath = "/js/*"
-target = "./public_html/js"
-
-[[route]]
-httpPath = "/css/*"
-target = "./public_html/css"
+name = "Grouped ping"
+group = "api"
+method = "GET"
+httpPath = "/ping"
+handlers = ["hello.Ping"]

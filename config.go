@@ -14,17 +14,19 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-// RouteFmt specifies expected route definition syntax
+// routeFmt formats a route for display.
 const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 
 const (
-	// ErrProtectedFlag is returned when a protected flag is used
+	// ErrProtectedFlag is a legacy sentinel; the current code does not return it.
 	ErrProtectedFlag = errors.Error("cannot use protected flag")
 	// ErrInvalidHostPolicy is returned when the HostPolicy does not match the intended signature
 	ErrInvalidHostPolicy = errors.Error("invalid HostPolicy handler within the autocert plugin")
 )
 
-// NewConfig will return a new configuration
+// NewConfig decodes loc and its includes, defaults Dir to "./", and adds process
+// environment entries whose keys are absent from the configured environment.
+// File paths are relative to the current working directory, not loc's directory.
 func NewConfig(loc string) (cfg *Config, err error) {
 	var c Config
 	if _, err = toml.DecodeFile(loc, &c); err != nil {
@@ -48,7 +50,7 @@ func NewConfig(loc string) (cfg *Config, err error) {
 	return
 }
 
-// Config is the configuration needed to initialize a new instance of Service
+// Config configures a Vroomy service. NewWithConfig retains and mutates this value.
 type Config struct {
 	Name string `toml:"name"`
 
@@ -65,14 +67,20 @@ type Config struct {
 
 	IncludeConfig
 
+	// Flags is a legacy field with no active runtime consumer.
 	Flags map[string]string `toml:"-"`
 
-	// Plugins to import
+	// Plugins stores import-path metadata with no active runtime consumer.
+	// It is separate from IncludeConfig.Plugins and does not filter the registry.
 	Plugins []string `toml:"plugins"`
 
+	// ErrorLogger receives httpserve request errors; initialization/listen errors
+	// are returned to the caller instead.
 	ErrorLogger func(error) `toml:"-"`
 }
 
+// GetFilepath returns config.toml within the CONFIG_PATH process environment
+// directory, or the current directory if CONFIG_PATH is unset. It does not use c.
 func (c *Config) GetFilepath() (filepath string) {
 	dir := "."
 	configPathEnv, configPathEnvPresent := os.LookupEnv("CONFIG_PATH")
@@ -138,7 +146,8 @@ func (c *Config) loadInclude(include string) (err error) {
 	return
 }
 
-// GetGroup will return group with name
+// GetRouteGroup returns the first group matching name, or ErrGroupNotFound.
+// An empty name returns nil, nil to select the root group.
 func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	if len(name) == 0 {
 		return

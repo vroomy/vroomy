@@ -6,18 +6,20 @@ func NewResponse(statusCode int, contentType string, value interface{}) *Respons
 	return &r
 }
 
-// NewAdopedtResponse will return a new adopted Response
+// NewAdopedtResponse returns a Response with Adopted set to true.
+// The exported name retains its historical spelling.
 func NewAdopedtResponse() *Response {
 	return &Response{Adopted: true}
 }
 
-// Response determines how the server will respond
+// Response holds legacy response metadata. The current plugin handler resolver
+// does not consume it; handlers write through httpserve.Context instead.
 type Response struct {
 	StatusCode  int
 	ContentType string
 	Value       interface{}
 
-	// Optional fields used by a minority of responses
+	// Legacy adoption and callback metadata.
 	Adopted  bool
 	Callback string
 }

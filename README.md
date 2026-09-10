@@ -1,275 +1,133 @@
 # Vroomy
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-![billboard](https://github.com/vroomy/vroomy/blob/main/vroomy-billboard.png?raw=true "Vroomy billboard")
-Vroomy is a plugin-based server. Vroomy can be used for anything, from a static file server to a full-blown back-end service!
+![Vroomy billboard](vroomy-billboard.png)
 
-## Installation
-To add `vroomy` to your Go project, just call:
-`go get github.com/vroomy/vroomy` 
+Vroomy is a Go library for building HTTP/HTTPS services from registered plugins.
+Plugins provide request handlers and shared backends; TOML config defines routes,
+groups, environment values, and listeners. Plugins are compiled into your application.
 
-## Getting started
-### Example Configuration
+## Quickstart
+
+Use Go **1.25.0 or newer** (see [go.mod](go.mod)). From a checkout of this repository:
+
+```sh
+go mod download
+go run ./examples/hello config.example.toml
+```
+
+In another terminal:
+
+```sh
+curl --fail http://localhost:8080/
+curl --fail http://localhost:8080/api/ping
+```
+
+Both return `PONG` followed by a newline. Stop the server with Ctrl-C. The example
+creates `./data`; copy the config and change `port` if 8080 is already in use.
+
+The example keeps each plugin in its own file under the application's `plugins`
+directory:
+
+```text
+examples/hello/
+├── main.go
+└── plugins/
+    └── hello.go
+```
+
+[main.go](examples/hello/main.go) blank-imports the `plugins` package, which runs
+the `init()` function in [plugins/hello.go](examples/hello/plugins/hello.go). That
+function calls `vroomy.Register("hello", &helloPlugin{})` before `main` starts.
+The application then loads [config.example.toml](config.example.toml). It needs no
+external plugins or certificates. A minimal configuration for that plugin is:
+
 ```toml
+dir = "."
 port = 8080
-tlsPort = 10443
-tlsDir = "./tls"
 
 [env]
-fqdn = "https://myserver.org"
+dataDir = "./data"
 
 [[route]]
 httpPath = "/"
-target = "./public_html/index.html"
-
-[[route]]
-httpPath = "/js/*"
-target = "./public_html/js"
-
-[[route]]
-httpPath = "/css/*"
-target = "./public_html/css"
+handlers = ["hello.Ping"]
 ```
 
-*Note: Please see config.example.toml for a more in depth example*
+## Use Vroomy in your application
 
-### Using the library
-Getting started with `vroomy` is quite easy! Call `vroomy.New` with the location of your configuration file. For a more in-depth explanation, please check out our [hello-world](https://github.com/vroomy/hello-world) repository.
+From your own Go module:
+
+```sh
+go get github.com/vroomy/vroomy
+```
+
+Keep application plugins in their own files under `./plugins`, with each file
+registering its plugin from `init()`. Blank-import the package in your main file:
 
 ```go
-package main
+// For an application whose go.mod declares module example.com/myapp:
+import _ "example.com/myapp/plugins"
+```
 
-import (
-	"context"
-	"log"
+Use your application's module path, not a relative Go import such as `"./plugins"`.
+The import triggers registration before `main` runs. Then construct and run the
+service:
 
-	"github.com/vroomy/vroomy"
-
-	_ "github.com/vroomy/hello-world/plugins/companies"
+```go
+var (
+	svc *vroomy.Vroomy
+	err error
 )
 
-func main() {
-	var (
-		svc *vroomy.Vroomy
-		err error
-	)
+if svc, err = vroomy.New("./config.toml"); err != nil {
+	log.Fatal(err)
+}
 
-	if svc, err = vroomy.New("./config.toml"); err != nil {
-		log.Fatal(err)
-	}
-
-	if err = svc.ListenUntilSignal(context.Background()); err != nil {
-		log.Fatal(err)
-	}
+if err = svc.ListenUntilSignal(context.Background()); err != nil {
+	log.Fatal(err)
 }
 ```
 
-## Usage
+This snippet belongs in `main` with imports for `context`, `log`, and
+`github.com/vroomy/vroomy`. See the [complete example](examples/hello/main.go) and
+[plugin guide](docs/plugins.md) for registration and handlers.
 
-### Environment.Get
-```go
-func ExampleEnvironment_Get() {
-	val := exampleEnvironment.Get("foo")
-	fmt.Println("Value of foo is", val)
-}
+`New` loads config, changes the process working directory to `dir`, initializes
+plugins and dependencies, and registers routes. `ListenUntilSignal` starts the
+configured listeners and closes the service when listening ends, including on
+SIGINT/SIGTERM. `NewWithConfig` accepts an in-memory config but does not apply the
+file loader's defaults; set `Dir` explicitly.
+
+## Documentation
+
+- [Configuration reference](docs/configuration.md): all fields, defaults, paths,
+  environment accessors, include precedence, routes, and TLS.
+- [Plugin guide](docs/plugins.md): registration, lifecycle, handlers, middleware,
+  and dependency injection with complete code examples.
+- [Development guide](docs/development.md): source map, checks, test coverage,
+  and known implementation gaps.
+- [Agent instructions](AGENTS.md): repository workflow and constraints for coding agents.
+- [Go style guide](STYLEGUIDE.md): code organization, declarations, returns, errors,
+  documentation, and tests.
+
+The current runtime does **not** serve files from a route's `target` field. Provide
+a handler instead. Legacy `-dataDir` / `-d` flags are not implemented; configure
+`[env].dataDir`. These limitations are detailed in the guides above.
+
+## Development
+
+```sh
+go test ./...
+go vet ./...
+go build ./...
 ```
 
-### Environment.GetInt
-```go
-func ExampleEnvironment_GetInt() {
-	var (
-		val int
-		err error
-	)
-
-	if val, err = exampleEnvironment.GetInt("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.GetInt64
-```go
-func ExampleEnvironment_GetInt64() {
-	var (
-		val int64
-		err error
-	)
-
-	if val, err = exampleEnvironment.GetInt64("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.GetFloat64
-```go
-func ExampleEnvironment_GetFloat64() {
-	var (
-		val float64
-		err error
-	)
-
-	if val, err = exampleEnvironment.GetFloat64("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.GetTime
-```go
-func ExampleEnvironment_GetTime() {
-	var (
-		val time.Time
-		err error
-	)
-
-	if val, err = exampleEnvironment.GetTime("foo", "2006-01-02"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.GetTimeInLocation
-```go
-func ExampleEnvironment_GetTimeInLocation() {
-	var (
-		val time.Time
-		err error
-	)
-
-	if val, err = exampleEnvironment.GetTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.Must
-```go
-func ExampleEnvironment_Must() {
-	var (
-		val string
-		err error
-	)
-
-	if val, err = exampleEnvironment.Must("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.MustInt
-```go
-func ExampleEnvironment_MustInt() {
-	var (
-		val int
-		err error
-	)
-
-	if val, err = exampleEnvironment.MustInt("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.MustInt64
-```go
-func ExampleEnvironment_MustInt64() {
-	var (
-		val int64
-		err error
-	)
-
-	if val, err = exampleEnvironment.MustInt64("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.MustFloat64
-```go
-func ExampleEnvironment_MustFloat64() {
-	var (
-		val float64
-		err error
-	)
-
-	if val, err = exampleEnvironment.MustFloat64("foo"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.MustTime
-```go
-func ExampleEnvironment_MustTime() {
-	var (
-		val time.Time
-		err error
-	)
-
-	if val, err = exampleEnvironment.MustTime("foo", "2006-01-02"); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-### Environment.MustTimeInLocation
-```go
-func ExampleEnvironment_MustTimeInLocation() {
-	var (
-		val time.Time
-		err error
-	)
-
-	if val, err = exampleEnvironment.MustTimeInLocation("foo", "2006-01-02", time.Local); err != nil {
-		// Handle error here
-		return
-	}
-
-	fmt.Println("Value of foo is", val)
-}
-```
-
-## Flags
-
-### [-dataDir -d]
-  :: Initializes backends in provided directory.
-  Overrides value set in config and default values.
-  Ignored when testing in favor of dir "testData".  
-  Use `vroomy -d <dir>`
+Run `gofmt` on changed Go files. See the [development guide](docs/development.md)
+for smoke checks and test isolation. The project license is in [LICENCE](LICENCE).
 
 ## Contributors ✨
 

@@ -8,18 +8,18 @@ import (
 
 // Route represents a listening route
 type Route struct {
-	// Target plug-in handler
+	// HTTPHandlers are Go-supplied handlers; resolved Handlers are appended to them.
 	HTTPHandlers []httpserve.Handler `toml:"-"`
 
 	// Route name/description
 	Name string `toml:"name"`
 	// Route group
 	Group string `toml:"group"`
-	// HTTP method
+	// Method selects PUT, POST, DELETE, or OPTIONS case-insensitively; other values use GET.
 	Method string `toml:"method"`
 	// HTTP path
 	HTTPPath string `toml:"httpPath"`
-	// Directory or file to serve
+	// Target is a legacy file/directory field with no current serving implementation.
 	Target string `toml:"target"`
 	// Plugin handlers
 	Handlers []string `toml:"handlers"`
