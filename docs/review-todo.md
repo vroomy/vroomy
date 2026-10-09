@@ -9,7 +9,7 @@ alignment, a dependency routing bug, and a test assertion bug discovered during
 this assessment. Existing style debt needs targeted migration; some cases need
 additional guidance rather than a stricter blanket rule.
 
-Status updated after the easy-win follow-up on 9 October 2026: **17 of 20 items
+Status updated after the easy-win follow-up on 9 October 2026: **18 of 20 items
 completed**, with partial progress on lifecycle and integration coverage. Checked items are implemented in
 the current worktree. P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
@@ -20,8 +20,8 @@ Completed work upgrades the module minimum to Go 1.27.2, aligns the guides, adds
 parser panic, repairs dependency assertions, migrates explicit returns/spacing,
 removes result shadowing and obsolete commentary, and expands the style guide.
 Plugin shape/dependency validation, exclusive service ownership, constructor
-rollback, and error causes are now addressed. Handler slice ownership and
-listener/signal cleanup remain open.
+rollback, error causes, and handler slice ownership are now addressed.
+Listener/signal cleanup remains pending dependency publication.
 
 ## P1: documentation corrections
 
@@ -76,8 +76,13 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   cycle-error expectations in `Test_makeDependenciesMap`. Reconcile those
   assertions with the intended error contract; avoid depending on map iteration
   order. Verify that missing, different, and unexpected errors fail assertions.
-- [ ] **R2 — Fix group handler slice ownership in httpserve, then update the pin.**
-  `PUT`, `POST`, `DELETE`, `OPTIONS`, `Handle`, and `Group` append to `g.hs`
+- [x] **R2 — Fix group handler slice ownership at every composition boundary.**
+  **Complete in Vroomy:** `handlerGroup` flattens paths and owns a copied chain
+  at each route/group boundary before registering on the root Serve. Integration
+  tests pass against the published dependency for sibling routes, every supported
+  configured method, nested groups, caller mutation, and both full/spare capacity.
+  An upstream fix is also prepared; publication is separate from this workaround.
+  In the original dependency, `PUT`, `POST`, `DELETE`, `OPTIONS`, `Handle`, and `Group` append to `g.hs`
   without copying. If capacity remains, later registrations overwrite handlers
   retained by earlier routes/groups. GET copies its middleware first, but that
   does not protect a nested group's middleware from sibling-group construction.
@@ -288,3 +293,14 @@ existing allowances; forcing named results or another library would overapply it
 - Added regressions for validation, injection, rollback, exclusive ownership,
   include paths/order/non-recursion, and cause preservation. Go test/race/vet/build
   passed against the published dependency with Go 1.27.2.
+
+## Middleware ownership follow-up
+
+- Configured groups use owned middleware chains, including nested siblings.
+  Root registration preserves httpserve's response completion and hook behavior.
+- HTTP integration regressions pass with the published httpserve v0.14.1 under
+  Go 1.27.2, with and without spare middleware capacity. All five configured
+  methods and caller-slice mutation are covered. Paths keep the existing cleaning
+  behavior and empty resolved root paths return errors.
+- Listener/signal cleanup and its complete protocol suite are prepared separately;
+  they require an upstream startup/Close race fix before integration.

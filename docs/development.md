@@ -94,6 +94,10 @@ Both return `PONG` followed by a newline. Stop the example with Ctrl-C. Change
 first argument. The example's default config path is `config.example.toml`, relative
 to the launch directory. It does not use `CONFIG_PATH`.
 
+`handlerGroup_test.go` exercises configured sibling routes and nested groups over
+HTTP for every configured method, full/spare middleware capacity, caller mutation,
+and port release after explicit close.
+
 When testing config loading, assert precedence and path resolution explicitly.
 For service/plugin tests, avoid `t.Parallel` around the global registry or process
 working directory. Restore any state you replace. An external test application in
@@ -111,7 +115,6 @@ guide.
 | Methods and flags | `initRoutes` falls back to GET for unrecognized methods (including HEAD/PATCH); group `Method` and dynamic flags have no active consumer. |
 | Includes | `loadIncludes` iterates the original include slice. Newly appended nested entries are not loaded. Included `Plugins` and outer `Config.Plugins` are separate. |
 | Handler/reflection validation | Missing closing handler parentheses return `ErrExpectedEndParen`, including a trailing `(`. Other malformed expressions are not fully validated; registration validates plugin shapes, anonymous pointers, and tagged fields; empty root paths return errors. Nil backends (including typed nil) and nil handler factory results are rejected. |
-| Group handler ownership | The pinned httpserve appends non-GET route handlers and nested group handlers to shared middleware slices without copying. With spare capacity, later sibling registrations can overwrite earlier handlers. Nested GET routes can inherit overwritten middleware too. |
 | Construction and reuse | `NewWithConfig` changes global working directory, retains and mutates config objects, and reuses registered plugin instances. One service exclusively owns the registry at a time. Failed construction closes attempted plugins in reverse dependency order and restores the previous directory. |
 | Cancellation | `Listen` returns on context cancellation without closing resources. Its 100 ms startup message is a timer, not a readiness guarantee. `ListenUntilSignal` closes after `Listen`, treats `context.Canceled` as non-error, and combines other listen/close errors. |
 | Signals | `onClose` registers SIGINT, SIGTERM, SIGABRT, but not SIGQUIT. It does not unregister or stop waiting when the parent context ends. |

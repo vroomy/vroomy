@@ -164,11 +164,10 @@ such as `/*` matches the remaining path without capturing it; once reached, it
 returns success immediately and ignores later pattern segments. Use wildcards
 only at the end of a pattern.
 
-The intended handler order is parent group, child group, then route, until the
-context completes. Current httpserve has a slice-ownership bug: when middleware
-has spare capacity, later non-GET routes or sibling nested groups can overwrite
-handlers belonging to earlier registrations. This can also affect GET routes in
-nested groups. See the [development gaps](development.md#known-implementation-gaps).
+The handler order is parent group, child group, then route, until the context
+completes. Vroomy copies inherited handlers at every group and route composition
+boundary, so sibling registrations and spare slice capacity cannot overwrite
+previous routes.
 Write a response from a handler; a `target` alone will not serve a file. See the
 [plugin guide](plugins.md) for exact method signatures and argument parsing.
 

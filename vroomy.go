@@ -220,7 +220,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 
 	var (
 		match *RouteGroup
-		grp   httpserve.Group = v.srv
+		grp   httpserve.Group = newHandlerGroup(v.srv, "", nil)
 	)
 
 	if match, err = v.cfg.GetRouteGroup(g.Group); err != nil {
@@ -247,7 +247,7 @@ func (v *Vroomy) initRoutes() (err error) {
 
 		var (
 			match *RouteGroup
-			grp   httpserve.Group = v.srv
+			grp   httpserve.Group = newHandlerGroup(v.srv, "", nil)
 		)
 
 		if match, err = v.cfg.GetRouteGroup(r.Group); err != nil {
@@ -276,10 +276,6 @@ func (v *Vroomy) initRoutes() (err error) {
 		default:
 			// Default case is GET
 			fn = grp.GET
-		}
-
-		if r.HTTPPath == "" && (match == nil || match.HTTPPath == "") {
-			return fmt.Errorf("route path must be nonempty")
 		}
 
 		if err = fn(r.HTTPPath, r.HTTPHandlers...); err != nil {

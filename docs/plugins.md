@@ -218,12 +218,11 @@ values and return to continue, or write a response to stop the sequence. There i
 no `ctx.Next()` call. Use methods such as `ctx.WriteString`, `ctx.WriteJSON`,
 `ctx.Param`, `ctx.Get`, and `ctx.Put` on `*httpserve.Context`.
 
-The intended order is parent-group middleware, child-group middleware, then route
-handlers. Current httpserve can overwrite an earlier handler sequence when
-middleware slices have spare capacity and later non-GET routes or sibling nested
-groups are registered. Nested GET routes can inherit overwritten middleware too.
-This is a dependency bug; see the
-[development gaps](development.md#known-implementation-gaps).
+The order is parent-group middleware, child-group middleware, then route handlers.
+Vroomy copies handler storage for every route and nested group, preventing sibling
+registrations from overwriting earlier sequences. Supplied handler slices may be
+changed after construction without changing the registered sequence; handler
+closures still share whatever application state they capture.
 
 The root package's `Response`, `NewResponse`, and misspelled `NewAdopedtResponse`
 remain exported data helpers, but the route resolver does not consume them. Use
