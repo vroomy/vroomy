@@ -211,7 +211,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	for _, handlerKey := range g.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
-			err = fmt.Errorf("initRouteGroup(): error getting handler for key of <%s>: %w", handlerKey, err)
+			err = fmt.Errorf("resolve handler for group %q: %w", g.Name, err)
 			return err
 		}
 
@@ -294,7 +294,7 @@ func (v *Vroomy) initRoute(r *Route) (err error) {
 	for _, handlerKey := range r.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
-			err = fmt.Errorf("initRoute(): error getting handler for key of <%s>: %w", handlerKey, err)
+			err = fmt.Errorf("resolve handler for route %q: %w", r.HTTPPath, err)
 			return err
 		}
 

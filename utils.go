@@ -125,11 +125,11 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 
 	case func(args ...string) (httpserve.Handler, error):
 		if h, err = val(args...); err != nil {
-			return nil, fmt.Errorf("create handler %q: %w", handlerKey, err)
+			return nil, fmt.Errorf("create handler %s.%s: %w", key, handler, err)
 		}
 
 		if h == nil {
-			return nil, fmt.Errorf("handler factory %q returned nil: %w", handlerKey, ErrInvalidPluginHandler)
+			return nil, fmt.Errorf("handler factory %s.%s returned nil: %w", key, handler, ErrInvalidPluginHandler)
 		}
 
 		return h, nil
