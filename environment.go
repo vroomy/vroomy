@@ -18,7 +18,7 @@ func (e Environment) Get(key string) (out string) {
 func (e Environment) GetInt(key string) (out int, err error) {
 	val, ok := e[key]
 	if !ok {
-		return
+		return out, err
 	}
 
 	return strconv.Atoi(val)
@@ -28,7 +28,7 @@ func (e Environment) GetInt(key string) (out int, err error) {
 func (e Environment) GetInt64(key string) (out int64, err error) {
 	val, ok := e[key]
 	if !ok {
-		return
+		return out, err
 	}
 
 	return strconv.ParseInt(val, 10, 64)
@@ -38,7 +38,7 @@ func (e Environment) GetInt64(key string) (out int64, err error) {
 func (e Environment) GetFloat64(key string) (out float64, err error) {
 	val, ok := e[key]
 	if !ok {
-		return
+		return out, err
 	}
 
 	return strconv.ParseFloat(val, 64)
@@ -48,7 +48,7 @@ func (e Environment) GetFloat64(key string) (out float64, err error) {
 func (e Environment) GetTime(key, layout string) (out time.Time, err error) {
 	val, ok := e[key]
 	if !ok {
-		return
+		return out, err
 	}
 
 	return time.Parse(layout, val)
@@ -59,7 +59,7 @@ func (e Environment) GetTime(key, layout string) (out time.Time, err error) {
 func (e Environment) GetTimeInLocation(key, layout string, loc *time.Location) (out time.Time, err error) {
 	val, ok := e[key]
 	if !ok {
-		return
+		return out, err
 	}
 
 	return time.ParseInLocation(layout, val, loc)
@@ -71,17 +71,17 @@ func (e Environment) Must(key string) (out string, err error) {
 	var ok bool
 	if out, ok = e[key]; !ok {
 		err = fmt.Errorf("invalid environment value for <%s>, cannot be empty", key)
-		return
+		return out, err
 	}
 
-	return
+	return out, err
 }
 
 // MustInt requires key to be present and parses its value as a decimal int.
 func (e Environment) MustInt(key string) (out int, err error) {
 	var val string
 	if val, err = e.Must(key); err != nil {
-		return
+		return out, err
 	}
 
 	return strconv.Atoi(val)
@@ -91,7 +91,7 @@ func (e Environment) MustInt(key string) (out int, err error) {
 func (e Environment) MustInt64(key string) (out int64, err error) {
 	var val string
 	if val, err = e.Must(key); err != nil {
-		return
+		return out, err
 	}
 
 	return strconv.ParseInt(val, 10, 64)
@@ -101,7 +101,7 @@ func (e Environment) MustInt64(key string) (out int64, err error) {
 func (e Environment) MustFloat64(key string) (out float64, err error) {
 	var val string
 	if val, err = e.Must(key); err != nil {
-		return
+		return out, err
 	}
 
 	return strconv.ParseFloat(val, 64)
@@ -111,7 +111,7 @@ func (e Environment) MustFloat64(key string) (out float64, err error) {
 func (e Environment) MustTime(key, layout string) (out time.Time, err error) {
 	var val string
 	if val, err = e.Must(key); err != nil {
-		return
+		return out, err
 	}
 
 	return time.Parse(layout, val)
@@ -122,7 +122,7 @@ func (e Environment) MustTime(key, layout string) (out time.Time, err error) {
 func (e Environment) MustTimeInLocation(key, layout string, loc *time.Location) (out time.Time, err error) {
 	var val string
 	if val, err = e.Must(key); err != nil {
-		return
+		return out, err
 	}
 
 	return time.ParseInLocation(layout, val, loc)

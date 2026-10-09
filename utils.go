@@ -17,25 +17,25 @@ type listener interface {
 
 func initDir(loc string) (err error) {
 	if len(loc) == 0 {
-		return
+		return err
 	}
 
 	if err = os.Mkdir(loc, 0744); err == nil {
-		return
+		return err
 	}
 
 	if os.IsExist(err) {
 		return nil
 	}
 
-	return
+	return err
 }
 
 func getHandlerParts(handlerKey string) (key, handler string, args []string, err error) {
 	spl := strings.SplitN(handlerKey, ".", 2)
 	if len(spl) != 2 {
 		err = fmt.Errorf("expected key and handler, received \"%s\"", handlerKey)
-		return
+		return key, handler, args, err
 	}
 
 	key = spl[0]
@@ -43,7 +43,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 
 	spl = strings.Split(handler, "(")
 	if len(spl) == 1 {
-		return
+		return key, handler, args, err
 	}
 
 	handler = spl[0]
@@ -51,12 +51,12 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 
 	if len(argsStr) == 0 || argsStr[len(argsStr)-1] != ')' {
 		err = ErrExpectedEndParen
-		return
+		return key, handler, args, err
 	}
 
 	argsStr = argsStr[:len(argsStr)-1]
 	args = strings.Split(argsStr, ",")
-	return
+	return key, handler, args, err
 }
 
 func getHostPolicy() (hp autocert.HostPolicy, err error) {
@@ -68,24 +68,24 @@ func getHostPolicy() (hp autocert.HostPolicy, err error) {
 	case isUnregisteredPluginError(err):
 		return nil, nil
 	default:
-		return
+		return hp, err
 	}
 }
 
 func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
 	var plugin Plugin
 	if plugin, err = p.Get(pluginKey); err != nil {
-		return
+		return out, err
 	}
 
 	reflected := reflect.ValueOf(plugin).MethodByName(method)
 	if reflected.Kind() == reflect.Invalid {
 		err = fmt.Errorf("method of <%s> not found within plugin <%s>", method, pluginKey)
-		return
+		return out, err
 	}
 
 	out = reflected.Interface()
-	return
+	return out, err
 }
 
 func getHandler(handlerKey string) (h httpserve.Handler, err error) {
@@ -96,25 +96,25 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	)
 
 	if key, handler, args, err = getHandlerParts(handlerKey); err != nil {
-		return
+		return h, err
 	}
 
 	var toAssert interface{}
 	if toAssert, err = getPluginMethod(key, handler); err != nil {
-		return
+		return h, err
 	}
 
 	switch val := toAssert.(type) {
 	case func(*httpserve.Context):
 		h = val
-		return
+		return h, err
 
 	case func(args ...string) (httpserve.Handler, error):
 		return val(args...)
 
 	default:
 		err = fmt.Errorf("invalid handler type, expected Handler and received %T", val)
-		return
+		return h, err
 	}
 }
 
@@ -130,13 +130,13 @@ func canSet(a, b reflect.Value) (err error) {
 		return fmt.Errorf("invalid type, expected %v and received %v", a.Type(), b.Type())
 	}
 
-	return
+	return err
 }
 
 func copySlice[T any](in []T) (out []T) {
 	out = make([]T, len(in))
 	copy(out, in)
-	return
+	return out
 }
 
 func getField(rval reflect.Value, indices []int) (field reflect.Value) {
@@ -172,8 +172,8 @@ func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
 	hp, ok = fn.(func(ctx context.Context, host string) error)
 	if !ok {
 		err = ErrInvalidHostPolicy
-		return
+		return hp, err
 	}
 
-	return
+	return hp, err
 }

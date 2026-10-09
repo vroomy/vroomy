@@ -5,7 +5,7 @@ type IncludeConfig struct {
 	AutoCertHosts []string `toml:"autoCertHosts"`
 	AutoCertDir   string   `toml:"autoCertDir"`
 
-	// Application environment
+	// Environment supplies string values to every plugin's Init and Load hooks.
 	Environment map[string]string `toml:"env"`
 
 	// Include lists paths to load. Entries merged from included files are appended

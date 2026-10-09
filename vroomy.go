@@ -45,7 +45,7 @@ const (
 func New(configLocation string) (sp *Vroomy, err error) {
 	var cfg *Config
 	if cfg, err = NewConfig(configLocation); err != nil {
-		return
+		return sp, err
 	}
 
 	if _, ok := cfg.Environment["dataDir"]; !ok {
@@ -59,17 +59,18 @@ func New(configLocation string) (sp *Vroomy, err error) {
 // NewWithConfig changes the process working directory to cfg.Dir, initializes
 // registered plugins and dependencies, and creates routes. It retains and mutates
 // cfg without loading includes or supplying defaults. Listeners start in Listen.
+// Failed construction does not close plugins that have already initialized.
 func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 	var v Vroomy
 	v.cfg = cfg
 	if err = os.Chdir(v.cfg.Dir); err != nil {
 		err = fmt.Errorf("error changing directory: %v", err)
-		return
+		return vp, err
 	}
 
 	if err = initDir(v.cfg.Environment["dataDir"]); err != nil {
 		err = fmt.Errorf("error initializing data directory: %v", err)
-		return
+		return vp, err
 	}
 
 	v.srv = httpserve.New()
@@ -77,28 +78,31 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 	v.pm = p.Loaded()
 
 	if err = v.initPlugins(); err != nil {
-		return
+		return vp, err
 	}
 
 	if err = v.loadPlugins(); err != nil {
-		return
+		return vp, err
 	}
 
 	if err = v.initGroups(); err != nil {
 		err = fmt.Errorf("error initializing groups: %v", err)
-		return
+		return vp, err
 	}
 
 	if err = v.initRoutes(); err != nil {
 		err = fmt.Errorf("error initializing routes: %v", err)
-		return
+		return vp, err
 	}
 
 	vp = &v
-	return
+	return vp, err
 }
 
-// Vroomy manages the web service
+// Vroomy manages a web service using shared registered plugin instances.
+// Construction mutates its config and the process working directory. Coordinate
+// construction and plugin use across services; plugins supply their own concurrency
+// guarantees. Closing a service closes its plugins even if another service uses them.
 type Vroomy struct {
 	cfg *Config
 	srv *httpserve.Serve
@@ -114,43 +118,27 @@ func (v *Vroomy) initPlugins() (err error) {
 	for pluginKey, plugin := range v.pm {
 		if err = plugin.Init(v.cfg.Environment); err != nil {
 			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
-			return
+			return err
 		}
 
 		log.Printf("Vroomy: Initialized %s\n", pluginKey)
 	}
 
-	return
+	return err
 }
 
 func (v *Vroomy) initGroups() (err error) {
 	if len(v.cfg.Groups) == 0 {
-		return
+		return err
 	}
 
-	//filter, ok := v.cfg.Flags["require"]
 	for _, group := range v.cfg.Groups {
-		// TODO: Document what this does and uncomment
-		//if ok {
-		//	var hasPlugin = false
-		//	for _, handler := range group.Handlers {
-		//		if ok && strings.Contains(filter, strings.Split(handler, ".")[0]) {
-		//			hasPlugin = true
-		//			break
-		//		}
-		//	}
-		//
-		//	if !hasPlugin {
-		//		continue
-		//	}
-		//}
-
 		if err = v.initRouteGroup(group); err != nil {
-			return
+			return err
 		}
 	}
 
-	return
+	return err
 }
 
 func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
@@ -158,7 +146,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			err = fmt.Errorf("initRouteGroup(): error getting handler for key of <%s>: %v", handlerKey, err)
-			return
+			return err
 		}
 
 		g.HTTPHandlers = append(g.HTTPHandlers, h)
@@ -170,41 +158,25 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	)
 
 	if match, err = v.cfg.GetRouteGroup(g.Group); err != nil {
-		return
+		return err
 	} else if match != nil {
 		if grp = match.G; grp == nil {
 			err = fmt.Errorf("parent group \"%s\" has not yet been initialized", match.Name)
-			return
+			return err
 		}
 	}
 
 	g.G = grp.Group(g.HTTPPath, g.HTTPHandlers...)
-	return
+	return err
 }
 
 func (v *Vroomy) initRoutes() (err error) {
 	// Set panic func
 	v.srv.SetPanic(v.handlePanic)
 
-	//filter, ok := v.cfg.Flags["require"]
 	for _, r := range v.cfg.Routes {
-		// TODO: Document what this does and uncomment
-		//if ok {
-		//	hasPlugin := true
-		//	for _, handler := range r.Handlers {
-		//		if ok && !strings.Contains(filter, strings.Split(handler, ".")[0]) {
-		//			hasPlugin = false
-		//			break
-		//		}
-		//	}
-		//
-		//	if !hasPlugin {
-		//		continue
-		//	}
-		//}
-
 		if err = v.initRoute(r); err != nil {
-			return
+			return err
 		}
 
 		var (
@@ -213,11 +185,11 @@ func (v *Vroomy) initRoutes() (err error) {
 		)
 
 		if match, err = v.cfg.GetRouteGroup(r.Group); err != nil {
-			return
+			return err
 		} else if match != nil {
 			if match.G == nil {
 				if err = v.initRouteGroup(match); err != nil {
-					return
+					return err
 				}
 			}
 
@@ -241,11 +213,11 @@ func (v *Vroomy) initRoutes() (err error) {
 		}
 
 		if err = fn(r.HTTPPath, r.HTTPHandlers...); err != nil {
-			return
+			return err
 		}
 	}
 
-	return
+	return err
 }
 
 func (v *Vroomy) initRoute(r *Route) (err error) {
@@ -253,29 +225,19 @@ func (v *Vroomy) initRoute(r *Route) (err error) {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			err = fmt.Errorf("initRoute(): error getting handler for key of <%s>: %v", handlerKey, err)
-			return
+			return err
 		}
 
 		r.HTTPHandlers = append(r.HTTPHandlers, h)
 	}
 
-	// Note: We are going to support the ability to serve a target even if we already
-	// have handlers specified. This will allow us to add MW logic to file serving routes
-	// in addition to our standard plugin routes.
-	// TODO: Determine if we want to move file serving to a plugin approach, and remove it
-	// from the core vroomy offerings
-	if len(r.Target) == 0 {
-		// No target is set, bail out now
-		return
-	}
-
-	return
+	return err
 }
 
 func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error) {
 	var pi Plugin
 	if pi, err = v.getPlugin(pluginKey); err != nil {
-		return
+		return err
 	}
 
 	rval := reflect.ValueOf(pi)
@@ -286,7 +248,7 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 	for depKey, indices := range dm {
 		field := getField(rval, indices)
 		if err = v.setBackend(field, depKey); err != nil {
-			return
+			return err
 		}
 	}
 
@@ -297,25 +259,25 @@ func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
 	var ok bool
 	if pi, ok = v.pm[key]; !ok {
 		err = fmt.Errorf("plugin with key of <%s> has not been registered", key)
-		return
+		return pi, err
 	}
 
-	return
+	return pi, err
 }
 
 func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
 	var pi Plugin
 	if pi, err = v.getPlugin(key); err != nil {
-		return
+		return reference, err
 	}
 
 	if reference = pi.Backend(); reference == nil {
 		// The provided value isn't an exact match, nor does it match the provided interface
 		err = fmt.Errorf("cannot call backend for plugin <%s>, provided value is nil", key)
-		return
+		return reference, err
 	}
 
-	return
+	return reference, err
 }
 
 func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
@@ -326,50 +288,39 @@ func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
 
 	var reference interface{}
 	if reference, err = v.getReference(key); err != nil {
-		return
+		return err
 	}
 
 	beVal := reflect.ValueOf(reference)
 	if err = canSet(elem, beVal); err != nil {
-		return
+		return err
 	}
 
 	elem.Set(beVal)
-	return
+	return err
 }
 
 func (v *Vroomy) loadPlugins() (err error) {
 	dms := makeDependenciesMap(v.pm)
 	if err = dms.Validate(); err != nil {
-		return
+		return err
 	}
 
 	var count int
 
-	if err = dms.Load(func(pluginKey string, dm dependencyMap) (err error) {
-		if err = v.setDependencies(pluginKey, dm); err != nil {
-			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
-			return
+	if err = dms.Load(func(pluginKey string, dm dependencyMap) (loadErr error) {
+		if loadErr = v.setDependencies(pluginKey, dm); loadErr != nil {
+			return fmt.Errorf("error loading plugin <%s>: %v", pluginKey, loadErr)
 		}
 
 		count++
 		log.Printf("Vroomy: Loaded %s (%d/%d)\n", pluginKey, count, len(dms))
-		return
+		return nil
 	}); err != nil {
-		return
+		return err
 	}
 
-	// Call Init(flags, env) for each initialized plugin
-	//for pluginKey, plugin := range pluginList {
-	//	if err = plugin.Load(); err != nil {
-	//		err = fmt.Errorf("error initializing plugin <%s>: %v", pluginKey, err)
-	//		return
-	//	}
-	//
-	//	v.out.Successf("Loaded %s", pluginKey)
-	//}
-
-	return
+	return err
 }
 
 func (v *Vroomy) getHTTPListener() (l listener) {
@@ -440,14 +391,14 @@ func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	timer := time.NewTimer(time.Millisecond * 100)
 
 	// Wait for one of the following:
-	// - Timer to end, which means we are listening succesfully
+	// - Timer to end, which emits a startup message without proving readiness
 	// - Error to come down error channel, which means an error occurred during listening
 	// - Context is finished, which means the caller no longer needing this action to continue
 	select {
 	case <-timer.C:
 		v.listenNotification()
 	case err = <-errC:
-		return
+		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -457,7 +408,7 @@ func (v *Vroomy) Listen(ctx context.Context) (err error) {
 	// - Context is finished, which means the caller no longer needing this action to continue
 	select {
 	case err = <-errC:
-		return
+		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -501,11 +452,11 @@ func (v *Vroomy) Close() (err error) {
 	var errs errors.ErrorList
 	errs.Push(v.srv.Close())
 	for key, p := range v.pm {
-		if err := p.Close(); err != nil {
-			err = fmt.Errorf("error closing <%s>: %v", key, err)
-			errs.Push(err)
+		if closeErr := p.Close(); closeErr != nil {
+			errs.Push(fmt.Errorf("error closing <%s>: %v", key, closeErr))
 		}
 	}
+
 	return errs.Err()
 }
 

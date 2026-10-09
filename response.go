@@ -28,5 +28,5 @@ func makeResponse(statusCode int, contentType string, value interface{}) (r Resp
 	r.StatusCode = statusCode
 	r.ContentType = contentType
 	r.Value = value
-	return
+	return r
 }

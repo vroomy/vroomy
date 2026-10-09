@@ -5,9 +5,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/gdbu/queue"
-
 	"github.com/gdbu/errors"
+	"github.com/gdbu/queue"
 )
 
 var p = newPlugins()
@@ -35,7 +34,7 @@ func (p *Plugins) Register(key string, pi Plugin) (err error) {
 
 	if p.closed {
 		err = errors.ErrIsClosed
-		return
+		return err
 	}
 
 	if _, ok := p.pm[key]; ok {
@@ -43,7 +42,7 @@ func (p *Plugins) Register(key string, pi Plugin) (err error) {
 	}
 
 	p.pm[key] = pi
-	return
+	return err
 }
 
 // Get returns a plugin by its registration key.
@@ -53,16 +52,16 @@ func (p *Plugins) Get(key string) (pi Plugin, err error) {
 
 	if p.closed {
 		err = errors.ErrIsClosed
-		return
+		return pi, err
 	}
 
 	var ok bool
 	if pi, ok = p.pm[key]; !ok {
 		err = fmt.Errorf("plugin with key of <%s> has not been registered", key)
-		return
+		return pi, err
 	}
 
-	return
+	return pi, err
 }
 
 // Loaded returns a copy of the registry map, sharing the same plugin instances.
@@ -74,7 +73,7 @@ func (p *Plugins) Loaded() (pm map[string]Plugin) {
 		pm[key] = val
 	}
 
-	return
+	return pm
 }
 
 // Test is unimplemented and always returns an error. Use go test for repository tests.
@@ -82,15 +81,7 @@ func (p *Plugins) Test() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	//for _, pi := range p.pm {
-	// TODO: Resolve test stuff here
-	//if err = pi.test(); err != nil {
-	//	return
-	//}
-	//}
-
 	return errors.Error("testing has not yet been implemented")
-
 }
 
 // TestAsync is unimplemented and always returns an error; q is not used.
@@ -98,22 +89,6 @@ func (p *Plugins) TestAsync(q *queue.Queue) (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	//var wg sync.WaitGroup
-	//wg.Add(len(p.pm))
-	//
-	//var errs errors.ErrorList
-	//for _, pi := range p.pm {
-	//	q.New(func(pi Plugin) func() {
-	//		return func() {
-	//			defer wg.Done()
-	//			// Fix test stuff here
-	//		}
-	//	}(pi))
-	//}
-	//
-	//wg.Wait()
-	//
-	//return errs.Err()
 	return errors.Error("testing has not yet been implemented")
 }
 

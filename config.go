@@ -14,9 +14,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-// routeFmt formats a route for display.
-const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
-
 const (
 	// ErrProtectedFlag is a legacy sentinel; the current code does not return it.
 	ErrProtectedFlag = errors.Error("cannot use protected flag")
@@ -30,11 +27,11 @@ const (
 func NewConfig(loc string) (cfg *Config, err error) {
 	var c Config
 	if _, err = toml.DecodeFile(loc, &c); err != nil {
-		return
+		return cfg, err
 	}
 
 	if err = c.loadIncludes(); err != nil {
-		return
+		return cfg, err
 	}
 
 	if c.Dir == "" {
@@ -47,7 +44,7 @@ func NewConfig(loc string) (cfg *Config, err error) {
 
 	c.populateFromOSEnv()
 	cfg = &c
-	return
+	return cfg, err
 }
 
 // Config configures a Vroomy service. NewWithConfig retains and mutates this value.
@@ -112,11 +109,11 @@ func (c *Config) loadIncludes() (err error) {
 		// Include each file or directory
 		if err = c.loadInclude(include); err != nil {
 			// Include failed
-			return
+			return err
 		}
 	}
 
-	return
+	return err
 }
 
 func (c *Config) loadInclude(include string) (err error) {
@@ -124,7 +121,7 @@ func (c *Config) loadInclude(include string) (err error) {
 		// Attempt to decode toml
 		var icfg IncludeConfig
 		if _, err = toml.DecodeFile(include, &icfg); err != nil {
-			return
+			return err
 		}
 
 		c.IncludeConfig.merge(&icfg)
@@ -138,19 +135,19 @@ func (c *Config) loadInclude(include string) (err error) {
 		// Call recursively
 		for _, file := range files {
 			if err = c.loadInclude(path.Join(include, file.Name())); err != nil {
-				return
+				return err
 			}
 		}
 	}
 
-	return
+	return err
 }
 
 // GetRouteGroup returns the first group matching name, or ErrGroupNotFound.
 // An empty name returns nil, nil to select the root group.
 func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	if len(name) == 0 {
-		return
+		return g, err
 	}
 
 	// TODO: Make this a map for faster lookups?
@@ -160,24 +157,24 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 		}
 
 		g = group
-		return
+		return g, err
 	}
 
 	err = ErrGroupNotFound
-	return
+	return g, err
 }
 
 func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig, err error) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
 	ac.HostPolicy, err = c.getHostPolicy()
-	return
+	return ac, err
 }
 
 func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
 	var primary autocert.HostPolicy
 	if primary, err = getHostPolicy(); err != nil {
-		return
+		return hp, err
 	}
 
 	backup := autocert.HostWhitelist(c.AutoCertHosts...)
@@ -185,20 +182,20 @@ func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
 		primary = backup
 	}
 
-	hp = func(ctx context.Context, host string) (err error) {
-		if err = primary(ctx, host); err == nil {
-			return
+	hp = func(ctx context.Context, host string) (policyErr error) {
+		if policyErr = primary(ctx, host); policyErr == nil {
+			return nil
 		}
 
-		if err := backup(ctx, host); err == nil {
+		if backupErr := backup(ctx, host); backupErr == nil {
 			fmt.Printf("Config.getHostPolicy(): failing HostPolicy lookup of <%s>, matched with backup whitelist\n", host)
 			return nil
 		}
 
-		return
+		return policyErr
 	}
 
-	return
+	return hp, err
 }
 
 func (c *Config) populateFromOSEnv() {
