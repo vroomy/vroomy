@@ -203,14 +203,12 @@ func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
 
 func (c *Config) populateFromOSEnv() {
 	for _, kv := range os.Environ() {
-		spl := strings.Split(kv, "=")
-		if len(spl) < 2 {
+		key, value, ok := strings.Cut(kv, "=")
+		if !ok {
 			continue
 		}
 
-		key := spl[0]
-		value := spl[1]
-		if _, ok := c.Environment[key]; ok {
+		if _, exists := c.Environment[key]; exists {
 			continue
 		}
 

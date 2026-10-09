@@ -200,8 +200,9 @@ to reject invalid configuration. Returning `*vroomy.Response`, taking a standard
   `"one"` and `" two"`. Validate factory arguments explicitly.
 - Parenthesized arguments on a direct handler are parsed but ignored. Omit them.
 
-Malformed expressions are not fully validated; in particular a trailing `(` can
-panic in the current parser. Keep references in the documented forms.
+An opening parenthesis without a closing one, including a trailing `(`, returns
+`ErrExpectedEndParen`. Other malformed expressions are not fully validated;
+keep references in the documented forms.
 
 Handlers in a group and route form a sequence. The pinned httpserve advances through
 them automatically until the context completes; middleware can inspect/store

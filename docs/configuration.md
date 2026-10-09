@@ -80,9 +80,9 @@ are different keys; Vroomy does not expand `${VARIABLE}` inside TOML strings.
 directory creation. The initializer uses `os.Mkdir`, not `MkdirAll`, so parent
 directories must already exist. Plugins decide how to use this value.
 
-Known limitation: `populateFromOSEnv` splits on every `=` and keeps only the second
-piece. A process value such as `TOKEN=abc=def` becomes `abc` in `Environment`.
-Explicit TOML values containing `=` are preserved.
+Process and TOML values containing `=` are preserved. For example, the process
+entry `TOKEN=abc=def` supplies `Environment["TOKEN"] = "abc=def"`. Empty values
+are preserved too and count as present for precedence.
 
 | API | Missing key | Present key |
 | --- | --- | --- |

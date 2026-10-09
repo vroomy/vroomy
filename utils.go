@@ -49,7 +49,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 	handler = spl[0]
 	argsStr := spl[1]
 
-	if argsStr[len(argsStr)-1] != ')' {
+	if len(argsStr) == 0 || argsStr[len(argsStr)-1] != ')' {
 		err = ErrExpectedEndParen
 		return
 	}

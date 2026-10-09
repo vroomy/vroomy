@@ -62,10 +62,16 @@ link other version requirements to `go.mod` when a copied number adds no value.
 ## Test coverage and manual verification
 
 `environment_test.go` checks typed getters and required keys.
-`dependencies_test.go` checks dependency discovery and graph validation.
-`utils_test.go` has a handler-parser case. `plugins_test.go` is an empty placeholder.
-The existing suite does not establish end-to-end correctness for config merging,
-dependency assignment, listeners, shutdown, or TLS.
+`config_test.go` checks environment values containing `=`, empty values, and
+main/include/process environment precedence and host-policy fallback. The
+`includeConfig_test.go` cases cover autocert directory/host merge behavior.
+`dependencies_test.go` checks
+dependency discovery and graph validation, including cycle membership without
+assuming map order, and regression cases for its error comparator.
+`utils_test.go` checks direct/factory handler parsing, literal argument semantics,
+and missing parentheses. `plugins_test.go` is an empty placeholder. The existing
+suite does not establish end-to-end correctness for all config merging, dependency
+assignment, listeners, shutdown, or TLS.
 
 The exported `Plugins.Test()` and `Plugins.TestAsync()` both return
 `"testing has not yet been implemented"`. They are unrelated to `go test`.
@@ -104,8 +110,7 @@ guide.
 | Static targets | `initRoute` in `vroomy.go` never adds a file handler for `Route.Target`. The former static-file quickstart could not serve its files. |
 | Methods and flags | `initRoutes` falls back to GET for unrecognized methods (including HEAD/PATCH); group `Method` and dynamic flags have no active consumer. |
 | Includes | `loadIncludes` iterates the original include slice. Newly appended nested entries are not loaded. Included `Plugins` and outer `Config.Plugins` are separate. |
-| Process environment | `populateFromOSEnv` truncates values containing `=`. Config values take precedence over process values. |
-| Handler/reflection validation | Malformed handler arguments, invalid plugin shapes, and nil embedded pointers can panic. Existing tests do not cover all these paths. |
+| Handler/reflection validation | Missing closing handler parentheses return `ErrExpectedEndParen`, including a trailing `(`. Other malformed expressions are not fully validated; invalid plugin shapes, nil embedded pointers, and empty root route paths can still panic. |
 | Construction and reuse | `NewWithConfig` changes global working directory, retains and mutates config objects, and reuses registered plugin instances. Failed construction does not roll back initialized plugins. |
 | Cancellation | `Listen` returns on context cancellation without closing resources. Its 100 ms startup message is a timer, not a readiness guarantee. `ListenUntilSignal` closes after `Listen`, treats `context.Canceled` as non-error, and combines other listen/close errors. |
 | Signals | `onClose` registers SIGINT, SIGTERM, SIGABRT, but not SIGQUIT. It does not unregister or stop waiting when the parent context ends. |
