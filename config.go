@@ -27,7 +27,7 @@ const (
 func NewConfig(loc string) (cfg *Config, err error) {
 	var c Config
 	if _, err = toml.DecodeFile(loc, &c); err != nil {
-		return cfg, err
+		return cfg, fmt.Errorf("decode configuration %q: %w", loc, err)
 	}
 
 	if err = c.loadIncludes(); err != nil {
@@ -121,7 +121,7 @@ func (c *Config) loadInclude(include string) (err error) {
 		// Attempt to decode toml
 		var icfg IncludeConfig
 		if _, err = toml.DecodeFile(include, &icfg); err != nil {
-			return err
+			return fmt.Errorf("decode include %q: %w", include, err)
 		}
 
 		c.IncludeConfig.merge(&icfg)
@@ -129,7 +129,7 @@ func (c *Config) loadInclude(include string) (err error) {
 		// Attempt to parse directory
 		var files []fs.DirEntry
 		if files, err = os.ReadDir(include); err != nil {
-			return fmt.Errorf("%s is not a .toml file or directory", include)
+			return fmt.Errorf("read include directory %q: %w", include, err)
 		}
 
 		// Call recursively
@@ -152,7 +152,7 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 
 	// TODO: Make this a map for faster lookups?
 	for _, group := range c.Groups {
-		if group.Name != name {
+		if group == nil || group.Name != name {
 			continue
 		}
 

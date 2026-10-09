@@ -88,7 +88,11 @@ func Test_makeDependencyMap(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m := makeDependencyMap(tc.val)
+		m, err := makeDependencyMap(tc.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		if !dependencyMapEqual(tc.want, m) {
 			t.Fatalf("invalid value, expected <%v> and received <%v>", tc.want, m)
 		}
@@ -337,12 +341,16 @@ func Test_makeDependenciesMap(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			var m = makeDependenciesMap(tc.val)
+			m, err := makeDependenciesMap(tc.val)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			if !dependenciesMapEqual(tc.want, m) {
 				t.Fatalf("dependencies = %v, want %v", m, tc.want)
 			}
 
-			var err = m.Validate()
+			err = m.Validate()
 			if len(tc.cycle) == 0 {
 				if !errorEqual(tc.wantErr, err) {
 					t.Fatalf("Validate() error = %v, want %v", err, tc.wantErr)

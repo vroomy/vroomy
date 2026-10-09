@@ -8,13 +8,15 @@ import (
 	"github.com/gdbu/stringset"
 )
 
-func makeDependenciesMap(ps map[string]Plugin) (dm dependenciesMap) {
+func makeDependenciesMap(ps map[string]Plugin) (dm dependenciesMap, err error) {
 	dm = make(dependenciesMap, len(ps))
 	for key, p := range ps {
-		dm[key] = makeDependencyMap(p)
+		if dm[key], err = makeDependencyMap(p); err != nil {
+			return nil, fmt.Errorf("inspect plugin %q: %w", key, err)
+		}
 	}
 
-	return dm
+	return dm, nil
 }
 
 type dependenciesMap map[string]dependencyMap
@@ -95,16 +97,26 @@ func (d dependenciesMap) validateDependency(key string, dm dependencyMap) (err e
 	return err
 }
 
-func makeDependencyMap(val interface{}) (m dependencyMap) {
+func makeDependencyMap(val interface{}) (m dependencyMap, err error) {
 	rtype := reflect.TypeOf(val)
-	if rtype.Kind() == reflect.Ptr {
+	if rtype == nil {
+		return nil, fmt.Errorf("cannot inspect nil plugin")
+	}
+
+	if rtype.Kind() == reflect.Pointer {
 		rtype = rtype.Elem()
 	}
 
-	numFields := rtype.NumField()
-	m = make(dependencyMap, numFields)
-	appendDependencyMap(m, nil, rtype)
-	return m
+	if rtype.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("plugin must be a struct, received %v", rtype)
+	}
+
+	m = make(dependencyMap)
+	if err = appendDependencyMap(m, nil, rtype, make(map[reflect.Type]bool)); err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 // dependencyMap records tagged field locations for one plugin in the graph.
@@ -130,25 +142,44 @@ func (d dependencyMap) isReady(loaded stringset.Map) (isReady bool) {
 	return true
 }
 
-func appendDependencyMap(m dependencyMap, prefix []int, rtype reflect.Type) {
+func appendDependencyMap(m dependencyMap, prefix []int, rtype reflect.Type, visiting map[reflect.Type]bool) error {
 	if rtype.Kind() == reflect.Pointer {
 		rtype = rtype.Elem()
 	}
 
-	numFields := rtype.NumField()
-	for i := 0; i < numFields; i++ {
+	if rtype.Kind() != reflect.Struct {
+		return nil
+	}
+
+	if visiting[rtype] {
+		return fmt.Errorf("recursive anonymous embedding in %v", rtype)
+	}
+
+	visiting[rtype] = true
+	defer delete(visiting, rtype)
+	for i := 0; i < rtype.NumField(); i++ {
 		field := rtype.Field(i)
-		fieldValue := field.Tag.Get("vroomy")
-		switch {
-		case field.Anonymous:
-			copied := copySlice(prefix)
-			copied = append(copied, i)
-			appendDependencyMap(m, copied, field.Type)
-		case fieldValue == "":
+		fieldKey := field.Tag.Get("vroomy")
+		indices := append(copySlice(prefix), i)
+		if fieldKey != "" {
+			if field.PkgPath != "" {
+				return fmt.Errorf("dependency field %s must be exported: %w", field.Name, ErrNotAddressable)
+			}
+
+			if _, exists := m[fieldKey]; exists {
+				return fmt.Errorf("duplicate dependency %q; use one shared field", fieldKey)
+			}
+
+			m[fieldKey] = indices
 			continue
-		default:
-			copied := copySlice(prefix)
-			m[fieldValue] = append(copied, i)
+		}
+
+		if field.Anonymous {
+			if err := appendDependencyMap(m, indices, field.Type, visiting); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }

@@ -2,6 +2,7 @@ package vroomy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -25,6 +26,15 @@ func initDir(loc string) (err error) {
 	}
 
 	if os.IsExist(err) {
+		var info os.FileInfo
+		if info, err = os.Stat(loc); err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			return fmt.Errorf("data path %q is not a directory", loc)
+		}
+
 		return nil
 	}
 
@@ -33,7 +43,7 @@ func initDir(loc string) (err error) {
 
 func getHandlerParts(handlerKey string) (key, handler string, args []string, err error) {
 	spl := strings.SplitN(handlerKey, ".", 2)
-	if len(spl) != 2 {
+	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
 		err = fmt.Errorf("expected key and handler, received \"%s\"", handlerKey)
 		return key, handler, args, err
 	}
@@ -65,7 +75,7 @@ func getHostPolicy() (hp autocert.HostPolicy, err error) {
 	switch {
 	case err == nil:
 		return assertAsHostPolicy(method)
-	case isUnregisteredPluginError(err):
+	case errors.Is(err, ErrPluginNotLoaded):
 		return nil, nil
 	default:
 		return hp, err
@@ -76,6 +86,10 @@ func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
 	var plugin Plugin
 	if plugin, err = p.Get(pluginKey); err != nil {
 		return out, err
+	}
+
+	if err = validatePlugin(plugin); err != nil {
+		return nil, fmt.Errorf("get method from plugin %q: %w", pluginKey, err)
 	}
 
 	reflected := reflect.ValueOf(plugin).MethodByName(method)
@@ -110,15 +124,27 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 		return h, err
 
 	case func(args ...string) (httpserve.Handler, error):
-		return val(args...)
+		if h, err = val(args...); err != nil {
+			return nil, fmt.Errorf("create handler %q: %w", handlerKey, err)
+		}
+
+		if h == nil {
+			return nil, fmt.Errorf("handler factory %q returned nil: %w", handlerKey, ErrInvalidPluginHandler)
+		}
+
+		return h, nil
 
 	default:
-		err = fmt.Errorf("invalid handler type, expected Handler and received %T", val)
+		err = fmt.Errorf("invalid handler type, expected Handler and received %T: %w", val, ErrInvalidPluginHandler)
 		return h, err
 	}
 }
 
 func canSet(a, b reflect.Value) (err error) {
+	if !a.IsValid() || !b.IsValid() {
+		return fmt.Errorf("invalid dependency value")
+	}
+
 	switch {
 	// Check to see if the types match exactly
 	case a.Type() == b.Type():
@@ -139,32 +165,41 @@ func copySlice[T any](in []T) (out []T) {
 	return out
 }
 
-func getField(rval reflect.Value, indices []int) (field reflect.Value) {
+func getField(value reflect.Value, indices []int) (field reflect.Value, err error) {
 	for _, index := range indices {
-		if rval.Kind() == reflect.Ptr {
-			rval = reflect.Indirect(rval.Elem())
+		if value.Kind() == reflect.Pointer {
+			if value.IsNil() {
+				return field, fmt.Errorf("nil anonymous pointer in dependency path")
+			}
+
+			value = value.Elem()
 		}
 
-		rval = rval.Field(index)
+		if !value.IsValid() || value.Kind() != reflect.Struct || index < 0 || index >= value.NumField() {
+			return field, fmt.Errorf("invalid dependency field path")
+		}
+
+		value = value.Field(index)
 	}
 
-	if rval.CanAddr() {
-		rval = rval.Addr()
+	if !value.IsValid() || !value.CanSet() {
+		return field, ErrNotAddressable
 	}
 
-	return rval
+	return value, nil
 }
 
-func isUnregisteredPluginError(err error) bool {
-	str := err.Error()
-	switch {
-	case !strings.Contains(str, "plugin with key of <"):
-		return false
-	case !strings.Contains(str, "> has not been registered"):
-		return false
-	default:
+func isNilValue(value reflect.Value) bool {
+	if !value.IsValid() {
 		return true
 	}
+
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	}
+
+	return false
 }
 
 func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {

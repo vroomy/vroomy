@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -154,5 +155,65 @@ func TestNewConfig_EnvironmentPrecedence(t *testing.T) {
 
 	if cfg.Dir != "./" {
 		t.Errorf("default Dir = %q, want ./", cfg.Dir)
+	}
+}
+
+func TestNewConfig_IncludePathsAndNonRecursion(t *testing.T) {
+	preserveWorkingDirectory(t)
+	workingDir := t.TempDir()
+	configDir := filepath.Join(workingDir, "config")
+	includeDir := filepath.Join(workingDir, "includes")
+	if err := os.Mkdir(configDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Mkdir(includeDir, 0700); err != nil {
+		t.Fatal(err)
+	}
+
+	files := map[string]string{
+		filepath.Join(configDir, "main.toml"): "dir = 'not-applied-by-NewConfig'\ninclude = ['includes']\n[[group]]\nname = 'main'\nhttpPath = '/main'\n",
+		filepath.Join(includeDir, "a.toml"):   "include = ['missing-nested.toml']\n[env]\nsource = 'first'\n[[group]]\nname = 'first'\nhttpPath = '/first'\n",
+		filepath.Join(includeDir, "b.toml"):   "[env]\nsource = 'second'\n[[group]]\nname = 'second'\nhttpPath = '/second'\n",
+	}
+	for filename, contents := range files {
+		if err := os.WriteFile(filename, []byte(contents), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := os.Chdir(workingDir); err != nil {
+		t.Fatal(err)
+	}
+
+	workingDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := NewConfig(filepath.Join("config", "main.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cfg.Environment["source"] != "second" {
+		t.Fatalf("directory includes did not follow filename order: %v", cfg.Environment["source"])
+	}
+
+	var groupNames []string
+	for _, group := range cfg.Groups {
+		groupNames = append(groupNames, group.Name)
+	}
+
+	if !slices.Equal(groupNames, []string{"main", "first", "second"}) {
+		t.Fatalf("group order = %v", groupNames)
+	}
+
+	if !slices.Equal(cfg.Include, []string{"includes", "missing-nested.toml"}) {
+		t.Fatalf("nested include metadata = %v", cfg.Include)
+	}
+
+	if currentDir, dirErr := os.Getwd(); dirErr != nil || currentDir != workingDir {
+		t.Fatalf("NewConfig changed working directory: %q, %v", currentDir, dirErr)
 	}
 }

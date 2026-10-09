@@ -9,8 +9,8 @@ alignment, a dependency routing bug, and a test assertion bug discovered during
 this assessment. Existing style debt needs targeted migration; some cases need
 additional guidance rather than a stricter blanket rule.
 
-Status updated after the easy-win follow-up on 9 October 2026: **15 of 20 items
-completed**, with partial progress on R3 and T1. Checked items are implemented in
+Status updated after the easy-win follow-up on 9 October 2026: **17 of 20 items
+completed**, with partial progress on lifecycle and integration coverage. Checked items are implemented in
 the current worktree. P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
 source line references below describe the original baseline unless stated otherwise.
@@ -19,8 +19,9 @@ Completed work upgrades the module minimum to Go 1.27.2, aligns the guides, adds
 `scripts/check-doc-versions.sh`, fixes environment truncation and the trailing-`(`
 parser panic, repairs dependency assertions, migrates explicit returns/spacing,
 removes result shadowing and obsolete commentary, and expands the style guide.
-The httpserve handler-ownership bug, lifecycle ownership, broader reflection
-validation, and error-contract changes remain open.
+Plugin shape/dependency validation, exclusive service ownership, constructor
+rollback, and error causes are now addressed. Handler slice ownership and
+listener/signal cleanup remain open.
 
 ## P1: documentation corrections
 
@@ -86,9 +87,10 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   group creation needs proof that nested composition is safe too.
   Evidence: dependency `group.go`, lines 47, 60, 73, 86, 99, and 112;
   [vroomy.go](../vroomy.go), `initRouteGroup` and `initRoutes`.
-- [ ] **R3 — Return errors for malformed configuration instead of panicking.**
-  **Partial:** the trailing-`(` guard and parser regressions are complete; plugin
-  shapes, embedded pointers, typed-nil backends, and empty paths remain open.
+- [x] **R3 — Return errors for malformed configuration instead of panicking.**
+  **Complete:** registration/constructor validation covers plugin shape, tagged
+  fields and anonymous pointers; nil backends (including typed nil) and empty root
+  paths return errors. Exact and interface injection and nil factory results are covered.
   Guard empty handler argument substrings before indexing in
   [utils.go](../utils.go), `getHandlerParts`, line 52. Validate plugin shapes,
   tagged fields, nil embedded pointers, and empty route paths before reflection
@@ -132,7 +134,7 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
 - [x] **S2 — Remove local/named-result shadowing.** Use distinct primary/backup error
   names in host-policy fallback, and a distinct plugin-close error in `Close`.
   Preserve which failure is returned and how errors are aggregated.
-- [ ] **S3 — Review error contracts before improving wrapping.** Add operation/path
+- [x] **S3 — Review error contracts before improving wrapping.** Add operation/path
   context and preserve external causes; replace error-message classification with
   a typed/sentinel contract. Review compatibility separately from formatting.
   Existing exported legacy sentinels are not automatically the correct contract.
@@ -271,3 +273,18 @@ existing allowances; forcing named results or another library would overapply it
   behavior and host-policy fallback, handler parser failures, and dependency
   assertion regressions. No TLS/ACME or HTTP/2 negotiation was exercised; the
   dependency routing defect and lifecycle integration gaps remain documented.
+
+## Validation and ownership follow-up
+
+- Registration rejects invalid shapes, keys, anonymous nil fields, unsettable
+  dependencies, and duplicate provider tags. Dependency fields support anonymous
+  structs and pointers; untagged scalar embedding is ignored.
+- Construction validates the graph before acquiring plugin resources. The registry
+  leases its instances to one service; concurrent construction/registration or
+  registry shutdown returns `ErrPluginInUse`. Failure closes attempted plugins in
+  reverse dependency order and restores the previous working directory.
+- Filesystem and plugin failures retain causes. Missing and duplicate registration
+  errors wrap their exported sentinels, replacing message-based classification.
+- Added regressions for validation, injection, rollback, exclusive ownership,
+  include paths/order/non-recursion, and cause preservation. Go test/race/vet/build
+  passed against the published dependency with Go 1.27.2.

@@ -2,6 +2,7 @@ package vroomy
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"reflect"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,7 +19,12 @@ import (
 	"github.com/vroomy/httpserve"
 )
 
+var constructionMu sync.Mutex
+
 const (
+	// ErrPluginInUse is returned when a service already owns the registry's plugins.
+	ErrPluginInUse = errors.Error("registered plugins are already owned by an active service")
+
 	// ErrInvalidTLSDirectory is returned by Listen when TLS is enabled without
 	// TLSDir or both AutoCertDir and AutoCertHosts.
 	ErrInvalidTLSDirectory = errors.Error("invalid tls directory, cannot be empty when tls port has been set")
@@ -30,13 +37,13 @@ const (
 	ErrNotAddressable = errors.Error("provided backend must be addressable")
 	// ErrInvalidDir is a legacy sentinel not returned by the current code.
 	ErrInvalidDir = errors.Error("invalid directory, cannot be empty")
-	// ErrPluginKeyExists is a legacy sentinel; duplicate keys return a formatted error.
+	// ErrPluginKeyExists identifies duplicate registration keys.
 	ErrPluginKeyExists = errors.Error("plugin cannot be added, key already exists")
-	// ErrPluginNotLoaded is a legacy sentinel; missing plugins return formatted errors.
+	// ErrPluginNotLoaded identifies an unregistered plugin key.
 	ErrPluginNotLoaded = errors.Error("plugin with that key has not been loaded")
 	// ErrExpectedEndParen is returned when an ending parenthesis is missing
 	ErrExpectedEndParen = errors.Error("expected ending parenthesis")
-	// ErrInvalidPluginHandler is a legacy sentinel; invalid signatures return formatted errors.
+	// ErrInvalidPluginHandler identifies nil handlers or invalid handler signatures.
 	ErrInvalidPluginHandler = errors.Error("plugin handler not valid")
 )
 
@@ -56,58 +63,110 @@ func New(configLocation string) (sp *Vroomy, err error) {
 	return NewWithConfig(cfg)
 }
 
-// NewWithConfig changes the process working directory to cfg.Dir, initializes
-// registered plugins and dependencies, and creates routes. It retains and mutates
-// cfg without loading includes or supplying defaults. Listeners start in Listen.
-// Failed construction does not close plugins that have already initialized.
+// NewWithConfig changes the process working directory to cfg.Dir, exclusively
+// acquires registered plugins, initializes them, and registers routes. It retains
+// and mutates cfg without loading includes or supplying defaults. On failure it
+// closes every plugin whose Init was attempted and restores the working directory.
+// A second service using the registry returns ErrPluginInUse until Close completes.
 func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
-	var v Vroomy
-	v.cfg = cfg
-	if err = os.Chdir(v.cfg.Dir); err != nil {
-		err = fmt.Errorf("error changing directory: %v", err)
-		return vp, err
+	constructionMu.Lock()
+	defer constructionMu.Unlock()
+	if cfg == nil {
+		return nil, fmt.Errorf("configuration must be non-nil")
 	}
 
-	if err = initDir(v.cfg.Environment["dataDir"]); err != nil {
-		err = fmt.Errorf("error initializing data directory: %v", err)
-		return vp, err
+	var v Vroomy
+	v.cfg = cfg
+	v.registry = p
+	if v.pm, err = v.registry.acquire(); err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err != nil {
+			err = stderrors.Join(err, v.closePlugins())
+			v.registry.release()
+		}
+	}()
+	for key, plugin := range v.pm {
+		if err = validatePlugin(plugin); err != nil {
+			return nil, fmt.Errorf("validate plugin %q: %w", key, err)
+		}
+	}
+
+	if v.dependencies, err = makeDependenciesMap(v.pm); err != nil {
+		return nil, err
+	}
+
+	if err = v.dependencies.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err = v.dependencies.Load(func(key string, _ dependencyMap) error {
+		v.pluginOrder = append(v.pluginOrder, key)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	var previousDir string
+	if previousDir, err = os.Getwd(); err != nil {
+		return nil, fmt.Errorf("get working directory: %w", err)
+	}
+
+	if err = os.Chdir(cfg.Dir); err != nil {
+		return nil, fmt.Errorf("change directory to %q: %w", cfg.Dir, err)
+	}
+
+	defer func() {
+		if err != nil {
+			// Restore after rollback, so plugin Close sees the same directory as Init.
+			rollbackErr := v.closePlugins()
+			v.initialized = nil
+			if restoreErr := os.Chdir(previousDir); restoreErr != nil {
+				err = stderrors.Join(err, fmt.Errorf("restore working directory %q: %w", previousDir, restoreErr))
+			}
+
+			err = stderrors.Join(err, rollbackErr)
+		}
+	}()
+	if err = initDir(cfg.Environment["dataDir"]); err != nil {
+		return nil, fmt.Errorf("initialize data directory %q: %w", cfg.Environment["dataDir"], err)
 	}
 
 	v.srv = httpserve.New()
-	v.srv.SetOnError(v.cfg.ErrorLogger)
-	v.pm = p.Loaded()
-
+	v.srv.SetOnError(cfg.ErrorLogger)
 	if err = v.initPlugins(); err != nil {
-		return vp, err
+		return nil, err
 	}
 
 	if err = v.loadPlugins(); err != nil {
-		return vp, err
+		return nil, err
 	}
 
 	if err = v.initGroups(); err != nil {
-		err = fmt.Errorf("error initializing groups: %v", err)
-		return vp, err
+		return nil, fmt.Errorf("initialize groups: %w", err)
 	}
 
 	if err = v.initRoutes(); err != nil {
-		err = fmt.Errorf("error initializing routes: %v", err)
-		return vp, err
+		return nil, fmt.Errorf("initialize routes: %w", err)
 	}
 
-	vp = &v
-	return vp, err
+	return &v, nil
 }
 
-// Vroomy manages a web service using shared registered plugin instances.
-// Construction mutates its config and the process working directory. Coordinate
-// construction and plugin use across services; plugins supply their own concurrency
-// guarantees. Closing a service closes its plugins even if another service uses them.
+// Vroomy manages a web service with exclusive ownership of registered plugins.
+// Construction mutates its config and the process working directory. Plugins
+// supply their own request concurrency guarantees; Close reverses dependency order.
 type Vroomy struct {
 	cfg *Config
 	srv *httpserve.Serve
 
-	pm map[string]Plugin
+	pm           map[string]Plugin
+	registry     *Plugins
+	dependencies dependenciesMap
+	pluginOrder  []string
+	initialized  []string
 
 	// Closed state
 	closed atoms.Bool
@@ -115,9 +174,12 @@ type Vroomy struct {
 
 func (v *Vroomy) initPlugins() (err error) {
 	// Call Init(env) for each registered plugin before dependency injection.
-	for pluginKey, plugin := range v.pm {
+	for _, pluginKey := range v.pluginOrder {
+		plugin := v.pm[pluginKey]
+		// Include a failing Init: it may already own partially acquired resources.
+		v.initialized = append(v.initialized, pluginKey)
 		if err = plugin.Init(v.cfg.Environment); err != nil {
-			err = fmt.Errorf("error loading plugin <%s>: %v", pluginKey, err)
+			err = fmt.Errorf("error loading plugin <%s>: %w", pluginKey, err)
 			return err
 		}
 
@@ -142,10 +204,14 @@ func (v *Vroomy) initGroups() (err error) {
 }
 
 func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
+	if g == nil {
+		return fmt.Errorf("route group must be non-nil")
+	}
+
 	for _, handlerKey := range g.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
-			err = fmt.Errorf("initRouteGroup(): error getting handler for key of <%s>: %v", handlerKey, err)
+			err = fmt.Errorf("initRouteGroup(): error getting handler for key of <%s>: %w", handlerKey, err)
 			return err
 		}
 
@@ -212,6 +278,10 @@ func (v *Vroomy) initRoutes() (err error) {
 			fn = grp.GET
 		}
 
+		if r.HTTPPath == "" && (match == nil || match.HTTPPath == "") {
+			return fmt.Errorf("route path must be nonempty")
+		}
+
 		if err = fn(r.HTTPPath, r.HTTPHandlers...); err != nil {
 			return err
 		}
@@ -221,10 +291,14 @@ func (v *Vroomy) initRoutes() (err error) {
 }
 
 func (v *Vroomy) initRoute(r *Route) (err error) {
+	if r == nil {
+		return fmt.Errorf("route must be non-nil")
+	}
+
 	for _, handlerKey := range r.Handlers {
 		var h httpserve.Handler
 		if h, err = getHandler(handlerKey); err != nil {
-			err = fmt.Errorf("initRoute(): error getting handler for key of <%s>: %v", handlerKey, err)
+			err = fmt.Errorf("initRoute(): error getting handler for key of <%s>: %w", handlerKey, err)
 			return err
 		}
 
@@ -246,7 +320,11 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 	}
 
 	for depKey, indices := range dm {
-		field := getField(rval, indices)
+		var field reflect.Value
+		if field, err = getField(rval, indices); err != nil {
+			return fmt.Errorf("dependency %q: %w", depKey, err)
+		}
+
 		if err = v.setBackend(field, depKey); err != nil {
 			return err
 		}
@@ -258,7 +336,7 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
 	var ok bool
 	if pi, ok = v.pm[key]; !ok {
-		err = fmt.Errorf("plugin with key of <%s> has not been registered", key)
+		err = fmt.Errorf("plugin with key of <%s> has not been registered: %w", key, ErrPluginNotLoaded)
 		return pi, err
 	}
 
@@ -271,7 +349,7 @@ func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
 		return reference, err
 	}
 
-	if reference = pi.Backend(); reference == nil {
+	if reference = pi.Backend(); isNilValue(reflect.ValueOf(reference)) {
 		// The provided value isn't an exact match, nor does it match the provided interface
 		err = fmt.Errorf("cannot call backend for plugin <%s>, provided value is nil", key)
 		return reference, err
@@ -281,8 +359,7 @@ func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
 }
 
 func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
-	elem := backend.Elem()
-	if !elem.CanSet() {
+	if !backend.IsValid() || !backend.CanSet() {
 		return ErrNotAddressable
 	}
 
@@ -292,35 +369,36 @@ func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
 	}
 
 	beVal := reflect.ValueOf(reference)
-	if err = canSet(elem, beVal); err != nil {
+	if err = canSet(backend, beVal); err != nil {
 		return err
 	}
 
-	elem.Set(beVal)
+	backend.Set(beVal)
 	return err
 }
 
-func (v *Vroomy) loadPlugins() (err error) {
-	dms := makeDependenciesMap(v.pm)
-	if err = dms.Validate(); err != nil {
-		return err
-	}
-
-	var count int
-
-	if err = dms.Load(func(pluginKey string, dm dependencyMap) (loadErr error) {
-		if loadErr = v.setDependencies(pluginKey, dm); loadErr != nil {
-			return fmt.Errorf("error loading plugin <%s>: %v", pluginKey, loadErr)
+func (v *Vroomy) loadPlugins() error {
+	for index, pluginKey := range v.pluginOrder {
+		if err := v.setDependencies(pluginKey, v.dependencies[pluginKey]); err != nil {
+			return fmt.Errorf("load plugin %q: %w", pluginKey, err)
 		}
 
-		count++
-		log.Printf("Vroomy: Loaded %s (%d/%d)\n", pluginKey, count, len(dms))
-		return nil
-	}); err != nil {
-		return err
+		log.Printf("Vroomy: Loaded %s (%d/%d)", pluginKey, index+1, len(v.pluginOrder))
 	}
 
-	return err
+	return nil
+}
+
+func (v *Vroomy) closePlugins() error {
+	var errs []error
+	for i := len(v.initialized) - 1; i >= 0; i-- {
+		key := v.initialized[i]
+		if closeErr := v.pm[key].Close(); closeErr != nil {
+			errs = append(errs, fmt.Errorf("close plugin %q: %w", key, closeErr))
+		}
+	}
+
+	return stderrors.Join(errs...)
 }
 
 func (v *Vroomy) getHTTPListener() (l listener) {
@@ -441,23 +519,20 @@ func (v *Vroomy) TLSPort() uint16 {
 	return v.cfg.TLSPort
 }
 
-// Close closes the service's HTTP server and plugins in unspecified order.
-// Repeated calls return errors.ErrIsClosed. The separate HTTPS redirect listener
-// is not retained by the service and is not closed here.
+// Close closes the HTTP server and plugins in reverse dependency order, then releases
+// the registry for reuse. Repeated calls return errors.ErrIsClosed. Plugins must
+// tolerate Close after a partially failed Init and support Init again for reuse.
 func (v *Vroomy) Close() (err error) {
 	if !v.closed.Set(true) {
 		return errors.ErrIsClosed
 	}
 
-	var errs errors.ErrorList
-	errs.Push(v.srv.Close())
-	for key, p := range v.pm {
-		if closeErr := p.Close(); closeErr != nil {
-			errs.Push(fmt.Errorf("error closing <%s>: %v", key, closeErr))
-		}
+	err = stderrors.Join(v.srv.Close(), v.closePlugins())
+	if v.registry != nil {
+		v.registry.release()
 	}
 
-	return errs.Err()
+	return err
 }
 
 func (v *Vroomy) listenNotification() {

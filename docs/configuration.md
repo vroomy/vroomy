@@ -18,7 +18,10 @@ does not start a server, change directories, or add the `dataDir` default.
 initializes the configured data directory, initializes/loads plugins, and creates
 groups and routes. It does not parse files, load includes, copy the config, import
 process environment entries, or supply defaults. A programmatic config should set
-`Dir: "."`; an empty directory makes construction fail.
+`Dir: "."`; an empty directory makes construction fail. On failure, construction
+closes plugins whose `Init` was attempted and restores the previous working
+directory. Only one active service can own the registered plugins; see the
+[plugin lifecycle](plugins.md#interface-and-lifecycle).
 
 The configuration filename and all includes are resolved against the process
 working directory **before** `dir` is applied. They are not relative to the
@@ -154,7 +157,7 @@ parents and parents that have not been initialized cause construction errors.
 With a nonempty group prefix, the pinned httpserve joins paths using `path.Join`,
 which cleans `.` and `..` segments and removes trailing slashes. For example,
 `/api` with `/../other` becomes `/other`. Root routes skip this join and must begin
-with `/`; an empty root path is invalid and can currently panic.
+with `/`; an empty root path returns a construction error.
 
 Named segments such as `/:id` are captured through `ctx.Param("id")`. A wildcard
 such as `/*` matches the remaining path without capturing it; once reached, it

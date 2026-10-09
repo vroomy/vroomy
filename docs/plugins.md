@@ -93,15 +93,17 @@ type Plugin interface {
 
 Embedding `vroomy.BasePlugin` by value supplies no-op `Init`, `Load`, and `Close`
 methods and a `Backend` method that returns nil. Override only what you need.
-Register a non-nil pointer to a struct, using a unique key without a dot; handler
+Register a non-nil pointer to a struct, using a unique nonempty key without `.`, `(`, or `)`; handler
 references split at the first dot. Duplicate registration returns an error.
 
 During `New` / `NewWithConfig`:
 
-1. The process changes to `Config.Dir` and initializes the data directory.
-2. The service snapshots the global registry and calls every plugin's `Init(env)`.
-   These calls have unspecified order, and dependencies have not been injected.
-3. Dependency validation checks for missing providers, self-dependencies, and cycles.
+1. The service exclusively acquires a snapshot of the global registry and validates
+   plugin fields and the dependency graph (missing providers, self-dependencies,
+   and cycles).
+2. The process changes to `Config.Dir` and initializes the data directory.
+3. Every plugin's `Init(env)` runs before any dependency injection. Providers
+   initialize before consumers; independent plugins have no stable order.
 4. In dependency order, the service assigns tagged fields from provider `Backend()`
    values, then calls the consumer's `Load(env)`. Providers finish loading first.
 5. Groups and routes resolve their handler methods/factories.
@@ -110,11 +112,17 @@ Use `Init` for your own environment/configuration and `Load` for setup requiring
 other plugins. All plugins receive the same environment map. Avoid mutating it
 as a way to communicate between plugins because initialization order is unstable.
 
-`Close` closes the HTTP server and calls the plugins in unspecified order. It does
-not reverse dependency order. Construction errors do not automatically close
-plugins that already initialized. Instances are shared globally across services;
-multiple calls to `New` do not create fresh plugin instances. See the
-[lifecycle caveats](development.md#known-implementation-gaps) when testing or embedding.
+`Close` closes the HTTP server and closes plugins in reverse dependency order.
+Construction validates the dependency graph before `Init`. On later failure it
+closes every plugin whose `Init` was attempted, including the failing plugin, and
+restores the previous working directory. `Close` must tolerate partial `Init`.
+
+The registry gives one service exclusive ownership of its instances. A second
+constructor, registration, or registry `Close` while that service is active returns
+`ErrPluginInUse`. Service `Close` releases ownership after plugin cleanup. Reuse
+calls `Init` and `Load` again on the same instances, so plugins must support that
+cycle; `New` does not allocate replacement instances. Do not mutate registered
+plugins or borrowed configs while a service is active.
 
 ## A complete plugin package
 
@@ -314,3 +322,18 @@ embedding and exported tagged fields: reflection is not a general object graph
 injector, and nil embedded pointers or inaccessible fields can panic. Use one field
 per dependency key in a plugin; repeated tags overwrite each other in the dependency
 map. See [dependencies.go](../dependencies.go) and [utils.go](../utils.go).
+
+## Validation and error causes
+
+Registration checks pointer/struct shape and nil anonymous fields. Tagged fields
+must be exported and settable. Duplicate tags for one provider are rejected; use
+one shared field. Recursive anonymous embedding is rejected, and anonymous scalar
+fields without tags are ignored. Tagged anonymous fields receive a backend rather
+than being traversed. Dependency backends must be non-nil, including typed-nil
+pointers, maps, slices, functions, and channels. Assignment accepts exact types or
+implemented interfaces. Handler factories must return a non-nil handler on success.
+
+Missing registrations wrap `ErrPluginNotLoaded`; duplicate keys wrap
+`ErrPluginKeyExists`. Use standard-library `errors.Is` for these and for underlying
+plugin, filesystem, or handler-factory failures. Shutdown and constructor rollback
+preserve multiple causes using `errors.Join`.
