@@ -80,8 +80,8 @@ not a requirement to extract a library for every small handler. See
 - Legacy flags (`-d`, `-dataDir`, `require`, `[[flag]]`) are not wired up. Included
   files do not recursively execute their own `include` entries. See the config
   reference before relying on merge or environment precedence.
-- `Listen` blocks and does not close resources on cancellation. `ListenUntilSignal`
-  closes after listening ends. Constructor failures close plugins whose Init was attempted and restore the
+- `Listen` closes all listeners/plugins and joins listener goroutines on every
+  exit. `ListenUntilSignal` adds signal cancellation and releases notifications. Constructor failures close plugins whose Init was attempted and restore the
   working directory. Plugin Close must tolerate partial Init. A second active
   service or registration while one owns the registry returns ErrPluginInUse.
 

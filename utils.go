@@ -12,10 +12,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-type listener interface {
-	Listen(port uint16) error
-}
-
 func initDir(loc string) (err error) {
 	if len(loc) == 0 {
 		return err
@@ -211,4 +207,22 @@ func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
 	}
 
 	return hp, err
+}
+
+// withoutCancellation preserves each leaf error except normal context cancellation.
+func withoutCancellation(err error) error {
+	if err == nil || err == context.Canceled {
+		return nil
+	}
+
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		var remaining []error
+		for _, cause := range joined.Unwrap() {
+			remaining = append(remaining, withoutCancellation(cause))
+		}
+
+		return errors.Join(remaining...)
+	}
+
+	return err
 }

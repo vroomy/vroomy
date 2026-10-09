@@ -5,6 +5,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/gdbu/atoms"
 	"github.com/gdbu/errors"
@@ -77,6 +77,11 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 
 	var v Vroomy
 	v.cfg = cfg
+	v.closeDone = make(chan struct{})
+	if cfg.TLSPort > 0 && !cfg.AllowNonTLS {
+		v.redirect = newRedirectListener(cfg.TLSPort, cfg.ErrorLogger)
+	}
+
 	v.registry = p
 	if v.pm, err = v.registry.acquire(); err != nil {
 		return nil, err
@@ -167,6 +172,11 @@ type Vroomy struct {
 	dependencies dependenciesMap
 	pluginOrder  []string
 	initialized  []string
+
+	redirect  *redirectListener
+	listening atoms.Bool
+	closeDone chan struct{}
+	closeErr  error
 
 	// Closed state
 	closed atoms.Bool
@@ -397,39 +407,18 @@ func (v *Vroomy) closePlugins() error {
 	return stderrors.Join(errs...)
 }
 
-func (v *Vroomy) getHTTPListener() (l listener) {
-	if v.cfg.TLSPort > 0 && !v.cfg.AllowNonTLS {
-		// TLS port exists, return a new upgrader pointing to the configured tls port
-		return httpserve.NewUpgrader(v.cfg.TLSPort)
-	}
-
-	// TLS port does not exist, return the raw httpserve.Serve
-	return v.srv
-}
-
 func (v *Vroomy) listenHTTP(errC chan error) {
-	if v.cfg.Port == 0 {
-		// HTTP port not set, return
+	if v.redirect != nil {
+		errC <- v.redirect.Listen(v.cfg.Port)
 		return
 	}
 
-	// Get http listener
-	// Note: If TLS is set, an httpserve.Upgrader will be returned
-	l := v.getHTTPListener()
-
-	// Attempt to listen to HTTP with the configured port
-	errC <- l.Listen(v.cfg.Port)
+	errC <- v.srv.Listen(v.cfg.Port)
 }
 
 func (v *Vroomy) listenHTTPS(errC chan error) {
-	if v.cfg.TLSPort == 0 {
-		// HTTPS port not set, return
-		return
-	}
-
 	switch {
 	case v.cfg.hasTLSDir():
-		// Attempt to listen to HTTPS with the configured tls port and directory
 		errC <- v.srv.ListenTLS(v.cfg.TLSPort, v.cfg.TLSDir)
 	case v.cfg.hasAutoCert():
 		ac, err := v.cfg.autoCertConfig()
@@ -438,13 +427,9 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 			return
 		}
 
-		// Attempt to listen to HTTPS with the configured tls port and directory
 		errC <- v.srv.ListenAutoCertTLS(v.cfg.TLSPort, ac)
 	default:
-		// Cannot serve TLS without a tls directory, send error down channel and return
 		errC <- ErrInvalidTLSDirectory
-		return
-
 	}
 }
 
@@ -452,57 +437,73 @@ func (v *Vroomy) handlePanic(in interface{}) {
 	log.Printf("Vroomy: Panic caught:\n%v\n%s\n\n", in, string(debug.Stack()))
 }
 
-// Listen starts the configured HTTP/HTTPS listeners and blocks until a listener
-// returns or ctx ends. Cancellation returns ctx.Err() without closing the service.
+// Listen runs configured listeners until ctx ends, a listener fails, or Close
+// is called. Every exit closes listeners and plugins and joins listener goroutines.
+// Cancellation preserves ctx.Err(). A service can only listen once.
 func (v *Vroomy) Listen(ctx context.Context) (err error) {
-	// Initialize error channel
+	if v.closed.Get() {
+		return errors.ErrIsClosed
+	}
+
+	if !v.listening.Set(true) {
+		return fmt.Errorf("service has already started listening")
+	}
+
+	var listenerCount int
 	errC := make(chan error, 2)
-	// Listen to HTTP (if needed)
-	go v.listenHTTP(errC)
-	// Listen to HTTPS (if needed)
-	go v.listenHTTPS(errC)
-
-	timer := time.NewTimer(time.Millisecond * 100)
-
-	// Wait for one of the following:
-	// - Timer to end, which emits a startup message without proving readiness
-	// - Error to come down error channel, which means an error occurred during listening
-	// - Context is finished, which means the caller no longer needing this action to continue
-	select {
-	case <-timer.C:
-		v.listenNotification()
-	case err = <-errC:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
+	if v.cfg.Port > 0 {
+		listenerCount++
+		go v.listenHTTP(errC)
 	}
 
-	// Wait for one of the following:
-	// - Error to come down error channel, which means an error occurred during listening
-	// - Context is finished, which means the caller no longer needing this action to continue
+	if v.cfg.TLSPort > 0 {
+		listenerCount++
+		go v.listenHTTPS(errC)
+	}
+
 	select {
 	case err = <-errC:
-		return err
+		listenerCount--
 	case <-ctx.Done():
-		return ctx.Err()
+		err = ctx.Err()
+	case <-v.closeDone:
 	}
-}
 
-// ListenUntilSignal cancels listening on SIGINT, SIGTERM, or SIGABRT, then closes
-// the service. It also closes when ctx ends or a listener returns, and suppresses
-// context.Canceled while preserving other listen and close errors.
-func (v *Vroomy) ListenUntilSignal(ctx context.Context) (err error) {
-	vctx, cancel := context.WithCancel(ctx)
-	go v.onClose(cancel)
-
-	if err = v.Listen(vctx); err == context.Canceled {
+	if stderrors.Is(err, http.ErrServerClosed) {
 		err = nil
 	}
 
-	var errs errors.ErrorList
-	errs.Push(err)
-	errs.Push(v.Close())
-	return errs.Err()
+	closeErr := v.Close()
+	if stderrors.Is(closeErr, errors.ErrIsClosed) {
+		closeErr = v.closeErr
+	}
+
+	err = stderrors.Join(err, closeErr)
+
+	// Buffered results allow both listeners to return during shutdown.
+	for ; listenerCount > 0; listenerCount-- {
+		listenerErr := <-errC
+		if !stderrors.Is(listenerErr, http.ErrServerClosed) {
+			err = stderrors.Join(err, listenerErr)
+		}
+	}
+
+	return err
+}
+
+// ListenUntilSignal stops on SIGINT, SIGTERM, or SIGABRT and releases signal
+// notification when listening ends. Context cancellation is normal shutdown;
+// other listener and cleanup errors are preserved.
+func (v *Vroomy) ListenUntilSignal(ctx context.Context) error {
+	signalContext, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT)
+	defer stop()
+	err := v.Listen(signalContext)
+	if signalContext.Err() == context.Canceled {
+		// Remove only cancellation; retain any other joined shutdown errors.
+		return withoutCancellation(err)
+	}
+
+	return err
 }
 
 // Port will return the current HTTP port
@@ -515,46 +516,28 @@ func (v *Vroomy) TLSPort() uint16 {
 	return v.cfg.TLSPort
 }
 
-// Close closes the HTTP server and plugins in reverse dependency order, then releases
+// Close closes listeners and plugins in reverse dependency order, then releases
 // the registry for reuse. Repeated calls return errors.ErrIsClosed. Plugins must
 // tolerate Close after a partially failed Init and support Init again for reuse.
 func (v *Vroomy) Close() (err error) {
 	if !v.closed.Set(true) {
+		<-v.closeDone
 		return errors.ErrIsClosed
 	}
 
-	err = stderrors.Join(v.srv.Close(), v.closePlugins())
+	defer close(v.closeDone)
+	var redirectErr error
+	if v.redirect != nil {
+		redirectErr = v.redirect.Close()
+	}
+
+	err = stderrors.Join(v.srv.Close(), redirectErr, v.closePlugins())
+	v.closeErr = err
 	if v.registry != nil {
 		v.registry.release()
 	}
 
 	return err
-}
-
-func (v *Vroomy) listenNotification() {
-	var msg string
-	switch {
-	case v.TLSPort() > 0 && v.Port() > 0:
-		msg = fmt.Sprintf("Listening on ports %d (HTTPS) and %d (HTTP)", v.TLSPort(), v.Port())
-	case v.TLSPort() > 0:
-		msg = fmt.Sprintf("Listening on port %d (HTTPS)", v.TLSPort())
-	case v.Port() > 0:
-		msg = fmt.Sprintf("Listening on port %d (HTTP)", v.Port())
-	}
-
-	log.Printf("Vroomy: %v", msg)
-}
-
-// onClose waits for SIGINT, SIGTERM, or SIGABRT and invokes fn.
-func (v *Vroomy) onClose(fn func()) {
-	// sc represents the signal channel
-	sc := make(chan os.Signal, 1)
-	// Listen for signal notifications
-	// Discussion topic: Should we include SIGQUIT? If we catch the signal, we won't get to see the unwind
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT)
-	// Signal received
-	<-sc
-	fn()
 }
 
 // Register adds a plugin to the process-wide registry under a unique key.

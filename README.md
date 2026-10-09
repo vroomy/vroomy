@@ -98,8 +98,8 @@ This snippet belongs in `main` with imports for `context`, `log`, and
 
 `New` loads config, changes the process working directory to `dir`, initializes
 plugins and dependencies, and registers routes. `ListenUntilSignal` starts the
-configured listeners and closes the service when listening ends, including on
-SIGINT/SIGTERM. `NewWithConfig` accepts an in-memory config but does not apply the
+configured listeners and stops on SIGINT/SIGTERM. `Listen` itself closes listeners
+and plugins whenever listening ends, including context cancellation. `NewWithConfig` accepts an in-memory config but does not apply the
 file loader's defaults; set `Dir` explicitly.
 
 ## Documentation

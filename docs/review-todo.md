@@ -9,8 +9,9 @@ alignment, a dependency routing bug, and a test assertion bug discovered during
 this assessment. Existing style debt needs targeted migration; some cases need
 additional guidance rather than a stricter blanket rule.
 
-Status updated after the easy-win follow-up on 9 October 2026: **18 of 20 items
-completed**, with partial progress on lifecycle and integration coverage. Checked items are implemented in
+Status updated after the easy-win follow-up on 9 October 2026: **all 20 items implemented in local commits**, with lifecycle integration pending
+publication of the httpserve dependency fix. The main Vroomy branch contains 18
+completed items; the prepared lifecycle branch contains the remaining changes. Checked items are implemented in
 the current worktree. P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
 source line references below describe the original baseline unless stated otherwise.
@@ -21,7 +22,8 @@ parser panic, repairs dependency assertions, migrates explicit returns/spacing,
 removes result shadowing and obsolete commentary, and expands the style guide.
 Plugin shape/dependency validation, exclusive service ownership, constructor
 rollback, error causes, and handler slice ownership are now addressed.
-Listener/signal cleanup remains pending dependency publication.
+Listener/signal cleanup is implemented on the prepared branch, pending dependency
+publication and integration.
 
 ## P1: documentation corrections
 
@@ -107,7 +109,7 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   `populateFromOSEnv`, line 206, with a first-separator operation. Test empty
   values, multiple equals signs, and existing TOML/include precedence. Remove
   the truncation caveat only with the runtime fix.
-- [ ] **R5 — Define ownership and repair lifecycle cleanup.** Retain and close
+- [x] **R5 — Define ownership and repair lifecycle cleanup.** Retain and close
   redirect listeners; httpserve's current `Upgrader` exposes no `Close`, so this
   needs a dependency API change or replacement implementation. Stop signal
   notification and cancel its waiting goroutine when listening ends. Define
@@ -120,10 +122,10 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
 
 ## P2: coverage and style migration
 
-- [ ] **T1 — Add focused config/lifecycle contract tests.**
-  **Partial:** environment precedence, equals-sign/empty values, autocert merging,
-  and host-policy/allowlist fallback are covered. Path resolution, nested includes,
-  redirects, dependency assignment, and lifecycle integration remain open.
+- [x] **T1 — Add focused config/lifecycle contract tests.**
+  **Complete on the prepared lifecycle branch:** includes/path/order/non-recursion,
+  dependency injection, redirects/shutdown, TLS HTTP/2, h2c, and cached autocert
+  certificates/hostname policy are covered. Live issuance remains a deployment check.
   Cover include precedence,
   path resolution, nested include non-recursion, autocert merge behavior and
   primary-policy/allowlist fallback, redirect methods, and listener cleanup.
@@ -304,3 +306,19 @@ existing allowances; forcing named results or another library would overapply it
   behavior and empty resolved root paths return errors.
 - Listener/signal cleanup and its complete protocol suite are prepared separately;
   they require an upstream startup/Close race fix before integration.
+
+## Prepared lifecycle follow-up
+
+- `Listen` now owns cleanup on every exit and waits for listener goroutines.
+  Redirect sockets are retained and closed. Signals use `signal.NotifyContext`
+  with a deferred stop; normal cancellation does not hide joined cleanup errors.
+- Upstream httpserve commits fix middleware ownership, the startup/Close race,
+  redirect Close support, and TLS walk errors/short names. Existing router tests
+  had stale zero-parameter assertions for named routes; corrected the assertions
+  without changing matching behavior.
+- Local HTTP/TLS/h2c/cached-autocert regressions and both modules' full race suites,
+  vet and build pass with the prepared dependency. The published v0.14.1 control
+  reproduced a data race and shutdown hang on immediate cancellation.
+- The lifecycle branch has a concrete pseudo-version pin and archive checksums for
+  the prepared dependency commit. Publish that commit before integrating the
+  branch; no repository-specific replace or workspace file is committed.

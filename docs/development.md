@@ -69,9 +69,11 @@ main/include/process environment precedence and host-policy fallback. The
 dependency discovery and graph validation, including cycle membership without
 assuming map order, and regression cases for its error comparator.
 `utils_test.go` checks direct/factory handler parsing, literal argument semantics,
-and missing parentheses. `plugins_test.go` is an empty placeholder. The existing
-suite does not establish end-to-end correctness for all config merging, dependency
-assignment, listeners, shutdown, or TLS.
+and missing parentheses. `reflection_test.go` covers registration shape,
+backend assignment, and exported error contracts. `vroomy_test.go` checks graph
+validation before Init, failed startup rollback, close order, registry reuse,
+working-directory restoration, and filesystem causes. `plugins_test.go` is an
+empty placeholder; registry coverage lives in those focused suites.
 
 The exported `Plugins.Test()` and `Plugins.TestAsync()` both return
 `"testing has not yet been implemented"`. They are unrelated to `go test`.
@@ -98,6 +100,13 @@ to the launch directory. It does not use `CONFIG_PATH`.
 HTTP for every configured method, full/spare middleware capacity, caller mutation,
 and port release after explicit close.
 
+`listener_test.go` covers startup failure, immediate cancellation, explicit close,
+redirect methods and URL preservation, socket release, TLS HTTP/2, h2c activation
+from the process environment, cached autocert certificates, hostname rejection,
+and shutdown error causes. These tests bind temporary local ports and need a
+sandbox that permits local listeners. Live ACME issuance/renewal is a deployment
+check; tests do not contact a certificate authority.
+
 When testing config loading, assert precedence and path resolution explicitly.
 For service/plugin tests, avoid `t.Parallel` around the global registry or process
 working directory. Restore any state you replace. An external test application in
@@ -116,10 +125,6 @@ guide.
 | Includes | `loadIncludes` iterates the original include slice. Newly appended nested entries are not loaded. Included `Plugins` and outer `Config.Plugins` are separate. |
 | Handler/reflection validation | Missing closing handler parentheses return `ErrExpectedEndParen`, including a trailing `(`. Other malformed expressions are not fully validated; registration validates plugin shapes, anonymous pointers, and tagged fields; empty root paths return errors. Nil backends (including typed nil) and nil handler factory results are rejected. |
 | Construction and reuse | `NewWithConfig` changes global working directory, retains and mutates config objects, and reuses registered plugin instances. One service exclusively owns the registry at a time. Failed construction closes attempted plugins in reverse dependency order and restores the previous directory. |
-| Cancellation | `Listen` returns on context cancellation without closing resources. Its 100 ms startup message is a timer, not a readiness guarantee. `ListenUntilSignal` closes after `Listen`, treats `context.Canceled` as non-error, and combines other listen/close errors. |
-| Signals | `onClose` registers SIGINT, SIGTERM, SIGABRT, but not SIGQUIT. It does not unregister or stop waiting when the parent context ends. |
-| HTTP redirects | The separate httpserve `Upgrader` redirects only GET (301); other methods return 404. Redirect URLs include the TLS port even for 443. `Vroomy.Close` does not retain/close this listener. Do not assume all listeners are released when embedding this mode in a long-lived process. |
-| Close ordering | Plugins close in reverse dependency order. Repeated `Vroomy.Close` returns `errors.ErrIsClosed` from `github.com/gdbu/errors`. |
 
 ## Keeping documentation aligned
 
@@ -132,3 +137,16 @@ Keep the README's first-run instructions independent of third-party plugins.
 Compile complete Go examples, parse TOML examples, check local links, and smoke-test
 changed startup instructions. Go doc comments are part of the documentation too:
 avoid describing a legacy field or stub as an implemented feature.
+
+## Prepared lifecycle integration
+
+The lifecycle follow-up branch pins the prepared httpserve commit
+`b01f2c093e3444bca994f6058e174fc661051f68` (startup/Close synchronization, middleware
+ownership, and safe TLS walking). It is not published yet. The previous v0.14.1
+release has an immediate-cancellation race that can leave a listener open and make
+shutdown wait forever. Publish the dependency fix before integrating this branch.
+
+The prepared code and exact module archive have been verified locally with the
+full Vroomy and httpserve race suites, vet, build, and hello example. Development
+tests can use a temporary Go workspace or local file proxy until publication;
+no local `replace` directive is shipped in Vroomy's `go.mod`.

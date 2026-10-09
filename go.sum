@@ -36,8 +36,8 @@ github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOf
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
-github.com/vroomy/httpserve v0.14.1 h1:DVcsJlUE4Sb7W9W/FW0NJFHJCGQOKKFK/WIKdaspSGw=
-github.com/vroomy/httpserve v0.14.1/go.mod h1:Bd4wM4jklJDeMj3Rr6ntGni8JI1pr0ArAvW+Ihn5vMw=
+github.com/vroomy/httpserve v0.14.2-0.20261009233643-b01f2c093e34 h1:8lMymcOS/YolTqkPwOC5OFjJzXAiN5hL+FFWLENeAOw=
+github.com/vroomy/httpserve v0.14.2-0.20261009233643-b01f2c093e34/go.mod h1:Bd4wM4jklJDeMj3Rr6ntGni8JI1pr0ArAvW+Ihn5vMw=
 golang.org/x/arch v0.31.0 h1:22MlEb14/O/EPCYHFxsDdv5TuLD5dMjT5e2QeJw4ULk=
 golang.org/x/arch v0.31.0/go.mod h1:KcJSod3cqT2dKcjBxqTyGfbumNikqU9p5tHJinPJnuY=
 golang.org/x/crypto v0.57.0 h1:3ZVCjf8Ggz7zneR/EHRVx68Ctf+2pmIMP2UFhh9cC6M=

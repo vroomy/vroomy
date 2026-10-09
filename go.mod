@@ -8,8 +8,9 @@ require (
 	github.com/gdbu/errors v0.5.0
 	github.com/gdbu/queue v0.4.81
 	github.com/gdbu/stringset v0.4.0
-	github.com/vroomy/httpserve v0.14.1
+	github.com/vroomy/httpserve v0.14.2-0.20261009233643-b01f2c093e34
 	golang.org/x/crypto v0.57.0
+	golang.org/x/net v0.59.0
 )
 
 require (
@@ -21,7 +22,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.31.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 )

@@ -215,3 +215,19 @@ handler. Its value is not parsed as a boolean: even `USE_HTTP2_RAW=false` or an
 empty value enables it. A TOML `[env]` entry alone does not set the process
 environment. These protocol details follow the pinned dependency source; the
 HTTP quickstart does not verify HTTP/2 negotiation or ACME issuance.
+
+## Listener ownership and shutdown
+
+`Listen` runs once per service and closes all HTTP, HTTPS, and redirect listeners
+and plugins whenever a listener fails, the context ends, or `Close` is called.
+It waits for listener goroutines before returning. Cancellation returns the context
+error; plugin and listener cleanup failures retain their causes too.
+`ListenUntilSignal` adds SIGINT/SIGTERM/SIGABRT cancellation, releases its signal
+notification on exit, and suppresses normal `context.Canceled` while preserving
+cleanup failures. SIGQUIT remains available for Go's stack dump behavior.
+
+`Close` releases the registry after cleanup and closes consumers before providers.
+A closed service cannot listen again. Construct a fresh service/config for reuse;
+plugins must support `Init` after `Close`. Live ACME issuance/renewal still requires
+a reachable deployment; tests exercise cached certificates and hostname policy
+without contacting a certificate authority.

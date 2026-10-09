@@ -122,7 +122,8 @@ constructor, registration, or registry `Close` while that service is active retu
 `ErrPluginInUse`. Service `Close` releases ownership after plugin cleanup. Reuse
 calls `Init` and `Load` again on the same instances, so plugins must support that
 cycle; `New` does not allocate replacement instances. Do not mutate registered
-plugins or borrowed configs while a service is active.
+plugins or configuration fields read at runtime while a service is active. Handler
+registration copies its own slice storage, as described below.
 
 ## A complete plugin package
 
