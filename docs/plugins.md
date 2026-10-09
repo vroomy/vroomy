@@ -203,7 +203,7 @@ to reject invalid configuration. Returning `*vroomy.Response`, taking a standard
 Malformed expressions are not fully validated; in particular a trailing `(` can
 panic in the current parser. Keep references in the documented forms.
 
-Handlers in a group and route form a sequence. httpserve v0.13.0 advances through
+Handlers in a group and route form a sequence. The pinned httpserve advances through
 them automatically until the context completes; middleware can inspect/store
 values and return to continue, or write a response to stop the sequence. There is
 no `ctx.Next()` call. Use methods such as `ctx.WriteString`, `ctx.WriteJSON`,

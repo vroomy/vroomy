@@ -7,9 +7,10 @@ source in this checkout.
 
 ## Setup and checks
 
-The module is `github.com/vroomy/vroomy`, with Go 1.25.0 declared in `go.mod`.
-Use that version or newer. Dependencies are pinned in `go.mod` / `go.sum`, including
-httpserve v0.13.0; inspect that dependency's source before documenting its APIs.
+The module is `github.com/vroomy/vroomy`. Use the Go version required by
+[`go.mod`](../go.mod) or newer; the [quickstart](../README.md#quickstart) names the
+current minimum. Dependencies are pinned in `go.mod` / `go.sum`; inspect the
+pinned httpserve source before documenting its APIs.
 
 From the repository root:
 
@@ -18,6 +19,7 @@ go mod download
 go test ./...
 go vet ./...
 go build ./...
+sh scripts/check-doc-versions.sh
 ```
 
 `go mod download` needs network access unless dependencies are cached. Run `gofmt`
@@ -37,6 +39,11 @@ GOCACHE="${TMPDIR:-/tmp}/vroomy-go-build" go test ./...
 There is no Makefile, custom lint configuration, or checked-in CI workflow. Do not
 assume additional checks have run remotely. `go build ./...` compiles all packages;
 the root is a library, so `go run .` is not an application startup command.
+
+Run `scripts/check-doc-versions.sh` after Go or dependency updates. It checks
+explicit Go/httpserve versions in the user and agent guides against `go.mod`;
+historical review notes are excluded. Keep a concrete minimum in the README and
+link other version requirements to `go.mod` when a copied number adds no value.
 
 ## Source map
 

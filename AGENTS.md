@@ -21,12 +21,14 @@ lives in `examples/hello`. No CLI is included in this checkout.
 
 ## Commands
 
-Use Go 1.25.0 or newer, as declared in `go.mod`. From the repository root:
+Use the Go version required by `go.mod` or newer; the
+[README](README.md#quickstart) names the current minimum. From the repository root:
 
 ```sh
 go test ./...
 go vet ./...
 go build ./...
+sh scripts/check-doc-versions.sh
 ```
 
 Run `gofmt -w` on changed Go files. Use `go test -race ./...` when changing shared

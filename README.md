@@ -12,7 +12,7 @@ groups, environment values, and listeners. Plugins are compiled into your applic
 
 ## Quickstart
 
-Use Go **1.25.0 or newer** (see [go.mod](go.mod)). From a checkout of this repository:
+Use Go **1.27.2 or newer** (see [go.mod](go.mod)). From a checkout of this repository:
 
 ```sh
 go mod download
@@ -124,6 +124,7 @@ a handler instead. Legacy `-dataDir` / `-d` flags are not implemented; configure
 go test ./...
 go vet ./...
 go build ./...
+sh scripts/check-doc-versions.sh
 ```
 
 Run `gofmt` on changed Go files. See the [development guide](docs/development.md)

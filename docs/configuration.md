@@ -151,7 +151,7 @@ handlers = ["hello.Ping"]
 This registers `/api/v1/ping`. Declare parent groups before their children; missing
 parents and parents that have not been initialized cause construction errors.
 
-httpserve v0.13.0 handles paths, parameters such as `/:id`, and terminal wildcards
+The pinned httpserve handles paths, parameters such as `/:id`, and terminal wildcards
 such as `/*`. Handlers run in group-to-route order until the context is completed.
 Write a response from a handler; a `target` alone will not serve a file. See the
 [plugin guide](plugins.md) for exact method signatures and argument parsing.
@@ -163,7 +163,7 @@ append handlers again. `RouteGroup.G` is internal runtime state, not TOML input.
 
 ## TLS
 
-For existing certificates, set `tlsPort` and `tlsDir`. The pinned httpserve v0.13.0
+For existing certificates, set `tlsPort` and `tlsDir`. The pinned httpserve
 loads PEM certificate/key pairs sharing a pathname stem, such as `server.crt` and
 `server.key`; keep certificate files in that directory. HTTP redirects to the
 configured HTTPS port unless `allowNonTLS = true`.
