@@ -9,10 +9,10 @@ alignment, a dependency routing bug, and a test assertion bug discovered during
 this assessment. Existing style debt needs targeted migration; some cases need
 additional guidance rather than a stricter blanket rule.
 
-Status updated after the easy-win follow-up on 9 October 2026: **all 20 items implemented in local commits**, with lifecycle integration pending
-publication of the httpserve dependency fix. The main Vroomy branch contains 18
-completed items; the prepared lifecycle branch contains the remaining changes. Checked items are implemented in
-the current worktree. P1 means address before the next release; P2 means follow-up
+Status updated on 10 October 2026: **all 20 items completed and integrated**,
+including lifecycle cleanup with the published httpserve dependency fix.
+Checked items are implemented in the current worktree.
+P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
 source line references below describe the original baseline unless stated otherwise.
 
@@ -22,13 +22,14 @@ parser panic, repairs dependency assertions, migrates explicit returns/spacing,
 removes result shadowing and obsolete commentary, and expands the style guide.
 Plugin shape/dependency validation, exclusive service ownership, constructor
 rollback, error causes, and handler slice ownership are now addressed.
-Listener/signal cleanup is implemented on the prepared branch, pending dependency
-publication and integration.
+Listener/signal cleanup and protocol regressions are integrated with the published
+dependency fixes.
 
 ## P1: documentation corrections
 
 - [x] **D1 — Align version requirements and prevent another split.**
-  [go.mod](../go.mod) now requires Go **1.27.2** and httpserve **v0.14.1**. Correct
+  [go.mod](../go.mod) now requires Go **1.27.2** and pins the published httpserve
+  fixes at **v0.14.2-0.20261009233643-b01f2c093e34**. Correct
   [README.md](../README.md), [AGENTS.md](../AGENTS.md), and
   [development.md](development.md) for Go; correct the httpserve references in
   [configuration.md](configuration.md), [plugins.md](plugins.md), and development.
@@ -83,7 +84,7 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   at each route/group boundary before registering on the root Serve. Integration
   tests pass against the published dependency for sibling routes, every supported
   configured method, nested groups, caller mutation, and both full/spare capacity.
-  An upstream fix is also prepared; publication is separate from this workaround.
+  The published upstream ownership fix is also pinned in `go.mod`.
   In the original dependency, `PUT`, `POST`, `DELETE`, `OPTIONS`, `Handle`, and `Group` append to `g.hs`
   without copying. If capacity remains, later registrations overwrite handlers
   retained by earlier routes/groups. GET copies its middleware first, but that
@@ -109,9 +110,12 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   `populateFromOSEnv`, line 206, with a first-separator operation. Test empty
   values, multiple equals signs, and existing TOML/include precedence. Remove
   the truncation caveat only with the runtime fix.
-- [x] **R5 — Define ownership and repair lifecycle cleanup.** Retain and close
-  redirect listeners; httpserve's current `Upgrader` exposes no `Close`, so this
-  needs a dependency API change or replacement implementation. Stop signal
+- [x] **R5 — Define ownership and repair lifecycle cleanup.**
+  **Complete:** listeners close on every exit, signal notification stops, and
+  shutdown waits for listener goroutines. Exclusive ownership and reverse-order
+  rollback/shutdown are covered by regressions.
+  Retain and close redirect listeners; the original httpserve `Upgrader` exposes
+  no `Close`, so this needs a dependency API change or replacement implementation. Stop signal
   notification and cancel its waiting goroutine when listening ends. Define
   constructor-failure cleanup and close order for shared registered instances
   before implementing rollback: blindly closing a shared plugin can break another
@@ -123,7 +127,7 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
 ## P2: coverage and style migration
 
 - [x] **T1 — Add focused config/lifecycle contract tests.**
-  **Complete on the prepared lifecycle branch:** includes/path/order/non-recursion,
+  **Complete:** includes/path/order/non-recursion,
   dependency injection, redirects/shutdown, TLS HTTP/2, h2c, and cached autocert
   certificates/hostname policy are covered. Live issuance remains a deployment check.
   Cover include precedence,
@@ -304,10 +308,10 @@ existing allowances; forcing named results or another library would overapply it
   Go 1.27.2, with and without spare middleware capacity. All five configured
   methods and caller-slice mutation are covered. Paths keep the existing cleaning
   behavior and empty resolved root paths return errors.
-- Listener/signal cleanup and its complete protocol suite are prepared separately;
-  they require an upstream startup/Close race fix before integration.
+- Listener/signal cleanup and its protocol suite are integrated with the published
+  upstream startup/Close race fix.
 
-## Prepared lifecycle follow-up
+## Lifecycle follow-up
 
 - `Listen` now owns cleanup on every exit and waits for listener goroutines.
   Redirect sockets are retained and closed. Signals use `signal.NotifyContext`
@@ -317,8 +321,9 @@ existing allowances; forcing named results or another library would overapply it
   had stale zero-parameter assertions for named routes; corrected the assertions
   without changing matching behavior.
 - Local HTTP/TLS/h2c/cached-autocert regressions and both modules' full race suites,
-  vet and build pass with the prepared dependency. The published v0.14.1 control
+  vet and build pass with the dependency fixes. The published v0.14.1 control
   reproduced a data race and shutdown hang on immediate cancellation.
-- The lifecycle branch has a concrete pseudo-version pin and archive checksums for
-  the prepared dependency commit. Publish that commit before integrating the
-  branch; no repository-specific replace or workspace file is committed.
+- Vroomy pins the published dependency commit with checksums verified through Go's
+  normal module resolution. The integrated branch passes test/race/vet/build,
+  documentation version/link checks, and the hello HTTP/SIGINT smoke test without
+  a repository-specific replace or workspace file.

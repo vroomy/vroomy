@@ -138,15 +138,14 @@ Compile complete Go examples, parse TOML examples, check local links, and smoke-
 changed startup instructions. Go doc comments are part of the documentation too:
 avoid describing a legacy field or stub as an implemented feature.
 
-## Prepared lifecycle integration
+## Listener dependency
 
-The lifecycle follow-up branch pins the prepared httpserve commit
-`b01f2c093e3444bca994f6058e174fc661051f68` (startup/Close synchronization, middleware
-ownership, and safe TLS walking). It is not published yet. The previous v0.14.1
-release has an immediate-cancellation race that can leave a listener open and make
-shutdown wait forever. Publish the dependency fix before integrating this branch.
+Vroomy pins the published httpserve commit
+[`b01f2c093e3444bca994f6058e174fc661051f68`](https://github.com/vroomy/httpserve/commit/b01f2c093e3444bca994f6058e174fc661051f68)
+for startup/Close synchronization, middleware ownership, and safe TLS walking.
+The previous v0.14.1 release has an immediate-cancellation race that can leave a listener open and make
+shutdown wait forever.
 
-The prepared code and exact module archive have been verified locally with the
-full Vroomy and httpserve race suites, vet, build, and hello example. Development
-tests can use a temporary Go workspace or local file proxy until publication;
-no local `replace` directive is shipped in Vroomy's `go.mod`.
+The published module resolves through Go's normal proxy and checksum verification.
+Both modules' race suites, vet and build, and the hello example have been checked.
+No local `replace` directive or workspace file is required.
