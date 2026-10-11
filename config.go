@@ -27,7 +27,7 @@ const (
 func NewConfig(loc string) (cfg *Config, err error) {
 	var c Config
 	if _, err = toml.DecodeFile(loc, &c); err != nil {
-		return cfg, fmt.Errorf("decode configuration %q: %w", loc, err)
+		return nil, fmt.Errorf("decode configuration %q: %w", loc, err)
 	}
 
 	if err = c.loadIncludes(); err != nil {
