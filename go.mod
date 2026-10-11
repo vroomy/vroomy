@@ -8,7 +8,7 @@ require (
 	github.com/gdbu/errors v0.5.0
 	github.com/gdbu/queue v0.4.81
 	github.com/gdbu/stringset v0.4.0
-	github.com/vroomy/httpserve v0.14.2-0.20261009233643-b01f2c093e34
+	github.com/vroomy/httpserve v0.14.2-0.20261011025536-46f7d4b6f0dc
 	golang.org/x/crypto v0.57.0
 	golang.org/x/net v0.59.0
 )
