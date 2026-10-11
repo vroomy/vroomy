@@ -140,8 +140,8 @@ avoid describing a legacy field or stub as an implemented feature.
 
 ## Listener dependency
 
-Vroomy pins the published httpserve commit
-[`46f7d4b6f0dc2de491b5a0ba3192b7b94eabc9de`](https://github.com/vroomy/httpserve/commit/46f7d4b6f0dc2de491b5a0ba3192b7b94eabc9de)
+Vroomy pins the published httpserve release
+[`v0.14.2`](https://github.com/vroomy/httpserve/tree/v0.14.2)
 for startup/Close synchronization, middleware ownership, and safe TLS walking.
 Listener setup uses a helper with a deferred unlock; serving begins after it returns.
 The previous v0.14.1 release has an immediate-cancellation race that can leave a listener open and make

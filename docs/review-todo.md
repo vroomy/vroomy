@@ -29,7 +29,7 @@ dependency fixes.
 
 - [x] **D1 — Align version requirements and prevent another split.**
   [go.mod](../go.mod) now requires Go **1.27.2** and pins the published httpserve
-  fixes at **v0.14.2-0.20261011025536-46f7d4b6f0dc**. Correct
+  fixes at **v0.14.2**. Correct
   [README.md](../README.md), [AGENTS.md](../AGENTS.md), and
   [development.md](development.md) for Go; correct the httpserve references in
   [configuration.md](configuration.md), [plugins.md](plugins.md), and development.
