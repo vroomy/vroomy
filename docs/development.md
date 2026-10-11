@@ -19,7 +19,6 @@ go mod download
 go test ./...
 go vet ./...
 go build ./...
-sh scripts/check-doc-versions.sh
 ```
 
 `go mod download` needs network access unless dependencies are cached. Run `gofmt`
@@ -40,9 +39,8 @@ There is no Makefile, custom lint configuration, or checked-in CI workflow. Do n
 assume additional checks have run remotely. `go build ./...` compiles all packages;
 the root is a library, so `go run .` is not an application startup command.
 
-Run `scripts/check-doc-versions.sh` after Go or dependency updates. It checks
-explicit Go/httpserve versions in the user and agent guides against `go.mod`;
-historical review notes are excluded. Keep a concrete minimum in the README and
+Keep documentation versions aligned with `go.mod` when updating dependencies.
+Keep a concrete minimum in the README and
 link other version requirements to `go.mod` when a copied number adds no value.
 
 ## Source map

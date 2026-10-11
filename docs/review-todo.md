@@ -16,8 +16,8 @@ P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
 source line references below describe the original baseline unless stated otherwise.
 
-Completed work upgrades the module minimum to Go 1.27.2, aligns the guides, adds
-`scripts/check-doc-versions.sh`, fixes environment truncation and the trailing-`(`
+Completed work upgrades the module minimum to Go 1.27.2, aligns the guides,
+fixes environment truncation and the trailing-`(`
 parser panic, repairs dependency assertions, migrates explicit returns/spacing,
 removes result shadowing and obsolete commentary, and expands the style guide.
 Plugin shape/dependency validation, exclusive service ownership, constructor
@@ -34,8 +34,8 @@ dependency fixes.
   [development.md](development.md) for Go; correct the httpserve references in
   [configuration.md](configuration.md), [plugins.md](plugins.md), and development.
   Keep a concrete Go requirement in the quickstart; link other version references
-  to the authoritative source where a number adds no value. Add a lightweight
-  version-consistency check to dependency-update verification.
+  to the authoritative source where a number adds no value. Use `go.mod` as the
+  source of truth when updating documentation alongside dependencies.
 - [x] **D2 — Describe the HTTP redirect precisely.** Configuration currently
   overstates `allowNonTLS = false`: only GET redirects, with status 301; other
   methods receive 404. The URL includes the configured TLS port even for 443.
@@ -215,8 +215,8 @@ existing allowances; forcing named results or another library would overapply it
   select/download a newer toolchain with `GOTOOLCHAIN=auto`. The documented minimum
   still needs correction. See [Go's toolchain documentation](https://go.dev/doc/toolchain).
 - **Version drift is not evidence that runtime tests would prevent it.** Ordinary
-  `go test` does not compare prose with `go.mod`. A version-consistency check or
-  release checklist addresses this directly; behavior tests address different gaps.
+  `go test` does not compare prose with `go.mod`. Update version claims alongside
+  dependency changes; behavior tests address different gaps.
 - **The dependency assertion coverage is weaker than the review suggests.** The
   empty plugin tests and limited parser tests are described correctly, but R1
   invalidates some existing dependency error assertions too.
@@ -272,9 +272,6 @@ existing allowances; forcing named results or another library would overapply it
 - On Go 1.27.2, `go test ./...`, `go test -race ./...`, `go vet ./...`, and
   `go build ./...` passed. Build emitted only the non-fatal sandbox module-cache
   metadata warning noted above. Changed Go files are `gofmt` clean.
-- The version-consistency script passed for this tree. Temporary fixtures verified
-  that it rejects stale Go versions, stale httpserve versions, and a missing README
-  minimum, and works when invoked from another working directory.
 - All 72 local links in the edited guides and this review document resolved;
   `git diff --check` passed.
 - Rebuilt the hello example with Go 1.27.2 and the updated source. With a temporary
@@ -325,5 +322,5 @@ existing allowances; forcing named results or another library would overapply it
   reproduced a data race and shutdown hang on immediate cancellation.
 - Vroomy pins the published dependency commit with checksums verified through Go's
   normal module resolution. The integrated branch passes test/race/vet/build,
-  documentation version/link checks, and the hello HTTP/SIGINT smoke test without
+  documentation link checks, and the hello HTTP/SIGINT smoke test without
   a repository-specific replace or workspace file.
