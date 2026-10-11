@@ -31,7 +31,7 @@ func NewConfig(loc string) (cfg *Config, err error) {
 	}
 
 	if err = c.loadIncludes(); err != nil {
-		return cfg, err
+		return nil, err
 	}
 
 	if c.Dir == "" {
@@ -43,8 +43,7 @@ func NewConfig(loc string) (cfg *Config, err error) {
 	}
 
 	c.populateFromOSEnv()
-	cfg = &c
-	return cfg, err
+	return &c, nil
 }
 
 // Config configures a Vroomy service. NewWithConfig retains and mutates this value.
