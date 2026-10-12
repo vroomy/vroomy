@@ -112,7 +112,7 @@ func (c *Config) loadIncludes() (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (c *Config) loadInclude(include string) (err error) {
@@ -139,14 +139,14 @@ func (c *Config) loadInclude(include string) (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 // GetRouteGroup returns the first group matching name, or ErrGroupNotFound.
 // An empty name returns nil, nil to select the root group.
 func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	if len(name) == 0 {
-		return g, err
+		return g, nil
 	}
 
 	// TODO: Make this a map for faster lookups?
@@ -156,7 +156,7 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 		}
 
 		g = group
-		return g, err
+		return g, nil
 	}
 
 	err = ErrGroupNotFound
@@ -194,7 +194,7 @@ func (c *Config) getHostPolicy() (hp autocert.HostPolicy, err error) {
 		return policyErr
 	}
 
-	return hp, err
+	return hp, nil
 }
 
 func (c *Config) populateFromOSEnv() {

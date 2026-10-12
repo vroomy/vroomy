@@ -14,11 +14,11 @@ import (
 
 func initDir(loc string) (err error) {
 	if len(loc) == 0 {
-		return err
+		return nil
 	}
 
 	if err = os.Mkdir(loc, 0744); err == nil {
-		return err
+		return nil
 	}
 
 	if os.IsExist(err) {
@@ -49,7 +49,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 
 	spl = strings.Split(handler, "(")
 	if len(spl) == 1 {
-		return key, handler, args, err
+		return key, handler, args, nil
 	}
 
 	handler = spl[0]
@@ -62,7 +62,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 
 	argsStr = argsStr[:len(argsStr)-1]
 	args = strings.Split(argsStr, ",")
-	return key, handler, args, err
+	return key, handler, args, nil
 }
 
 func getHostPolicy() (hp autocert.HostPolicy, err error) {
@@ -95,7 +95,7 @@ func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
 	}
 
 	out = reflected.Interface()
-	return out, err
+	return out, nil
 }
 
 func getHandler(handlerKey string) (h httpserve.Handler, err error) {
@@ -117,7 +117,7 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	switch val := toAssert.(type) {
 	case func(*httpserve.Context):
 		h = val
-		return h, err
+		return h, nil
 
 	case func(args ...string) (httpserve.Handler, error):
 		if h, err = val(args...); err != nil {
@@ -152,7 +152,7 @@ func canSet(a, b reflect.Value) (err error) {
 		return fmt.Errorf("invalid type, expected %v and received %v", a.Type(), b.Type())
 	}
 
-	return err
+	return nil
 }
 
 func copySlice[T any](in []T) (out []T) {
@@ -206,7 +206,7 @@ func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
 		return hp, err
 	}
 
-	return hp, err
+	return hp, nil
 }
 
 // withoutCancellation preserves each leaf error except normal context cancellation.

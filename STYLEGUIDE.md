@@ -247,6 +247,17 @@ Named results can be changed by deferred functions even after an explicit return
 Use that behavior deliberately for cleanup, keep it visible, and never shadow the
 result being updated.
 
+### Successful Returns
+
+On a successful path where every operation that can fail has been checked, return
+literal `nil` in the error position instead of an error variable known to be nil.
+Use `return nil` for error-only functions and `return result, nil` for functions
+with additional results. This also applies to early successful exits.
+
+Preserve error variables and direct operation results when they can carry an
+unchecked, accumulated, or cleanup error. Deferred functions may still update a
+named error result after `return result, nil`; preserve that cleanup behavior.
+
 ## Function Design
 
 Keep functions focused on one responsibility. Fitting on one screen is a useful
@@ -507,6 +518,7 @@ Apply this checklist to the scope of the change:
 * [ ] Functions are small and focused
 * [ ] Named returns used appropriately
 * [ ] No naked returns
+* [ ] Successful paths return literal nil errors when all failures have been checked
 * [ ] Declarations use `var` or a documented `:=` exception
 * [ ] No shadowing
 * [ ] External/operation errors include context

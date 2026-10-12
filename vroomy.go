@@ -196,12 +196,12 @@ func (v *Vroomy) initPlugins() (err error) {
 		log.Printf("Vroomy: Initialized %s\n", pluginKey)
 	}
 
-	return err
+	return nil
 }
 
 func (v *Vroomy) initGroups() (err error) {
 	if len(v.cfg.Groups) == 0 {
-		return err
+		return nil
 	}
 
 	for _, group := range v.cfg.Groups {
@@ -210,7 +210,7 @@ func (v *Vroomy) initGroups() (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
@@ -243,7 +243,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	}
 
 	g.G = grp.Group(g.HTTPPath, g.HTTPHandlers...)
-	return err
+	return nil
 }
 
 func (v *Vroomy) initRoutes() (err error) {
@@ -293,7 +293,7 @@ func (v *Vroomy) initRoutes() (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (v *Vroomy) initRoute(r *Route) (err error) {
@@ -311,7 +311,7 @@ func (v *Vroomy) initRoute(r *Route) (err error) {
 		r.HTTPHandlers = append(r.HTTPHandlers, h)
 	}
 
-	return err
+	return nil
 }
 
 func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error) {
@@ -346,7 +346,7 @@ func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
 		return pi, err
 	}
 
-	return pi, err
+	return pi, nil
 }
 
 func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
@@ -361,7 +361,7 @@ func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
 		return reference, err
 	}
 
-	return reference, err
+	return reference, nil
 }
 
 func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
@@ -380,7 +380,7 @@ func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
 	}
 
 	backend.Set(beVal)
-	return err
+	return nil
 }
 
 func (v *Vroomy) loadPlugins() error {

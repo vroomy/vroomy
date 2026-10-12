@@ -51,7 +51,7 @@ func (d dependenciesMap) validateRegistration() (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (d dependenciesMap) Load(fn func(pluginKey string, dm dependencyMap) error) (err error) {
@@ -86,7 +86,7 @@ func (d dependenciesMap) Load(fn func(pluginKey string, dm dependencyMap) error)
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (d dependenciesMap) validateDependency(key string, dm dependencyMap) (err error) {
@@ -94,7 +94,7 @@ func (d dependenciesMap) validateDependency(key string, dm dependencyMap) (err e
 		return fmt.Errorf("self import error: <%s> cannot import itself", key)
 	}
 
-	return err
+	return nil
 }
 
 func makeDependencyMap(val interface{}) (m dependencyMap, err error) {
@@ -129,7 +129,7 @@ func (d dependencyMap) validateRegistration(dm dependenciesMap) (err error) {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (d dependencyMap) isReady(loaded stringset.Map) (isReady bool) {

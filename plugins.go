@@ -58,7 +58,7 @@ func (p *Plugins) Register(key string, pi Plugin) (err error) {
 	}
 
 	p.pm[key] = pi
-	return err
+	return nil
 }
 
 // Get returns a plugin by its registration key.
@@ -77,7 +77,7 @@ func (p *Plugins) Get(key string) (pi Plugin, err error) {
 		return pi, err
 	}
 
-	return pi, err
+	return pi, nil
 }
 
 // Loaded returns a copy of the registry map, sharing the same plugin instances.
