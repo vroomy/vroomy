@@ -2,6 +2,7 @@ package vroomy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -11,31 +12,36 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-type listener interface {
-	Listen(port uint16) error
-}
-
 func initDir(loc string) (err error) {
 	if len(loc) == 0 {
-		return
-	}
-
-	if err = os.Mkdir(loc, 0744); err == nil {
-		return
-	}
-
-	if os.IsExist(err) {
 		return nil
 	}
 
-	return
+	if err = os.Mkdir(loc, 0744); err == nil {
+		return nil
+	}
+
+	if os.IsExist(err) {
+		var info os.FileInfo
+		if info, err = os.Stat(loc); err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			return fmt.Errorf("data path %q is not a directory", loc)
+		}
+
+		return nil
+	}
+
+	return err
 }
 
 func getHandlerParts(handlerKey string) (key, handler string, args []string, err error) {
 	spl := strings.SplitN(handlerKey, ".", 2)
-	if len(spl) != 2 {
+	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
 		err = fmt.Errorf("expected key and handler, received \"%s\"", handlerKey)
-		return
+		return key, handler, args, err
 	}
 
 	key = spl[0]
@@ -43,20 +49,20 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 
 	spl = strings.Split(handler, "(")
 	if len(spl) == 1 {
-		return
+		return key, handler, args, nil
 	}
 
 	handler = spl[0]
 	argsStr := spl[1]
 
-	if argsStr[len(argsStr)-1] != ')' {
+	if len(argsStr) == 0 || argsStr[len(argsStr)-1] != ')' {
 		err = ErrExpectedEndParen
-		return
+		return key, handler, args, err
 	}
 
 	argsStr = argsStr[:len(argsStr)-1]
 	args = strings.Split(argsStr, ",")
-	return
+	return key, handler, args, nil
 }
 
 func getHostPolicy() (hp autocert.HostPolicy, err error) {
@@ -65,27 +71,31 @@ func getHostPolicy() (hp autocert.HostPolicy, err error) {
 	switch {
 	case err == nil:
 		return assertAsHostPolicy(method)
-	case isUnregisteredPluginError(err):
+	case errors.Is(err, ErrPluginNotLoaded):
 		return nil, nil
 	default:
-		return
+		return hp, err
 	}
 }
 
 func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
 	var plugin Plugin
 	if plugin, err = p.Get(pluginKey); err != nil {
-		return
+		return out, err
+	}
+
+	if err = validatePlugin(plugin); err != nil {
+		return nil, fmt.Errorf("get method from plugin %q: %w", pluginKey, err)
 	}
 
 	reflected := reflect.ValueOf(plugin).MethodByName(method)
 	if reflected.Kind() == reflect.Invalid {
 		err = fmt.Errorf("method of <%s> not found within plugin <%s>", method, pluginKey)
-		return
+		return out, err
 	}
 
 	out = reflected.Interface()
-	return
+	return out, nil
 }
 
 func getHandler(handlerKey string) (h httpserve.Handler, err error) {
@@ -96,29 +106,41 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	)
 
 	if key, handler, args, err = getHandlerParts(handlerKey); err != nil {
-		return
+		return h, err
 	}
 
 	var toAssert interface{}
 	if toAssert, err = getPluginMethod(key, handler); err != nil {
-		return
+		return h, err
 	}
 
 	switch val := toAssert.(type) {
 	case func(*httpserve.Context):
 		h = val
-		return
+		return h, nil
 
 	case func(args ...string) (httpserve.Handler, error):
-		return val(args...)
+		if h, err = val(args...); err != nil {
+			return nil, fmt.Errorf("create handler %s.%s: %w", key, handler, err)
+		}
+
+		if h == nil {
+			return nil, fmt.Errorf("handler factory %s.%s returned nil: %w", key, handler, ErrInvalidPluginHandler)
+		}
+
+		return h, nil
 
 	default:
-		err = fmt.Errorf("invalid handler type, expected Handler and received %T", val)
-		return
+		err = fmt.Errorf("invalid handler type, expected Handler and received %T: %w", val, ErrInvalidPluginHandler)
+		return h, err
 	}
 }
 
 func canSet(a, b reflect.Value) (err error) {
+	if !a.IsValid() || !b.IsValid() {
+		return fmt.Errorf("invalid dependency value")
+	}
+
 	switch {
 	// Check to see if the types match exactly
 	case a.Type() == b.Type():
@@ -130,41 +152,50 @@ func canSet(a, b reflect.Value) (err error) {
 		return fmt.Errorf("invalid type, expected %v and received %v", a.Type(), b.Type())
 	}
 
-	return
+	return nil
 }
 
 func copySlice[T any](in []T) (out []T) {
 	out = make([]T, len(in))
 	copy(out, in)
-	return
+	return out
 }
 
-func getField(rval reflect.Value, indices []int) (field reflect.Value) {
+func getField(value reflect.Value, indices []int) (field reflect.Value, err error) {
 	for _, index := range indices {
-		if rval.Kind() == reflect.Ptr {
-			rval = reflect.Indirect(rval.Elem())
+		if value.Kind() == reflect.Pointer {
+			if value.IsNil() {
+				return field, fmt.Errorf("nil anonymous pointer in dependency path")
+			}
+
+			value = value.Elem()
 		}
 
-		rval = rval.Field(index)
+		if !value.IsValid() || value.Kind() != reflect.Struct || index < 0 || index >= value.NumField() {
+			return field, fmt.Errorf("invalid dependency field path")
+		}
+
+		value = value.Field(index)
 	}
 
-	if rval.CanAddr() {
-		rval = rval.Addr()
+	if !value.IsValid() || !value.CanSet() {
+		return field, ErrNotAddressable
 	}
 
-	return rval
+	return value, nil
 }
 
-func isUnregisteredPluginError(err error) bool {
-	str := err.Error()
-	switch {
-	case !strings.Contains(str, "plugin with key of <"):
-		return false
-	case !strings.Contains(str, "> has not been registered"):
-		return false
-	default:
+func isNilValue(value reflect.Value) bool {
+	if !value.IsValid() {
 		return true
 	}
+
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	}
+
+	return false
 }
 
 func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
@@ -172,8 +203,26 @@ func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
 	hp, ok = fn.(func(ctx context.Context, host string) error)
 	if !ok {
 		err = ErrInvalidHostPolicy
-		return
+		return hp, err
 	}
 
-	return
+	return hp, nil
+}
+
+// withoutCancellation preserves each leaf error except normal context cancellation.
+func withoutCancellation(err error) error {
+	if err == nil || err == context.Canceled {
+		return nil
+	}
+
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		var remaining []error
+		for _, cause := range joined.Unwrap() {
+			remaining = append(remaining, withoutCancellation(cause))
+		}
+
+		return errors.Join(remaining...)
+	}
+
+	return err
 }

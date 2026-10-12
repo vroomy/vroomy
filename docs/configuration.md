@@ -18,7 +18,10 @@ does not start a server, change directories, or add the `dataDir` default.
 initializes the configured data directory, initializes/loads plugins, and creates
 groups and routes. It does not parse files, load includes, copy the config, import
 process environment entries, or supply defaults. A programmatic config should set
-`Dir: "."`; an empty directory makes construction fail.
+`Dir: "."`; an empty directory makes construction fail. On failure, construction
+closes plugins whose `Init` was attempted and restores the previous working
+directory. Only one active service can own the registered plugins; see the
+[plugin lifecycle](plugins.md#interface-and-lifecycle).
 
 The configuration filename and all includes are resolved against the process
 working directory **before** `dir` is applied. They are not relative to the
@@ -39,7 +42,7 @@ uses the explicit filename and does not consult it.
 | `port` | uint16 / `0` | HTTP port; `0` disables HTTP. |
 | `tlsPort` | uint16 / `0` | HTTPS port; `0` disables HTTPS. |
 | `tlsDir` | string / empty | Directory of certificate/key pairs; takes precedence over autocert. |
-| `allowNonTLS` | bool / `false` | When HTTPS is enabled, `false` makes the HTTP listener redirect to HTTPS. `true` serves the routes over HTTP too. |
+| `allowNonTLS` | bool / `false` | When HTTPS is enabled, `false` redirects HTTP GET requests to HTTPS; other methods receive 404. `true` serves the routes over HTTP too. |
 | `autoCertDir` | string / empty | Autocert cache directory; requires nonempty `autoCertHosts`. |
 | `autoCertHosts` | string array / empty | Autocert host allowlist. |
 | `include` | string array / empty | TOML files or directories loaded in order; see merge rules below. |
@@ -80,9 +83,9 @@ are different keys; Vroomy does not expand `${VARIABLE}` inside TOML strings.
 directory creation. The initializer uses `os.Mkdir`, not `MkdirAll`, so parent
 directories must already exist. Plugins decide how to use this value.
 
-Known limitation: `populateFromOSEnv` splits on every `=` and keeps only the second
-piece. A process value such as `TOKEN=abc=def` becomes `abc` in `Environment`.
-Explicit TOML values containing `=` are preserved.
+Process and TOML values containing `=` are preserved. For example, the process
+entry `TOKEN=abc=def` supplies `Environment["TOKEN"] = "abc=def"`. Empty values
+are preserved too and count as present for precedence.
 
 | API | Missing key | Present key |
 | --- | --- | --- |
@@ -151,8 +154,20 @@ handlers = ["hello.Ping"]
 This registers `/api/v1/ping`. Declare parent groups before their children; missing
 parents and parents that have not been initialized cause construction errors.
 
-httpserve v0.13.0 handles paths, parameters such as `/:id`, and terminal wildcards
-such as `/*`. Handlers run in group-to-route order until the context is completed.
+With a nonempty group prefix, the pinned httpserve joins paths using `path.Join`,
+which cleans `.` and `..` segments and removes trailing slashes. For example,
+`/api` with `/../other` becomes `/other`. Root routes skip this join and must begin
+with `/`; an empty root path returns a construction error.
+
+Named segments such as `/:id` are captured through `ctx.Param("id")`. A wildcard
+such as `/*` matches the remaining path without capturing it; once reached, it
+returns success immediately and ignores later pattern segments. Use wildcards
+only at the end of a pattern.
+
+The handler order is parent group, child group, then route, until the context
+completes. Vroomy copies inherited handlers at every group and route composition
+boundary, so sibling registrations and spare slice capacity cannot overwrite
+previous routes.
 Write a response from a handler; a `target` alone will not serve a file. See the
 [plugin guide](plugins.md) for exact method signatures and argument parsing.
 
@@ -163,10 +178,11 @@ append handlers again. `RouteGroup.G` is internal runtime state, not TOML input.
 
 ## TLS
 
-For existing certificates, set `tlsPort` and `tlsDir`. The pinned httpserve v0.13.0
+For existing certificates, set `tlsPort` and `tlsDir`. The pinned httpserve
 loads PEM certificate/key pairs sharing a pathname stem, such as `server.crt` and
-`server.key`; keep certificate files in that directory. HTTP redirects to the
-configured HTTPS port unless `allowNonTLS = true`.
+`server.key`; keep certificate files in that directory. When HTTP is enabled and
+`allowNonTLS = false`, GET requests receive a 301 redirect to the configured HTTPS
+port; other methods receive 404. The redirect URL includes the port even for 443.
 
 For automatic certificates, omit `tlsDir` and set both `autoCertDir` and
 `autoCertHosts`. The listener uses httpserve's autocert integration and automatically
@@ -184,3 +200,34 @@ An enabled TLS port without either certificate source produces
 `ErrInvalidTLSDirectory` during `Listen`, not during construction. Shutdown has a
 separate HTTP-redirect-listener limitation described in
 [development.md](development.md#known-implementation-gaps).
+
+## Listener defaults and HTTP/2
+
+Vroomy uses httpserve's default listener configuration: a 30-second read timeout,
+a 30-second write timeout, a 90-second idle timeout, and `MaxHeaderBytes = 4096`.
+There are no TOML fields for these values, and Vroomy does not expose the
+dependency's `ListenWithConfig` variants through its public API.
+
+The certificate-based TLS listener advertises `h2` and `http/1.1` through ALPN;
+autocert's TLS configuration also advertises HTTP/2. For plain HTTP, the presence
+of the **process environment** variable `USE_HTTP2_RAW` enables httpserve's h2c
+handler. Its value is not parsed as a boolean: even `USE_HTTP2_RAW=false` or an
+empty value enables it. A TOML `[env]` entry alone does not set the process
+environment. These protocol details follow the pinned dependency source; the
+HTTP quickstart does not verify HTTP/2 negotiation or ACME issuance.
+
+## Listener ownership and shutdown
+
+`Listen` runs once per service and closes all HTTP, HTTPS, and redirect listeners
+and plugins whenever a listener fails, the context ends, or `Close` is called.
+It waits for listener goroutines before returning. Cancellation returns the context
+error; plugin and listener cleanup failures retain their causes too.
+`ListenUntilSignal` adds SIGINT/SIGTERM/SIGABRT cancellation, releases its signal
+notification on exit, and suppresses normal `context.Canceled` while preserving
+cleanup failures. SIGQUIT remains available for Go's stack dump behavior.
+
+`Close` releases the registry after cleanup and closes consumers before providers.
+A closed service cannot listen again. Construct a fresh service/config for reuse;
+plugins must support `Init` after `Close`. Live ACME issuance/renewal still requires
+a reachable deployment; tests exercise cached certificates and hostname policy
+without contacting a certificate authority.

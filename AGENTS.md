@@ -21,7 +21,8 @@ lives in `examples/hello`. No CLI is included in this checkout.
 
 ## Commands
 
-Use Go 1.25.0 or newer, as declared in `go.mod`. From the repository root:
+Use the Go version required by `go.mod` or newer; the
+[README](README.md#quickstart) names the current minimum. From the repository root:
 
 ```sh
 go test ./...
@@ -60,15 +61,15 @@ not a requirement to extract a library for every small handler. See
 - Plugins are registered globally with `Register(key, &plugin)`. Startup snapshots
   all registered instances; `Config.Plugins` does not filter or dynamically load
   them. Registration belongs before `New` / `NewWithConfig`.
-- Startup calls every `Init`, validates dependencies, then injects tagged fields
+- Startup validates the dependency graph, calls every `Init`, then injects tagged fields
   and calls `Load` in dependency order. Dependencies are unavailable during `Init`.
-  Independent plugins have no stable order. Close order is also unspecified.
+  Independent plugins have no stable order. Close reverses dependency order.
 - Register non-nil pointers to structs. Dependency fields must be exported and
   settable, tagged `vroomy:"registered-key"`, and match the provider's `Backend()`
   type (or an interface it implements). Prefer embedding `BasePlugin` by value.
 - `New` parses config/includes and fills defaults. `NewWithConfig` does neither;
   supply at least `Dir: "."` explicitly. Both paths change the process working
-  directory and share plugin instances. Avoid parallel tests that mutate either.
+  directory and acquire exclusive ownership of the registered plugin instances. Avoid parallel tests that mutate either.
 - Config routes resolve exported plugin methods with the exact signatures in the
   plugin guide. A handler writes through `*httpserve.Context`; returning
   `*vroomy.Response` is not supported by the route resolver.
@@ -78,9 +79,10 @@ not a requirement to extract a library for every small handler. See
 - Legacy flags (`-d`, `-dataDir`, `require`, `[[flag]]`) are not wired up. Included
   files do not recursively execute their own `include` entries. See the config
   reference before relying on merge or environment precedence.
-- `Listen` blocks and does not close resources on cancellation. `ListenUntilSignal`
-  closes after listening ends. Constructor failures do not roll back plugin
-  initialization; check the lifecycle limitations before adding resource ownership.
+- `Listen` closes all listeners/plugins and joins listener goroutines on every
+  exit. `ListenUntilSignal` adds signal cancellation and releases notifications. Constructor failures close plugins whose Init was attempted and restore the
+  working directory. Plugin Close must tolerate partial Init. A second active
+  service or registration while one owns the registry returns ErrPluginInUse.
 
 ## Presenting pull request titles and descriptions
 

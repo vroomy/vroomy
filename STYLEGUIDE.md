@@ -14,8 +14,8 @@ Apply this guide to new code and functions being substantially changed. A commen
 edit or a one-line bug fix does not require restyling an entire function or file.
 Keep broader style migrations in separate, intentional changes.
 
-Existing code is not uniformly compliant, particularly around naked returns and
-error wrapping. Its presence is not an exception for new code. Preserve public
+Existing code is not uniformly compliant, particularly around error wrapping and
+resource ownership. Its presence is not an exception for new code. Preserve public
 APIs, error contracts, and behavior when improving style: changing error identity,
 cleanup, or initialization order is a behavior change that needs its own review.
 
@@ -30,6 +30,11 @@ below are part of the guide; they do not require a separate approval step.
 Each primary production type gets its own file, with its constructors and all its
 production methods. Small supporting types may stay with the primary type when
 they exist only to support it.
+
+Tightly coupled private supporting types, such as a dependency graph's per-plugin
+field map, may share the primary type's file. Keep each supporting type's methods
+together and place its constructor directly above that type too. Function-local
+test types are outside this production-file rule.
 
 Tests belong in corresponding `_test.go` files. Generated code and platform/build
 constraints may require separate files; use those mechanisms when needed, rather
@@ -242,6 +247,17 @@ Named results can be changed by deferred functions even after an explicit return
 Use that behavior deliberately for cleanup, keep it visible, and never shadow the
 result being updated.
 
+### Successful Returns
+
+On a successful path where every operation that can fail has been checked, return
+literal `nil` in the error position instead of an error variable known to be nil.
+Use `return nil` for error-only functions and `return result, nil` for functions
+with additional results. This also applies to early successful exits.
+
+Preserve error variables and direct operation results when they can carry an
+unchecked, accumulated, or cleanup error. Deferred functions may still update a
+named error result after `return result, nil`; preserve that cleanup behavior.
+
 ## Function Design
 
 Keep functions focused on one responsibility. Fitting on one screen is a useful
@@ -307,6 +323,18 @@ the failure; do not both log and return the same error without a specific reason
 Reserve `log.Fatal` and `os.Exit` for executable entry points, since they bypass
 normal caller cleanup. Do not use panics for ordinary operational failures.
 
+A panic in an executable's `init()` may report a programming invariant failure,
+such as duplicate plugin registration, when returning an error is impossible.
+Malformed configuration and reflection input are operational validation errors
+and should be returned to the caller, not handled by a registration-panic exception.
+
+Prefer reporting a failure through one configured callback when a framework owns
+error handling. For example, httpserve's `ctx.WriteString` and `ctx.WriteJSON`
+return no error and report write failures through its error callback; a plugin
+cannot check an error those methods do not return. Avoid unconditional progress
+output from library validation and use the application's logging boundary for
+lifecycle notifications.
+
 Sentinel check fragment:
 
 ```go
@@ -325,6 +353,14 @@ ownership. Arrange cleanup after successful acquisition, including when later
 initialization fails. Check meaningful `Close`, flush, and final write errors.
 If both the operation and cleanup fail, preserve the original failure and handle
 the cleanup failure too. Explain an intentional ignored cleanup error briefly.
+
+Retain owned listeners and cancel functions so all exit paths can release them.
+Context cancellation does not itself guarantee that a listener closes. Stop
+signal notification and release waiting goroutines when their owner finishes.
+Distinguish acquired resources from externally registered shared objects: define
+ownership, rollback, and reuse before closing shared plugin instances on startup
+failure. Current Vroomy lifecycle limitations are described in the
+[development guide](docs/development.md#known-implementation-gaps).
 
 For example, this function preserves write and close errors using the
 standard-library `errors` package:
@@ -353,6 +389,17 @@ func writeState(filename string, data []byte) (err error) {
 This demonstrates error handling, not atomic file replacement. If a file already
 imports `github.com/gdbu/errors`, distinguish it from the standard library with a
 clear alias when both are needed.
+
+### Collection Ownership
+
+Document whether an API borrows, copies, retains, or mutates caller-provided slices
+and maps. Copy storage when retained values need independent ownership. Appending
+to a borrowed slice can overwrite another retained view when spare capacity is
+available; a changed length alone does not establish independent storage.
+
+For middleware composition, each route and nested group should retain its own
+handler sequence. Copy the inherited sequence before appending child handlers.
+Apply the same ownership decision at every nesting level, not just the root.
 
 ## Interfaces
 
@@ -471,6 +518,7 @@ Apply this checklist to the scope of the change:
 * [ ] Functions are small and focused
 * [ ] Named returns used appropriately
 * [ ] No naked returns
+* [ ] Successful paths return literal nil errors when all failures have been checked
 * [ ] Declarations use `var` or a documented `:=` exception
 * [ ] No shadowing
 * [ ] External/operation errors include context
