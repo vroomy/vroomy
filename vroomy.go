@@ -105,10 +105,7 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 		return nil, err
 	}
 
-	if err = v.dependencies.Load(func(key string, _ dependencyMap) error {
-		v.pluginOrder = append(v.pluginOrder, key)
-		return nil
-	}); err != nil {
+	if err = v.dependencies.Load(v.appendPluginOrder); err != nil {
 		return nil, err
 	}
 
@@ -187,6 +184,11 @@ func (v *Vroomy) validatePlugins() (err error) {
 		}
 	}
 
+	return nil
+}
+
+func (v *Vroomy) appendPluginOrder(key string, _ dependencyMap) error {
+	v.pluginOrder = append(v.pluginOrder, key)
 	return nil
 }
 
