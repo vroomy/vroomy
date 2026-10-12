@@ -93,10 +93,8 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 			v.registry.release()
 		}
 	}()
-	for key, plugin := range v.pm {
-		if err = validatePlugin(plugin); err != nil {
-			return nil, fmt.Errorf("validate plugin %q: %w", key, err)
-		}
+	if err = v.validatePlugins(); err != nil {
+		return nil, err
 	}
 
 	if v.dependencies, err = makeDependenciesMap(v.pm); err != nil {
@@ -180,6 +178,16 @@ type Vroomy struct {
 
 	// Closed state
 	closed atoms.Bool
+}
+
+func (v *Vroomy) validatePlugins() (err error) {
+	for key, plugin := range v.pm {
+		if err = validatePlugin(plugin); err != nil {
+			return fmt.Errorf("validate plugin %q: %w", key, err)
+		}
+	}
+
+	return nil
 }
 
 func (v *Vroomy) initPlugins() (err error) {
