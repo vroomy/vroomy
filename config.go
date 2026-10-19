@@ -123,7 +123,7 @@ func (c *Config) loadInclude(include string) (err error) {
 			return fmt.Errorf("decode include %q: %w", include, err)
 		}
 
-		c.IncludeConfig.merge(&icfg)
+		c.merge(&icfg)
 	} else {
 		// Attempt to parse directory
 		var files []fs.DirEntry
