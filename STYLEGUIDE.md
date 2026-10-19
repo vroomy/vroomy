@@ -329,7 +329,7 @@ Malformed configuration and reflection input are operational validation errors
 and should be returned to the caller, not handled by a registration-panic exception.
 
 Prefer reporting a failure through one configured callback when a framework owns
-error handling. For example, httpserve's `ctx.WriteString` and `ctx.WriteJSON`
+error handling. For example, apex's `ctx.WriteString` and `ctx.WriteJSON`
 return no error and report write failures through its error callback; a plugin
 cannot check an error those methods do not return. Avoid unconditional progress
 output from library validation and use the application's logging boundary for
@@ -407,7 +407,7 @@ Apply the same ownership decision at every nesting level, not just the root.
   Do not create an interface for every concrete type.
 * Prefer returning concrete types from constructors. Preserve required contracts
   such as `Plugin.Backend() interface{}` and factories returning
-  `(httpserve.Handler, error)`.
+  `(apex.Handler, error)`.
 * Keep interfaces small and behavior-focused.
 * Define interfaces near where they are used.
 

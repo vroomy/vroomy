@@ -3,7 +3,7 @@ package vroomy
 import (
 	"fmt"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
 // routeFmt formats a route for display.
@@ -12,7 +12,7 @@ const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 // Route represents a listening route
 type Route struct {
 	// HTTPHandlers are Go-supplied handlers; resolved Handlers are appended to them.
-	HTTPHandlers []httpserve.Handler `toml:"-"`
+	HTTPHandlers []apex.Handler `toml:"-"`
 
 	// Name describes the route.
 	Name string `toml:"name"`

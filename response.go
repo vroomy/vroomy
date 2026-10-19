@@ -13,7 +13,7 @@ func NewAdopedtResponse() *Response {
 }
 
 // Response holds legacy response metadata. The current plugin handler resolver
-// does not consume it; handlers write through httpserve.Context instead.
+// does not consume it; handlers write through apex.Context instead.
 type Response struct {
 	StatusCode  int
 	ContentType string

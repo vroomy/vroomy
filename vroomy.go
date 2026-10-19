@@ -16,7 +16,7 @@ import (
 
 	"github.com/gdbu/atoms"
 	"github.com/gdbu/errors"
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
 var constructionMu sync.Mutex
@@ -134,7 +134,7 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 		return nil, fmt.Errorf("initialize data directory %q: %w", cfg.Environment["dataDir"], err)
 	}
 
-	v.srv = httpserve.New()
+	v.srv = apex.New()
 	v.srv.SetOnError(cfg.ErrorLogger)
 	if err = v.initPlugins(); err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func NewWithConfig(cfg *Config) (vp *Vroomy, err error) {
 // supply their own request concurrency guarantees; Close reverses dependency order.
 type Vroomy struct {
 	cfg *Config
-	srv *httpserve.Serve
+	srv *apex.Engine
 
 	pm           map[string]Plugin
 	registry     *Plugins
@@ -229,7 +229,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 	}
 
 	for _, handlerKey := range g.Handlers {
-		var h httpserve.Handler
+		var h apex.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			err = fmt.Errorf("resolve handler for group %q: %w", g.Name, err)
 			return err
@@ -240,7 +240,7 @@ func (v *Vroomy) initRouteGroup(g *RouteGroup) (err error) {
 
 	var (
 		match *RouteGroup
-		grp   httpserve.Group = newHandlerGroup(v.srv, "", nil)
+		grp   apex.Group = newHandlerGroup(v.srv, "", nil)
 	)
 
 	if match, err = v.cfg.GetRouteGroup(g.Group); err != nil {
@@ -267,7 +267,7 @@ func (v *Vroomy) initRoutes() (err error) {
 
 		var (
 			match *RouteGroup
-			grp   httpserve.Group = newHandlerGroup(v.srv, "", nil)
+			grp   apex.Group = newHandlerGroup(v.srv, "", nil)
 		)
 
 		if match, err = v.cfg.GetRouteGroup(r.Group); err != nil {
@@ -282,7 +282,7 @@ func (v *Vroomy) initRoutes() (err error) {
 			grp = match.G
 		}
 
-		var fn func(string, ...httpserve.Handler) error
+		var fn func(string, ...apex.Handler) error
 		switch strings.ToLower(r.Method) {
 		case "put":
 			fn = grp.PUT
@@ -312,7 +312,7 @@ func (v *Vroomy) initRoute(r *Route) (err error) {
 	}
 
 	for _, handlerKey := range r.Handlers {
-		var h httpserve.Handler
+		var h apex.Handler
 		if h, err = getHandler(handlerKey); err != nil {
 			err = fmt.Errorf("resolve handler for route %q: %w", r.HTTPPath, err)
 			return err

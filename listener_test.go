@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 	"golang.org/x/net/http2"
 )
 
@@ -68,7 +68,7 @@ func TestTLSRedirectAndShutdown(t *testing.T) {
 	certDir := t.TempDir()
 	_, _, roots := writeTestCertificate(t, certDir, "localhost")
 	cfg := &Config{Dir: ".", Port: ports[0], TLSPort: ports[1], TLSDir: certDir}
-	cfg.Routes = []*Route{{HTTPPath: "/ping", HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}}
+	cfg.Routes = []*Route{{HTTPPath: "/ping", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}}
 	running := startService(t, cfg)
 	client := &http.Client{Timeout: time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	for _, method := range []string{"GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"} {
@@ -120,7 +120,7 @@ func TestH2CProcessEnvironment(t *testing.T) {
 	preserveWorkingDirectory(t)
 	t.Setenv("USE_HTTP2_RAW", "false")
 	cfg := &Config{Dir: ".", Port: availablePorts(t, 1)[0]}
-	cfg.Routes = []*Route{{HTTPPath: "/ping", HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}}
+	cfg.Routes = []*Route{{HTTPPath: "/ping", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}}
 	startService(t, cfg)
 	transport := &http2.Transport{AllowHTTP: true, DialTLSContext: func(ctx context.Context, network, address string, _ *tls.Config) (net.Conn, error) {
 		return (&net.Dialer{}).DialContext(ctx, network, address)
@@ -169,7 +169,7 @@ func TestAutoCertCachedCertificate(t *testing.T) {
 
 	cfg := &Config{Dir: ".", TLSPort: availablePorts(t, 1)[0], IncludeConfig: IncludeConfig{
 		AutoCertDir: cacheDir, AutoCertHosts: []string{"cached.example"},
-		Routes: []*Route{{HTTPPath: "/ping", HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}},
+		Routes: []*Route{{HTTPPath: "/ping", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}},
 	}}
 	running := startService(t, cfg)
 	transport := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: roots, ServerName: "cached.example"}, ForceAttemptHTTP2: true}

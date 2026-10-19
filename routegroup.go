@@ -2,7 +2,7 @@ package vroomy
 
 import (
 	"github.com/gdbu/errors"
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
 const (
@@ -23,8 +23,8 @@ type RouteGroup struct {
 	Handlers []string `toml:"handlers"`
 
 	// HTTPHandlers are Go-supplied handlers; resolved Handlers are appended to them.
-	HTTPHandlers []httpserve.Handler `toml:"-"`
+	HTTPHandlers []apex.Handler `toml:"-"`
 
 	// G is populated during group initialization.
-	G httpserve.Group `toml:"-"`
+	G apex.Group `toml:"-"`
 }

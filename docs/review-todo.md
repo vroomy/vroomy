@@ -2,7 +2,7 @@
 
 Assessed on 9 October 2026 against commit `7a5406b` (also tag `v0.20.0`),
 the supplied **Vroomy documentation review** dated 5 October 2026, and the cached
-source of httpserve v0.14.1. The starting worktree was clean.
+source of apex v0.14.1. The starting worktree was clean.
 
 The review is substantially correct. The immediate work is version/documentation
 alignment, a dependency routing bug, and a test assertion bug discovered during
@@ -10,7 +10,7 @@ this assessment. Existing style debt needs targeted migration; some cases need
 additional guidance rather than a stricter blanket rule.
 
 Status updated on 10 October 2026: **all 20 items completed and integrated**,
-including lifecycle cleanup with the published httpserve dependency fix.
+including lifecycle cleanup with the published apex dependency fix.
 Checked items are implemented in the current worktree.
 P1 means address before the next release; P2 means follow-up
 work. Optional items are product or maintenance decisions. The assessment and
@@ -28,10 +28,10 @@ dependency fixes.
 ## P1: documentation corrections
 
 - [x] **D1 — Align version requirements and prevent another split.**
-  [go.mod](../go.mod) now requires Go **1.27.2** and pins the published httpserve
+  [go.mod](../go.mod) now requires Go **1.27.2** and pins the published apex
   fixes at **v0.14.2**. Correct
   [README.md](../README.md), [AGENTS.md](../AGENTS.md), and
-  [development.md](development.md) for Go; correct the httpserve references in
+  [development.md](development.md) for Go; correct the apex references in
   [configuration.md](configuration.md), [plugins.md](plugins.md), and development.
   Keep a concrete Go requirement in the quickstart; link other version references
   to the authoritative source where a number adds no value. Use `go.mod` as the
@@ -59,12 +59,12 @@ dependency fixes.
   `"false"`. A TOML `[env]` entry alone does not set the process environment.
   Distinguish source inspection from tested protocol negotiation.
 
-Dependency evidence for D2–D5: httpserve v0.14.1
-[upgrader.go](https://github.com/vroomy/httpserve/blob/v0.14.1/upgrader.go)
+Dependency evidence for D2–D5: apex v0.14.1
+[upgrader.go](https://github.com/vroomy/apex/blob/v0.14.1/upgrader.go)
 (`NewUpgrader`, `upgradeConn`),
-[group.go](https://github.com/vroomy/httpserve/blob/v0.14.1/group.go),
-[route.go](https://github.com/vroomy/httpserve/blob/v0.14.1/route.go) (`newRoute`, `check`),
-and [httpserve.go](https://github.com/vroomy/httpserve/blob/v0.14.1/httpserve.go)
+[group.go](https://github.com/vroomy/apex/blob/v0.14.1/group.go),
+[route.go](https://github.com/vroomy/apex/blob/v0.14.1/route.go) (`newRoute`, `check`),
+and [apex.go](https://github.com/vroomy/apex/blob/v0.14.1/apex.go)
 (`defaultConfig`, the listener methods). Vroomy invokes the default-config
 listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
 
@@ -114,7 +114,7 @@ listener variants in [vroomy.go](../vroomy.go), `listenHTTP` and `listenHTTPS`.
   **Complete:** listeners close on every exit, signal notification stops, and
   shutdown waits for listener goroutines. Exclusive ownership and reverse-order
   rollback/shutdown are covered by regressions.
-  Retain and close redirect listeners; the original httpserve `Upgrader` exposes
+  Retain and close redirect listeners; the original apex `Upgrader` exposes
   no `Close`, so this needs a dependency API change or replacement implementation. Stop signal
   notification and cancel its waiting goroutine when listening ends. Define
   constructor-failure cleanup and close order for shared registered instances
@@ -200,7 +200,7 @@ stay with their type and its constructors precede it.
 - [x] **G5 — Describe library output and framework error callbacks.** Validation
   should not unconditionally print progress. Explain when reporting through a
   configured callback is appropriate. `ctx.WriteString`/`WriteJSON` return no
-  error and report write failures through httpserve's callback, so the example is
+  error and report write failures through apex's callback, so the example is
   not ignoring a returned error and needs no artificial wrapper.
 
 Do not add exceptions for naked returns or result shadowing. Do not ban all `:=`:
@@ -242,7 +242,7 @@ existing allowances; forcing named results or another library would overapply it
 ## Initial review verification
 
 - Read the supplied DOCX, repository guides, production Go sources/tests, and the
-  relevant cached httpserve v0.14.1 source. Confirmed HEAD equals tag v0.20.0.
+  relevant cached apex v0.14.1 source. Confirmed HEAD equals tag v0.20.0.
 - `go test ./...`, `go vet ./...`, and `go build ./...` passed with Go 1.26.5 and
   a writable temporary build cache. Build emitted a non-fatal sandbox module-cache
   metadata warning. `gofmt -l` reported no files needing formatting.
@@ -250,7 +250,7 @@ existing allowances; forcing named results or another library would overapply it
   and data directory. GET `/` and `/api/ping` both returned 200 with `PONG\n`;
   SIGINT produced exit status 0. Temporary data remained outside the repository.
 - Temporary diagnostic tests reproduced R1 and R2 without modifying tracked Go
-  files: a Go overlay for Vroomy and an unchanged temporary copy of httpserve with
+  files: a Go overlay for Vroomy and an unchanged temporary copy of apex with
   added probes. The correct-behavior assertions intentionally failed: the first
   non-GET route returned B instead of A; a nested GET route ran sibling B's
   middleware; the comparator accepted nil for an expected error list. GET sibling
@@ -300,8 +300,8 @@ existing allowances; forcing named results or another library would overapply it
 ## Middleware ownership follow-up
 
 - Configured groups use owned middleware chains, including nested siblings.
-  Root registration preserves httpserve's response completion and hook behavior.
-- HTTP integration regressions pass with the published httpserve v0.14.1 under
+  Root registration preserves apex's response completion and hook behavior.
+- HTTP integration regressions pass with the published apex v0.14.1 under
   Go 1.27.2, with and without spare middleware capacity. All five configured
   methods and caller-slice mutation are covered. Paths keep the existing cleaning
   behavior and empty resolved root paths return errors.
@@ -313,7 +313,7 @@ existing allowances; forcing named results or another library would overapply it
 - `Listen` now owns cleanup on every exit and waits for listener goroutines.
   Redirect sockets are retained and closed. Signals use `signal.NotifyContext`
   with a deferred stop; normal cancellation does not hide joined cleanup errors.
-- Upstream httpserve commits fix middleware ownership, the startup/Close race,
+- Upstream apex commits fix middleware ownership, the startup/Close race,
   redirect Close support, and TLS walk errors/short names. Existing router tests
   had stale zero-parameter assertions for named routes; corrected the assertions
   without changing matching behavior.

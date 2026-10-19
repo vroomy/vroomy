@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -98,7 +98,7 @@ func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
 	return out, nil
 }
 
-func getHandler(handlerKey string) (h httpserve.Handler, err error) {
+func getHandler(handlerKey string) (h apex.Handler, err error) {
 	var (
 		key     string
 		handler string
@@ -115,11 +115,11 @@ func getHandler(handlerKey string) (h httpserve.Handler, err error) {
 	}
 
 	switch val := toAssert.(type) {
-	case func(*httpserve.Context):
+	case func(*apex.Context):
 		h = val
 		return h, nil
 
-	case func(args ...string) (httpserve.Handler, error):
+	case func(args ...string) (apex.Handler, error):
 		if h, err = val(args...); err != nil {
 			return nil, fmt.Errorf("create handler %s.%s: %w", key, handler, err)
 		}

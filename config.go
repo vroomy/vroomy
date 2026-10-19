@@ -10,7 +10,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/gdbu/errors"
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -70,7 +70,7 @@ type Config struct {
 	// It is separate from IncludeConfig.Plugins and does not filter the registry.
 	Plugins []string `toml:"plugins"`
 
-	// ErrorLogger receives httpserve request errors; initialization/listen errors
+	// ErrorLogger receives apex request errors; initialization/listen errors
 	// are returned to the caller instead.
 	ErrorLogger func(error) `toml:"-"`
 }
@@ -163,7 +163,7 @@ func (c *Config) GetRouteGroup(name string) (g *RouteGroup, err error) {
 	return g, err
 }
 
-func (c *Config) autoCertConfig() (ac httpserve.AutoCertConfig, err error) {
+func (c *Config) autoCertConfig() (ac apex.AutoCertConfig, err error) {
 	ac.DirCache = c.AutoCertDir
 	ac.Hosts = c.AutoCertHosts
 	ac.HostPolicy, err = c.getHostPolicy()

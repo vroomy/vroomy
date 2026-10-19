@@ -2,7 +2,7 @@
 package plugins
 
 import (
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 	"github.com/vroomy/vroomy"
 )
 
@@ -17,6 +17,6 @@ type helloPlugin struct {
 }
 
 // Ping responds with PONG.
-func (p *helloPlugin) Ping(ctx *httpserve.Context) {
+func (p *helloPlugin) Ping(ctx *apex.Context) {
 	ctx.WriteString(200, "text/plain", "PONG\n")
 }

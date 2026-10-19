@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
 func availablePorts(t *testing.T, count int) []uint16 {
@@ -127,29 +127,29 @@ func TestConfiguredHandlerOwnership(t *testing.T) {
 		t.Run(fmt.Sprintf("capacity_%d", capacity), func(t *testing.T) {
 			isolateRegistry(t)
 			preserveWorkingDirectory(t)
-			middleware := make([]httpserve.Handler, 3, capacity)
+			middleware := make([]apex.Handler, 3, capacity)
 			for i := range middleware {
-				middleware[i] = func(ctx *httpserve.Context) { ctx.Put("order", ctx.Get("order")+"P") }
+				middleware[i] = func(ctx *apex.Context) { ctx.Put("order", ctx.Get("order")+"P") }
 			}
 
 			cfg := &Config{Dir: ".", Port: availablePorts(t, 1)[0]}
 			cfg.Groups = []*RouteGroup{
 				{Name: "parent", HTTPPath: "/parent", HTTPHandlers: middleware},
-				{Name: "a", Group: "parent", HTTPPath: "/a", HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.Put("order", ctx.Get("order")+"A") }}},
-				{Name: "b", Group: "parent", HTTPPath: "/b", HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.Put("order", ctx.Get("order")+"B") }}},
+				{Name: "a", Group: "parent", HTTPPath: "/a", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.Put("order", ctx.Get("order")+"A") }}},
+				{Name: "b", Group: "parent", HTTPPath: "/b", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.Put("order", ctx.Get("order")+"B") }}},
 			}
 			for _, method := range []string{"GET", "PUT", "POST", "DELETE", "OPTIONS"} {
 				for _, group := range []string{"parent", "a", "b"} {
 					for _, suffix := range []string{"first", "second"} {
 						label := suffix
-						cfg.Routes = append(cfg.Routes, &Route{Group: group, Method: method, HTTPPath: "/" + suffix, HTTPHandlers: []httpserve.Handler{func(ctx *httpserve.Context) { ctx.WriteString(200, "text/plain", ctx.Get("order")+label) }}})
+						cfg.Routes = append(cfg.Routes, &Route{Group: group, Method: method, HTTPPath: "/" + suffix, HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.WriteString(200, "text/plain", ctx.Get("order")+label) }}})
 					}
 				}
 			}
 
 			running := startService(t, cfg)
 			// Borrowed config slices must not remain mutable views of registered chains.
-			middleware[0] = func(ctx *httpserve.Context) { ctx.Put("order", "corrupted") }
+			middleware[0] = func(ctx *apex.Context) { ctx.Put("order", "corrupted") }
 			client := &http.Client{Timeout: time.Second}
 			for _, route := range cfg.Routes {
 				prefix := "/parent"

@@ -10,7 +10,7 @@ source in this checkout.
 The module is `github.com/vroomy/vroomy`. Use the Go version required by
 [`go.mod`](../go.mod) or newer; the [quickstart](../README.md#quickstart) names the
 current minimum. Dependencies are pinned in `go.mod` / `go.sum`; inspect the
-pinned httpserve source before documenting its APIs.
+pinned apex source before documenting its APIs.
 
 From the repository root:
 
@@ -138,8 +138,8 @@ avoid describing a legacy field or stub as an implemented feature.
 
 ## Listener dependency
 
-Vroomy pins the published httpserve release
-[`v0.14.2`](https://github.com/vroomy/httpserve/tree/v0.14.2)
+Vroomy pins the published apex release
+[`v0.14.2`](https://github.com/vroomy/apex/tree/v0.14.2)
 for startup/Close synchronization, middleware ownership, and safe TLS walking.
 Listener setup uses a helper with a deferred unlock; serving begins after it returns.
 The previous v0.14.1 release has an immediate-cancellation race that can leave a listener open and make

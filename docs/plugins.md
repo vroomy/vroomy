@@ -64,7 +64,7 @@ For example, an order-creation request would typically follow this flow:
 3. The plugin handler maps that result or error to the intended HTTP response.
 
 Prefer library APIs that work with ordinary Go values so their behavior can be
-tested and reused without an HTTP request or `*httpserve.Context`. Test business
+tested and reused without an HTTP request or `*apex.Context`. Test business
 behavior in the library and request decoding/response mapping in the plugin.
 
 Use `Init` for setup that does not need injected dependencies and `Load` for setup
@@ -138,7 +138,7 @@ package plugins
 import (
 	"fmt"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 	"github.com/vroomy/vroomy"
 )
 
@@ -153,18 +153,18 @@ type helloPlugin struct {
 }
 
 // Ping responds with PONG.
-func (p *helloPlugin) Ping(ctx *httpserve.Context) {
+func (p *helloPlugin) Ping(ctx *apex.Context) {
 	ctx.WriteString(200, "text/plain", "PONG\n")
 }
 
 // Message builds a handler that responds with its single configured argument.
-func (p *helloPlugin) Message(args ...string) (httpserve.Handler, error) {
+func (p *helloPlugin) Message(args ...string) (apex.Handler, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("Message expects one argument, received %d", len(args))
 	}
 
 	message := args[0]
-	return func(ctx *httpserve.Context) {
+	return func(ctx *apex.Context) {
 		ctx.WriteString(200, "text/plain", message)
 	}, nil
 }
@@ -191,8 +191,8 @@ import/register its own plugins.
 The resolver accepts exactly these exported method signatures:
 
 ```go
-func (p *helloPlugin) Ping(ctx *httpserve.Context)
-func (p *helloPlugin) Message(args ...string) (httpserve.Handler, error)
+func (p *helloPlugin) Ping(ctx *apex.Context)
+func (p *helloPlugin) Message(args ...string) (apex.Handler, error)
 ```
 
 Direct handlers run for each request. Factories run once during route/group
@@ -213,11 +213,11 @@ An opening parenthesis without a closing one, including a trailing `(`, returns
 `ErrExpectedEndParen`. Other malformed expressions are not fully validated;
 keep references in the documented forms.
 
-Handlers in a group and route form a sequence. The pinned httpserve advances through
+Handlers in a group and route form a sequence. The pinned apex advances through
 them automatically until the context completes; middleware can inspect/store
 values and return to continue, or write a response to stop the sequence. There is
 no `ctx.Next()` call. Use methods such as `ctx.WriteString`, `ctx.WriteJSON`,
-`ctx.Param`, `ctx.Get`, and `ctx.Put` on `*httpserve.Context`.
+`ctx.Param`, `ctx.Get`, and `ctx.Put` on `*apex.Context`.
 
 The order is parent-group middleware, child-group middleware, then route handlers.
 Vroomy copies handler storage for every route and nested group, preventing sibling
@@ -227,7 +227,7 @@ closures still share whatever application state they capture.
 
 The root package's `Response`, `NewResponse`, and misspelled `NewAdopedtResponse`
 remain exported data helpers, but the route resolver does not consume them. Use
-httpserve's context response methods in new handlers.
+apex's context response methods in new handlers.
 
 ## Dependency injection
 

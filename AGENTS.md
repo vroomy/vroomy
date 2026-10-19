@@ -71,7 +71,7 @@ not a requirement to extract a library for every small handler. See
   supply at least `Dir: "."` explicitly. Both paths change the process working
   directory and acquire exclusive ownership of the registered plugin instances. Avoid parallel tests that mutate either.
 - Config routes resolve exported plugin methods with the exact signatures in the
-  plugin guide. A handler writes through `*httpserve.Context`; returning
+  plugin guide. A handler writes through `*apex.Context`; returning
   `*vroomy.Response` is not supported by the route resolver.
 - `target` has no file-serving implementation. Methods other than PUT, POST,
   DELETE, and OPTIONS fall back to GET. Group `method` is ignored. Parent groups

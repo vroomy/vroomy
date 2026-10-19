@@ -4,42 +4,42 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
-func newHandlerGroup(server *httpserve.Serve, prefix string, handlers []httpserve.Handler) *handlerGroup {
+func newHandlerGroup(server *apex.Engine, prefix string, handlers []apex.Handler) *handlerGroup {
 	return &handlerGroup{server: server, prefix: prefix, handlers: copySlice(handlers)}
 }
 
 // handlerGroup owns middleware at each composition boundary. Register flattened
-// routes on the root Serve to avoid httpserve's nested slice aliasing.
+// routes on the root Serve to avoid apex's nested slice aliasing.
 type handlerGroup struct {
-	server   *httpserve.Serve
+	server   *apex.Engine
 	prefix   string
-	handlers []httpserve.Handler
+	handlers []apex.Handler
 }
 
-func (g *handlerGroup) GET(route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) GET(route string, handlers ...apex.Handler) error {
 	return g.Handle("GET", route, handlers...)
 }
 
-func (g *handlerGroup) PUT(route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) PUT(route string, handlers ...apex.Handler) error {
 	return g.Handle("PUT", route, handlers...)
 }
 
-func (g *handlerGroup) POST(route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) POST(route string, handlers ...apex.Handler) error {
 	return g.Handle("POST", route, handlers...)
 }
 
-func (g *handlerGroup) DELETE(route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) DELETE(route string, handlers ...apex.Handler) error {
 	return g.Handle("DELETE", route, handlers...)
 }
 
-func (g *handlerGroup) OPTIONS(route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) OPTIONS(route string, handlers ...apex.Handler) error {
 	return g.Handle("OPTIONS", route, handlers...)
 }
 
-func (g *handlerGroup) Handle(method, route string, handlers ...httpserve.Handler) error {
+func (g *handlerGroup) Handle(method, route string, handlers ...apex.Handler) error {
 	route = g.joinPath(route)
 	if route == "" {
 		return fmt.Errorf("route path must be nonempty")
@@ -55,7 +55,7 @@ func (g *handlerGroup) Handle(method, route string, handlers ...httpserve.Handle
 	return g.server.Handle(method, route, owned...)
 }
 
-func (g *handlerGroup) Group(route string, handlers ...httpserve.Handler) httpserve.Group {
+func (g *handlerGroup) Group(route string, handlers ...apex.Handler) apex.Group {
 	owned := append(copySlice(g.handlers), handlers...)
 	return newHandlerGroup(g.server, g.joinPath(route), owned)
 }

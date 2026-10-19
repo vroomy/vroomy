@@ -53,7 +53,7 @@ uses the explicit filename and does not consult it.
 | `[[flag]]` | array of tables | Legacy entries with `name`, `defaultValue`, `usage`; parsed but not applied. |
 
 `Config.ErrorLogger func(error)` and `Config.Flags map[string]string` are Go-only
-fields (`toml:"-"`). `ErrorLogger` is passed to httpserve's request error callback;
+fields (`toml:"-"`). `ErrorLogger` is passed to apex's request error callback;
 constructor/listener errors are still returned, and plugin/panic logs use the
 standard logger. `Flags` has no active consumer. There are no built-in `-dataDir`,
 `-d`, or `require` flags, and there is no automatic `testData` override.
@@ -154,7 +154,7 @@ handlers = ["hello.Ping"]
 This registers `/api/v1/ping`. Declare parent groups before their children; missing
 parents and parents that have not been initialized cause construction errors.
 
-With a nonempty group prefix, the pinned httpserve joins paths using `path.Join`,
+With a nonempty group prefix, the pinned apex joins paths using `path.Join`,
 which cleans `.` and `..` segments and removes trailing slashes. For example,
 `/api` with `/../other` becomes `/other`. Root routes skip this join and must begin
 with `/`; an empty root path returns a construction error.
@@ -178,14 +178,14 @@ append handlers again. `RouteGroup.G` is internal runtime state, not TOML input.
 
 ## TLS
 
-For existing certificates, set `tlsPort` and `tlsDir`. The pinned httpserve
+For existing certificates, set `tlsPort` and `tlsDir`. The pinned apex
 loads PEM certificate/key pairs sharing a pathname stem, such as `server.crt` and
 `server.key`; keep certificate files in that directory. When HTTP is enabled and
 `allowNonTLS = false`, GET requests receive a 301 redirect to the configured HTTPS
 port; other methods receive 404. The redirect URL includes the port even for 443.
 
 For automatic certificates, omit `tlsDir` and set both `autoCertDir` and
-`autoCertHosts`. The listener uses httpserve's autocert integration and automatically
+`autoCertHosts`. The listener uses apex's autocert integration and automatically
 accepts the ACME terms. Certificate issuance requires a reachable deployment
 appropriate for the ACME challenge; the local HTTP quickstart does not exercise it.
 
@@ -203,14 +203,14 @@ separate HTTP-redirect-listener limitation described in
 
 ## Listener defaults and HTTP/2
 
-Vroomy uses httpserve's default listener configuration: a 30-second read timeout,
+Vroomy uses apex's default listener configuration: a 30-second read timeout,
 a 30-second write timeout, a 90-second idle timeout, and `MaxHeaderBytes = 4096`.
 There are no TOML fields for these values, and Vroomy does not expose the
 dependency's `ListenWithConfig` variants through its public API.
 
 The certificate-based TLS listener advertises `h2` and `http/1.1` through ALPN;
 autocert's TLS configuration also advertises HTTP/2. For plain HTTP, the presence
-of the **process environment** variable `USE_HTTP2_RAW` enables httpserve's h2c
+of the **process environment** variable `USE_HTTP2_RAW` enables apex's h2c
 handler. Its value is not parsed as a boolean: even `USE_HTTP2_RAW=false` or an
 empty value enables it. A TOML `[env]` entry alone does not set the process
 environment. These protocol details follow the pinned dependency source; the

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
 
 type testValuePlugin int
@@ -34,7 +34,7 @@ func (p *testProviderPlugin) Backend() interface{} { return p.value }
 
 type testFactoryPlugin struct{ BasePlugin }
 
-func (*testFactoryPlugin) Empty(...string) (httpserve.Handler, error) { return nil, nil }
+func (*testFactoryPlugin) Empty(...string) (apex.Handler, error) { return nil, nil }
 
 func TestPluginValidation(t *testing.T) {
 	type privateFieldPlugin struct {
