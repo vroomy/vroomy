@@ -11,9 +11,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 func newRedirectListener(tlsPort uint16, onError func(error)) *redirectListener {
@@ -71,7 +68,10 @@ func (l *redirectListener) Listen(port uint16) error {
 	}
 
 	if _, enabled := os.LookupEnv("USE_HTTP2_RAW"); enabled {
-		l.server.Handler = h2c.NewHandler(l.server.Handler, &http2.Server{})
+		// Enable unencrypted HTTP/2 support directly
+		l.server.Protocols = new(http.Protocols)
+		l.server.Protocols.SetHTTP1(true)
+		l.server.Protocols.SetUnencryptedHTTP2(true)
 	}
 
 	var err error
