@@ -14,9 +14,10 @@ import (
 )
 
 func newRedirectListener(tlsPort uint16, onError func(error)) *redirectListener {
-	var port = strconv.Itoa(int(tlsPort))
-	var notFoundBody = []byte("404, not found")
 	var listener redirectListener
+	port := strconv.Itoa(int(tlsPort))
+	notFoundBody := []byte("404, not found")
+
 	listener.server = &http.Server{
 		ReadTimeout:                  30 * time.Second,
 		WriteTimeout:                 30 * time.Second,
@@ -24,6 +25,7 @@ func newRedirectListener(tlsPort uint16, onError func(error)) *redirectListener 
 		MaxHeaderBytes:               4096,
 		DisableGeneralOptionsHandler: true,
 	}
+
 	listener.server.Handler = http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodGet {
 			writer.Header().Set("Content-Type", "text/plain")

@@ -125,6 +125,7 @@ func getHandler(handlerKey string) (h apex.Handler, err error) {
 		receiver reflect.Value
 		method   reflect.Method
 	)
+
 	if receiver, method, err = lookupPluginMethod(key, handler); err != nil {
 		return h, err
 	}
