@@ -331,7 +331,7 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 	}
 
 	rval := reflect.ValueOf(pi)
-	if rval.Kind() == reflect.Ptr {
+	if rval.Kind() == reflect.Pointer {
 		rval = rval.Elem()
 	}
 
