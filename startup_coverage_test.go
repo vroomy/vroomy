@@ -34,7 +34,7 @@ func TestNewFromFile(t *testing.T) {
 
 			var directory = t.TempDir()
 			var filename = filepath.Join(directory, "config.toml")
-			if err := os.WriteFile(filename, []byte(fmt.Sprintf("dir = %q\n%s", directory, tt.env)), 0600); err != nil {
+			if err := os.WriteFile(filename, fmt.Appendf(nil, "dir = %q\n%s", directory, tt.env), 0600); err != nil {
 				t.Fatal(err)
 			}
 
