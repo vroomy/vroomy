@@ -200,6 +200,12 @@ initialization and return the per-request handler. Return an error from a factor
 to reject invalid configuration. Returning `*vroomy.Response`, taking a standard
 `http.ResponseWriter`, or using a different factory signature is not supported.
 
+Direct handlers use the unbound reflected method and the registered receiver to
+avoid the per-call allocation of a reflected bound function. Factories return
+ordinary Go functions and avoid reflection while serving. Both paths can serve
+without allocating in the warmed handler dispatch; response encoding and the
+HTTP transport have separate costs. See the [serving benchmarks](../benchmarks/serving/README.md).
+
 - `"hello.Ping"` resolves the exported method on the registered `hello` instance.
 - `"hello.Message(one,two)"` supplies two literal strings to a factory.
 - `"hello.Message"` invokes a factory with zero arguments.
