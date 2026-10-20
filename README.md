@@ -1,10 +1,17 @@
-# Vroomy
+# Vroomy &emsp; [![GoDoc][GoDoc Badge]][GoDoc URL] [![Coverage][Coverage Badge]][Coverage URL] [![Lint][Lint Badge]][Lint URL] [![MIT licensed][License Badge]][License URL] [![Contributors][Contributors Badge]][Contributors URL]
 
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+[GoDoc Badge]: https://pkg.go.dev/badge/github.com/vroomy/vroomy
+[GoDoc URL]: https://pkg.go.dev/github.com/vroomy/vroomy
+[Coverage Badge]: https://codecov.io/gh/vroomy/vroomy/branch/main/graph/badge.svg
+[Coverage URL]: https://codecov.io/gh/vroomy/vroomy
+[License Badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[License URL]: https://github.com/vroomy/vroomy/blob/main/LICENSE
+[Lint Badge]: https://github.com/vroomy/vroomy/actions/workflows/lint.yaml/badge.svg
+[Lint URL]: https://github.com/vroomy/vroomy/actions/workflows/lint.yaml
+[Contributors Badge]: https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square
+[Contributors URL]: #contributors-
 
-![Vroomy billboard](vroomy-billboard.png)
+![Vroomy billboard](billboard.webp)
 
 Vroomy is a Go library for building HTTP/HTTPS services from registered plugins.
 Plugins provide request handlers and shared backends; TOML config defines routes,

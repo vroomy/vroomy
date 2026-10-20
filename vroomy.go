@@ -331,7 +331,7 @@ func (v *Vroomy) setDependencies(pluginKey string, dm dependencyMap) (err error)
 	}
 
 	rval := reflect.ValueOf(pi)
-	if rval.Kind() == reflect.Ptr {
+	if rval.Kind() == reflect.Pointer {
 		rval = rval.Elem()
 	}
 
@@ -359,7 +359,7 @@ func (v *Vroomy) getPlugin(key string) (pi Plugin, err error) {
 	return pi, nil
 }
 
-func (v *Vroomy) getReference(key string) (reference interface{}, err error) {
+func (v *Vroomy) getReference(key string) (reference any, err error) {
 	var pi Plugin
 	if pi, err = v.getPlugin(key); err != nil {
 		return reference, err
@@ -379,7 +379,7 @@ func (v *Vroomy) setBackend(backend reflect.Value, key string) (err error) {
 		return ErrNotAddressable
 	}
 
-	var reference interface{}
+	var reference any
 	if reference, err = v.getReference(key); err != nil {
 		return err
 	}
@@ -443,7 +443,7 @@ func (v *Vroomy) listenHTTPS(errC chan error) {
 	}
 }
 
-func (v *Vroomy) handlePanic(in interface{}) {
+func (v *Vroomy) handlePanic(in any) {
 	log.Printf("Vroomy: Panic caught:\n%v\n%s\n\n", in, string(debug.Stack()))
 }
 

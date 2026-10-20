@@ -66,7 +66,7 @@ func getHandlerParts(handlerKey string) (key, handler string, args []string, err
 }
 
 func getHostPolicy() (hp autocert.HostPolicy, err error) {
-	var method interface{}
+	var method any
 	method, err = getPluginMethod("autocert", "HostPolicy")
 	switch {
 	case err == nil:
@@ -78,7 +78,7 @@ func getHostPolicy() (hp autocert.HostPolicy, err error) {
 	}
 }
 
-func getPluginMethod(pluginKey, method string) (out interface{}, err error) {
+func getPluginMethod(pluginKey, method string) (out any, err error) {
 	var plugin Plugin
 	if plugin, err = p.Get(pluginKey); err != nil {
 		return out, err
@@ -109,7 +109,7 @@ func getHandler(handlerKey string) (h apex.Handler, err error) {
 		return h, err
 	}
 
-	var toAssert interface{}
+	var toAssert any
 	if toAssert, err = getPluginMethod(key, handler); err != nil {
 		return h, err
 	}
@@ -198,7 +198,7 @@ func isNilValue(value reflect.Value) bool {
 	return false
 }
 
-func assertAsHostPolicy(fn interface{}) (hp autocert.HostPolicy, err error) {
+func assertAsHostPolicy(fn any) (hp autocert.HostPolicy, err error) {
 	var ok bool
 	hp, ok = fn.(func(ctx context.Context, host string) error)
 	if !ok {

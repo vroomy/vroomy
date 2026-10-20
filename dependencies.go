@@ -97,7 +97,7 @@ func (d dependenciesMap) validateDependency(key string, dm dependencyMap) (err e
 	return nil
 }
 
-func makeDependencyMap(val interface{}) (m dependencyMap, err error) {
+func makeDependencyMap(val any) (m dependencyMap, err error) {
 	rtype := reflect.TypeOf(val)
 	if rtype == nil {
 		return nil, fmt.Errorf("cannot inspect nil plugin")

@@ -16,7 +16,7 @@ func (b *BasePlugin) Load(env Environment) error {
 }
 
 // Backend returns nil. Override it when another plugin needs this plugin's backend.
-func (b *BasePlugin) Backend() interface{} {
+func (b *BasePlugin) Backend() any {
 	return nil
 }
 

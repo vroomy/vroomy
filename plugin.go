@@ -8,7 +8,7 @@ type Plugin interface {
 	// Load runs after dependencies have been assigned and their plugins loaded.
 	Load(env Environment) error
 	// Backend returns the value injected into consumers' tagged fields.
-	Backend() interface{}
+	Backend() any
 	// Close releases resources after partial or successful Init, in reverse dependency order.
 	Close() error
 }

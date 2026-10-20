@@ -8,9 +8,8 @@ require (
 	github.com/gdbu/errors v0.5.0
 	github.com/gdbu/queue v0.4.81
 	github.com/gdbu/stringset v0.4.0
-	github.com/vroomy/apex v0.16.0
+	github.com/vroomy/apex v0.16.1
 	golang.org/x/crypto v0.58.0
-	golang.org/x/net v0.61.0
 )
 
 require (
@@ -22,6 +21,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.4.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.32.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 )
