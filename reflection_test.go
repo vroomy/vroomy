@@ -39,10 +39,13 @@ func (*testFactoryPlugin) Empty(...string) (apex.Handler, error) { return nil, n
 func TestPluginValidation(t *testing.T) {
 	type privateFieldPlugin struct {
 		BasePlugin
+		dependency *string `vroomy:"provider"`
 	}
 
+	type embeddedScalar string
 	type scalarPlugin struct {
 		BasePlugin
+		embeddedScalar
 	}
 
 	var typedNil *BasePlugin
