@@ -13,7 +13,7 @@ type testValuePlugin int
 
 func (testValuePlugin) Init(Environment) error { return nil }
 func (testValuePlugin) Load(Environment) error { return nil }
-func (testValuePlugin) Backend() interface{}   { return nil }
+func (testValuePlugin) Backend() any           { return nil }
 func (testValuePlugin) Close() error           { return nil }
 
 type testEmbeddedFields struct {
@@ -27,10 +27,10 @@ type testEmbeddedPlugin struct {
 
 type testProviderPlugin struct {
 	BasePlugin
-	value interface{}
+	value any
 }
 
-func (p *testProviderPlugin) Backend() interface{} { return p.value }
+func (p *testProviderPlugin) Backend() any { return p.value }
 
 type testFactoryPlugin struct{ BasePlugin }
 
@@ -82,16 +82,16 @@ func TestDependencyInjection(t *testing.T) {
 	value := "backend"
 	var tests = []struct {
 		name        string
-		backend     interface{}
-		destination interface{}
+		backend     any
+		destination any
 		wantErr     bool
 	}{
 		{name: "exact pointer", backend: &value, destination: new(*string)},
-		{name: "interface", backend: &value, destination: new(interface{})},
+		{name: "interface", backend: &value, destination: new(any)},
 		{name: "mismatch", backend: &value, destination: new(int), wantErr: true},
-		{name: "nil", destination: new(interface{}), wantErr: true},
-		{name: "typed nil", backend: (*string)(nil), destination: new(interface{}), wantErr: true},
-		{name: "nil map", backend: map[string]string(nil), destination: new(interface{}), wantErr: true},
+		{name: "nil", destination: new(any), wantErr: true},
+		{name: "typed nil", backend: (*string)(nil), destination: new(any), wantErr: true},
+		{name: "nil map", backend: map[string]string(nil), destination: new(any), wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

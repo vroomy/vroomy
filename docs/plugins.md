@@ -86,7 +86,7 @@ Every plugin implements [`Plugin`](../plugin.go):
 type Plugin interface {
 	Init(env Environment) error
 	Load(env Environment) error
-	Backend() interface{}
+	Backend() any
 	Close() error
 }
 ```
@@ -268,7 +268,7 @@ func (p *storePlugin) Init(env vroomy.Environment) error {
 }
 
 // Backend exposes the store to dependent plugins.
-func (p *storePlugin) Backend() interface{} { return p.store }
+func (p *storePlugin) Backend() any { return p.store }
 ```
 
 `plugins/consumer.go` contains the consumer and the interface it needs:

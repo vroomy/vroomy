@@ -35,7 +35,7 @@ func (p *lifecyclePlugin) Close() error {
 	return p.closeErr
 }
 
-func (p *lifecyclePlugin) Backend() interface{} { return p }
+func (p *lifecyclePlugin) Backend() any { return p }
 
 // lifecycleProvider avoids the consumer's dependency tag.
 type lifecycleProvider struct {
@@ -46,7 +46,7 @@ type lifecycleProvider struct {
 func (p *lifecycleProvider) Init(env Environment) error { return p.plugin.Init(env) }
 func (p *lifecycleProvider) Load(env Environment) error { return p.plugin.Load(env) }
 func (p *lifecycleProvider) Close() error               { return p.plugin.Close() }
-func (p *lifecycleProvider) Backend() interface{}       { return p.plugin }
+func (p *lifecycleProvider) Backend() any               { return p.plugin }
 
 func isolateRegistry(t *testing.T) {
 	t.Helper()

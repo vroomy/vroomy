@@ -38,7 +38,7 @@ func Test_makeDependencyMap(t *testing.T) {
 	}
 
 	type testcase struct {
-		val  interface{}
+		val  any
 		want map[string][]int
 	}
 

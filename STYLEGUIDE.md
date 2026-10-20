@@ -406,7 +406,7 @@ Apply the same ownership decision at every nesting level, not just the root.
 * Prefer accepting small interfaces when they express a real dependency boundary.
   Do not create an interface for every concrete type.
 * Prefer returning concrete types from constructors. Preserve required contracts
-  such as `Plugin.Backend() interface{}` and factories returning
+  such as `Plugin.Backend() any` and factories returning
   `(apex.Handler, error)`.
 * Keep interfaces small and behavior-focused.
 * Define interfaces near where they are used.
