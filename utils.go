@@ -79,23 +79,35 @@ func getHostPolicy() (hp autocert.HostPolicy, err error) {
 }
 
 func getPluginMethod(pluginKey, method string) (out any, err error) {
+	var (
+		receiver reflect.Value
+		resolved reflect.Method
+	)
+	if receiver, resolved, err = lookupPluginMethod(pluginKey, method); err != nil {
+		return nil, err
+	}
+
+	return receiver.Method(resolved.Index).Interface(), nil
+}
+
+func lookupPluginMethod(pluginKey, methodName string) (receiver reflect.Value, method reflect.Method, err error) {
 	var plugin Plugin
 	if plugin, err = p.Get(pluginKey); err != nil {
-		return out, err
+		return receiver, method, err
 	}
 
 	if err = validatePlugin(plugin); err != nil {
-		return nil, fmt.Errorf("get method from plugin %q: %w", pluginKey, err)
+		return receiver, method, fmt.Errorf("get method from plugin %q: %w", pluginKey, err)
 	}
 
-	reflected := reflect.ValueOf(plugin).MethodByName(method)
-	if reflected.Kind() == reflect.Invalid {
-		err = fmt.Errorf("method of <%s> not found within plugin <%s>", method, pluginKey)
-		return out, err
+	receiver = reflect.ValueOf(plugin)
+	var ok bool
+	if method, ok = receiver.Type().MethodByName(methodName); !ok {
+		err = fmt.Errorf("method of <%s> not found within plugin <%s>", methodName, pluginKey)
+		return receiver, method, err
 	}
 
-	out = reflected.Interface()
-	return out, nil
+	return receiver, method, nil
 }
 
 func getHandler(handlerKey string) (h apex.Handler, err error) {
@@ -109,15 +121,23 @@ func getHandler(handlerKey string) (h apex.Handler, err error) {
 		return h, err
 	}
 
-	var toAssert any
-	if toAssert, err = getPluginMethod(key, handler); err != nil {
+	var (
+		receiver reflect.Value
+		method   reflect.Method
+	)
+
+	if receiver, method, err = lookupPluginMethod(key, handler); err != nil {
 		return h, err
 	}
 
-	switch val := toAssert.(type) {
+	switch val := receiver.Method(method.Index).Interface().(type) {
 	case func(*apex.Context):
-		h = val
-		return h, nil
+		// Calling the unbound function avoids the per-request allocation of a
+		// reflect-created bound method. Each invocation owns its argument slice.
+		var function = method.Func
+		return func(ctx *apex.Context) {
+			function.Call([]reflect.Value{receiver, reflect.ValueOf(ctx)})
+		}, nil
 
 	case func(args ...string) (apex.Handler, error):
 		if h, err = val(args...); err != nil {

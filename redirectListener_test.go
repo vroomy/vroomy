@@ -25,6 +25,36 @@ func (w *failingResponseWriter) WriteHeader(status int) { w.status = status }
 
 func (w *failingResponseWriter) Write([]byte) (int, error) { return 0, w.cause }
 
+func TestRedirectResponseContent(t *testing.T) {
+	var listener = newRedirectListener(8443, nil)
+	var tests = []struct {
+		method   string
+		url      string
+		status   int
+		location string
+		body     string
+	}{
+		{method: "GET", url: "http://example.com:8080/a%2Fb?value=a%3Db", status: 301, location: "https://example.com:8443/a%2Fb?value=a%3Db"},
+		{method: "GET", url: "http://[::1]:8080/ping?", status: 301, location: "https://[::1]:8443/ping?"},
+		{method: "POST", url: "http://example.com/ping", status: 404, body: "404, not found"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.method+" "+tt.url, func(t *testing.T) {
+			var request = httptest.NewRequest(tt.method, tt.url, nil)
+			var original = *request.URL
+			var writer = httptest.NewRecorder()
+			listener.server.Handler.ServeHTTP(writer, request)
+			if writer.Code != tt.status || writer.Header().Get("Location") != tt.location || writer.Body.String() != tt.body {
+				t.Fatalf("response = %d %q %q, want %d %q %q", writer.Code, writer.Header().Get("Location"), writer.Body.String(), tt.status, tt.location, tt.body)
+			}
+
+			if *request.URL != original {
+				t.Fatal("redirect mutated the request URL")
+			}
+		})
+	}
+}
+
 func TestRedirectResponseWriteErrors(t *testing.T) {
 	var cause = errors.New("client disconnected")
 	for _, callback := range []bool{true, false} {
