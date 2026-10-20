@@ -59,6 +59,22 @@ link other version requirements to `go.mod` when a copied number adds no value.
 
 ## Test coverage and manual verification
 
+Measure library statement coverage and inspect uncovered lines with:
+
+```sh
+go test -coverprofile="${TMPDIR:-/tmp}/vroomy-coverage.out" .
+go tool cover -func="${TMPDIR:-/tmp}/vroomy-coverage.out"
+go tool cover -html="${TMPDIR:-/tmp}/vroomy-coverage.out"
+```
+
+These commands measure the root library package. Examples have no automated
+tests; use the manual HTTP check below. Coverage measures executed statements,
+not every possible branch or input. Remaining gaps include guards for malformed
+process environment entries, a repeated nil-embedding check, and the constructor's
+dependency-order callback failure. The removed-working-directory test skips on
+platforms that can still resolve that directory. Live ACME issuance/renewal
+remains a deployment check.
+
 `environment_test.go` checks typed getters and required keys.
 `config_test.go` checks environment values containing `=`, empty values, and
 main/include/process environment precedence and host-policy fallback. The
@@ -70,8 +86,14 @@ assuming map order, and regression cases for its error comparator.
 and missing parentheses. `reflection_test.go` covers registration shape,
 backend assignment, and exported error contracts. `vroomy_test.go` checks graph
 validation before Init, failed startup rollback, close order, registry reuse,
-working-directory restoration, and filesystem causes. `plugins_test.go` is an
-empty placeholder; registry coverage lives in those focused suites.
+working-directory restoration, and filesystem causes. `startup_coverage_test.go`
+adds file-based construction, data directory defaults, invalid groups and
+dependencies, deferred group initialization, and rollback restoration failures.
+`plugins_test.go` checks registry snapshots, invalid keys, closed-state contracts,
+and aggregation of multiple cleanup failures. `handler_resolution_test.go`
+checks direct/factory execution, literal arguments, configured middleware,
+host-policy errors, and panic recovery with stack logging. `response_test.go`
+and `route_test.go` cover the legacy response constructors and route display.
 
 The exported `Plugins.Test()` and `Plugins.TestAsync()` both return
 `"testing has not yet been implemented"`. They are unrelated to `go test`.
@@ -104,6 +126,9 @@ from the process environment, cached autocert certificates, hostname rejection,
 and shutdown error causes. These tests bind temporary local ports and need a
 sandbox that permits local listeners. Live ACME issuance/renewal is a deployment
 check; tests do not contact a certificate authority.
+
+`redirectListener_test.go` adds redirect response write failures, occupied ports,
+repeated startup, close before startup, and HTTP/2 redirects.
 
 When testing config loading, assert precedence and path resolution explicitly.
 For service/plugin tests, avoid `t.Parallel` around the global registry or process
