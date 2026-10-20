@@ -1,4 +1,4 @@
-# Vroomy &emsp; [![GoDoc][GoDoc Badge]][GoDoc URL] [![Coverage][Coverage Badge]][Coverage URL] [![Lint][Lint Badge]][Lint URL] [![MIT licensed][License Badge]][License URL]
+# Vroomy &emsp; [![GoDoc][GoDoc Badge]][GoDoc URL] [![Coverage][Coverage Badge]][Coverage URL] [![Lint][Lint Badge]][Lint URL] [![MIT licensed][License Badge]][License URL] [![Contributors][Contributors Badge]][Contributors URL]
 
 [GoDoc Badge]: https://pkg.go.dev/badge/github.com/vroomy/vroomy
 [GoDoc URL]: https://pkg.go.dev/github.com/vroomy/vroomy
@@ -8,10 +8,8 @@
 [License URL]: https://github.com/vroomy/vroomy/blob/main/LICENSE
 [Lint Badge]: https://github.com/vroomy/vroomy/actions/workflows/lint.yaml/badge.svg
 [Lint URL]: https://github.com/vroomy/vroomy/actions/workflows/lint.yaml
-
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+[Contributors Badge]: https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square
+[Contributors URL]: #contributors-
 
 ![Vroomy billboard](billboard.webp)
 
