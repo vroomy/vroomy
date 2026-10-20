@@ -8,7 +8,7 @@ require (
 	github.com/gdbu/errors v0.5.0
 	github.com/gdbu/queue v0.4.81
 	github.com/gdbu/stringset v0.4.0
-	github.com/vroomy/apex v0.16.0
+	github.com/vroomy/apex v0.16.1
 	golang.org/x/crypto v0.58.0
 )
 
