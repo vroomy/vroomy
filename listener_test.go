@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/vroomy/apex"
-	"golang.org/x/net/http2"
 )
 
 func writeTestCertificate(t *testing.T, dir, host string) ([]byte, []byte, *x509.CertPool) {
@@ -122,9 +121,8 @@ func TestH2CProcessEnvironment(t *testing.T) {
 	cfg := &Config{Dir: ".", Port: availablePorts(t, 1)[0]}
 	cfg.Routes = []*Route{{HTTPPath: "/ping", HTTPHandlers: []apex.Handler{func(ctx *apex.Context) { ctx.WriteString(200, "text/plain", "PONG") }}}}
 	startService(t, cfg)
-	transport := &http2.Transport{AllowHTTP: true, DialTLSContext: func(ctx context.Context, network, address string, _ *tls.Config) (net.Conn, error) {
-		return (&net.Dialer{}).DialContext(ctx, network, address)
-	}}
+	transport := &http.Transport{Protocols: new(http.Protocols)}
+	transport.Protocols.SetUnencryptedHTTP2(true)
 	t.Cleanup(transport.CloseIdleConnections)
 	client := &http.Client{Transport: transport, Timeout: time.Second}
 	request, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/ping", cfg.Port), nil)
@@ -133,8 +131,8 @@ func TestH2CProcessEnvironment(t *testing.T) {
 	}
 
 	response := requestEventually(t, client, request)
-	if body := responseBody(t, response); body != "PONG" || response.ProtoMajor != 2 {
-		t.Fatalf("h2c response = %q %s", body, response.Proto)
+	if body := responseBody(t, response); response.StatusCode != http.StatusOK || body != "PONG" || response.ProtoMajor != 2 {
+		t.Fatalf("unencrypted HTTP/2 response = %d %q %s, want 200 PONG over HTTP/2", response.StatusCode, body, response.Proto)
 	}
 }
 
