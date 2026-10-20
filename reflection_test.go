@@ -59,8 +59,8 @@ func TestPluginValidation(t *testing.T) {
 		{name: "value", plugin: testValuePlugin(1), wantErr: true},
 		{name: "pointer to scalar", plugin: new(testValuePlugin), wantErr: true},
 		{name: "nil embedded pointer", plugin: &testEmbeddedPlugin{}, wantErr: true},
-		{name: "private dependency", plugin: &privateFieldPlugin{}, wantErr: true},
-		{name: "embedded scalar", plugin: &scalarPlugin{}},
+		{name: "private dependency", plugin: &privateFieldPlugin{dependency: new(string)}, wantErr: true},
+		{name: "embedded scalar", plugin: &scalarPlugin{embeddedScalar: "value"}},
 		{name: "embedded dependency", plugin: &testEmbeddedPlugin{testEmbeddedFields: &testEmbeddedFields{}}},
 		{name: "base plugin", plugin: &BasePlugin{}},
 	}
