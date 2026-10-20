@@ -200,7 +200,7 @@ func TestDependencyInspectionFailures(t *testing.T) {
 	}{
 		{name: "nil"},
 		{name: "scalar", value: 1},
-		{name: "private tagged field", value: &privateDependency{}, cause: ErrNotAddressable},
+		{name: "private tagged field", value: &privateDependency{dependency: "backend"}, cause: ErrNotAddressable},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
