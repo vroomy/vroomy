@@ -2,6 +2,7 @@ package vroomy
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/gdbu/errors"
@@ -87,7 +88,11 @@ func Test_makeDependencyMap(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		m := makeDependencyMap(tc.val)
+		m, err := makeDependencyMap(tc.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		if !dependencyMapEqual(tc.want, m) {
 			t.Fatalf("invalid value, expected <%v> and received <%v>", tc.want, m)
 		}
@@ -155,9 +160,11 @@ func Test_makeDependenciesMap(t *testing.T) {
 	}
 
 	type testcase struct {
+		name    string
 		val     map[string]Plugin
 		want    dependenciesMap
 		wantErr error
+		cycle   []string
 	}
 
 	var (
@@ -175,6 +182,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 
 	tcs := []testcase{
 		{
+			name: "independent plugin",
 			val: map[string]Plugin{
 				"a": &a,
 			},
@@ -184,6 +192,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "single dependency",
 			val: map[string]Plugin{
 				"a": &a,
 				"b": &b,
@@ -197,6 +206,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "multiple dependencies",
 			val: map[string]Plugin{
 				"a": &a,
 				"b": &b,
@@ -215,6 +225,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "shared dependency",
 			val: map[string]Plugin{
 				"a": &a,
 				"b": &b,
@@ -241,6 +252,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "missing dependency",
 			val: map[string]Plugin{
 				"a": &a,
 				"b": &b,
@@ -271,6 +283,7 @@ func Test_makeDependenciesMap(t *testing.T) {
 			wantErr: errors.Error("dependency with key of <g> not found in dependencies map"),
 		},
 		{
+			name: "two plugin cycle",
 			val: map[string]Plugin{
 				"a": &a,
 				"b": &b,
@@ -302,12 +315,10 @@ func Test_makeDependenciesMap(t *testing.T) {
 					"f": []int{1},
 				},
 			},
-			wantErr: makeErrorsList(
-				"circular import error: plugin of <g> imports <f>",
-				"circular import error: plugin of <f> imports <g>",
-			),
+			cycle: []string{"f", "g"},
 		},
 		{
+			name: "three plugin cycle",
 			val: map[string]Plugin{
 				"h": &h,
 				"i": &i,
@@ -324,24 +335,69 @@ func Test_makeDependenciesMap(t *testing.T) {
 					"i": []int{1},
 				},
 			},
-			wantErr: makeErrorsList(
-				"dependency of <h> failed with: circular import error: plugin of <i> imports <h>",
-				"dependency of <i> failed with: circular import error: plugin of <j> imports <i>",
-				"dependency of <j> failed with: circular import error: plugin of <h> imports <j>",
-			),
+			cycle: []string{"h", "i", "j"},
 		},
 	}
 
-	for i, tc := range tcs {
-		m := makeDependenciesMap(tc.val)
-		if !dependenciesMapEqual(tc.want, m) {
-			t.Fatalf("invalid value, expected <%v> and received <%v> (test case index #%d)", tc.want, m, i)
-		}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := makeDependenciesMap(tc.val)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		err := m.Validate()
-		if !errorEqual(tc.wantErr, err) {
-			t.Fatalf("invalid error, expected <%v> and received <%v> (test case index #%d)", tc.wantErr, err, i)
-		}
+			if !dependenciesMapEqual(tc.want, m) {
+				t.Fatalf("dependencies = %v, want %v", m, tc.want)
+			}
+
+			err = m.Validate()
+			if len(tc.cycle) == 0 {
+				if !errorEqual(tc.wantErr, err) {
+					t.Fatalf("Validate() error = %v, want %v", err, tc.wantErr)
+				}
+
+				return
+			}
+
+			const prefix = "circular import error, affected plugins: ["
+			if err == nil || !strings.HasPrefix(err.Error(), prefix) || !strings.HasSuffix(err.Error(), "]") {
+				t.Fatalf("Validate() error = %v, want cycle involving %v", err, tc.cycle)
+			}
+
+			var affected = strings.Fields(strings.TrimSuffix(strings.TrimPrefix(err.Error(), prefix), "]"))
+			sort.Strings(affected)
+			if !stringSliceEqual(affected, tc.cycle) {
+				t.Fatalf("affected plugins = %v, want %v", affected, tc.cycle)
+			}
+		})
+	}
+}
+
+func TestErrorEqual(t *testing.T) {
+	type testcase struct {
+		name string
+		a    error
+		b    error
+		want bool
+	}
+
+	var expected = makeErrorsList("first", "second")
+	var tests = []testcase{
+		{name: "both nil", want: true},
+		{name: "missing error list", a: expected},
+		{name: "unexpected error list", b: expected},
+		{name: "different error list", a: expected, b: makeErrorsList("first", "different")},
+		{name: "shorter error list", a: expected, b: makeErrorsList("first")},
+		{name: "reordered error list", a: expected, b: makeErrorsList("second", "first"), want: true},
+		{name: "same single error", a: errors.Error("first"), b: errors.Error("first"), want: true},
+		{name: "different single error", a: errors.Error("first"), b: errors.Error("second")},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := errorEqual(tc.a, tc.b); got != tc.want {
+				t.Errorf("errorEqual(%v, %v) = %t, want %t", tc.a, tc.b, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -357,12 +413,12 @@ func makeErrorsList(errs ...string) error {
 
 func stringSliceEqual(a, b []string) (equal bool) {
 	if len(a) != len(b) {
-		return
+		return equal
 	}
 
 	for k, v := range a {
 		if v != b[k] {
-			return
+			return equal
 		}
 	}
 
@@ -371,7 +427,7 @@ func stringSliceEqual(a, b []string) (equal bool) {
 
 func errorEqual(a, b error) (equal bool) {
 	al, alok := a.(*errors.ErrorList)
-	bl, blok := a.(*errors.ErrorList)
+	bl, blok := b.(*errors.ErrorList)
 	if alok && blok {
 		return errorslistEqual(al, bl)
 	}
@@ -390,7 +446,7 @@ func errorEqual(a, b error) (equal bool) {
 
 func errorslistEqual(a, b *errors.ErrorList) (equal bool) {
 	if a.Len() != b.Len() {
-		return
+		return equal
 	}
 
 	ae := make(sort.StringSlice, 0, a.Len())
@@ -413,12 +469,12 @@ func errorslistEqual(a, b *errors.ErrorList) (equal bool) {
 
 func dependencyMapEqual(a, b dependencyMap) (equal bool) {
 	if len(a) != len(b) {
-		return
+		return equal
 	}
 
 	for k, v := range a {
 		if !intSliceEqual(v, b[k]) {
-			return
+			return equal
 		}
 	}
 
@@ -427,12 +483,12 @@ func dependencyMapEqual(a, b dependencyMap) (equal bool) {
 
 func dependenciesMapEqual(a, b dependenciesMap) (equal bool) {
 	if len(a) != len(b) {
-		return
+		return equal
 	}
 
 	for k, aM := range a {
 		if !dependencyMapEqual(aM, b[k]) {
-			return
+			return equal
 		}
 	}
 
@@ -450,5 +506,6 @@ func intSliceEqual(a, b []int) (equal bool) {
 			return false
 		}
 	}
+
 	return true
 }

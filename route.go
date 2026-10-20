@@ -3,25 +3,28 @@ package vroomy
 import (
 	"fmt"
 
-	"github.com/vroomy/httpserve"
+	"github.com/vroomy/apex"
 )
+
+// routeFmt formats a route for display.
+const routeFmt = "{ HTTPPath: \"%s\", Target: \"%s\" Plugin Handler: \"%v\" }"
 
 // Route represents a listening route
 type Route struct {
 	// HTTPHandlers are Go-supplied handlers; resolved Handlers are appended to them.
-	HTTPHandlers []httpserve.Handler `toml:"-"`
+	HTTPHandlers []apex.Handler `toml:"-"`
 
-	// Route name/description
+	// Name describes the route.
 	Name string `toml:"name"`
-	// Route group
+	// Group names the parent group; an empty value selects the root.
 	Group string `toml:"group"`
 	// Method selects PUT, POST, DELETE, or OPTIONS case-insensitively; other values use GET.
 	Method string `toml:"method"`
-	// HTTP path
+	// HTTPPath is the route path, joined to a nonempty group prefix.
 	HTTPPath string `toml:"httpPath"`
 	// Target is a legacy file/directory field with no current serving implementation.
 	Target string `toml:"target"`
-	// Plugin handlers
+	// Handlers lists registered plugin method references in execution order.
 	Handlers []string `toml:"handlers"`
 }
 

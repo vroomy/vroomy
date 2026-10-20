@@ -8,6 +8,7 @@ port = 8080
 # tlsPort = 10443
 # tlsDir = "./tls"
 # allowNonTLS = false
+# With allowNonTLS = false, only HTTP GET requests redirect (301); other methods get 404.
 
 # Includes are read relative to the process working directory before dir is applied.
 # include = ["./config.d"]

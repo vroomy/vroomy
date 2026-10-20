@@ -7,9 +7,10 @@ source in this checkout.
 
 ## Setup and checks
 
-The module is `github.com/vroomy/vroomy`, with Go 1.25.0 declared in `go.mod`.
-Use that version or newer. Dependencies are pinned in `go.mod` / `go.sum`, including
-httpserve v0.13.0; inspect that dependency's source before documenting its APIs.
+The module is `github.com/vroomy/vroomy`. Use the Go version required by
+[`go.mod`](../go.mod) or newer; the [quickstart](../README.md#quickstart) names the
+current minimum. Dependencies are pinned in `go.mod` / `go.sum`; inspect the
+pinned apex source before documenting its APIs.
 
 From the repository root:
 
@@ -38,6 +39,10 @@ There is no Makefile, custom lint configuration, or checked-in CI workflow. Do n
 assume additional checks have run remotely. `go build ./...` compiles all packages;
 the root is a library, so `go run .` is not an application startup command.
 
+Keep documentation versions aligned with `go.mod` when updating dependencies.
+Keep a concrete minimum in the README and
+link other version requirements to `go.mod` when a copied number adds no value.
+
 ## Source map
 
 | Files | Responsibility |
@@ -55,10 +60,18 @@ the root is a library, so `go run .` is not an application startup command.
 ## Test coverage and manual verification
 
 `environment_test.go` checks typed getters and required keys.
-`dependencies_test.go` checks dependency discovery and graph validation.
-`utils_test.go` has a handler-parser case. `plugins_test.go` is an empty placeholder.
-The existing suite does not establish end-to-end correctness for config merging,
-dependency assignment, listeners, shutdown, or TLS.
+`config_test.go` checks environment values containing `=`, empty values, and
+main/include/process environment precedence and host-policy fallback. The
+`includeConfig_test.go` cases cover autocert directory/host merge behavior.
+`dependencies_test.go` checks
+dependency discovery and graph validation, including cycle membership without
+assuming map order, and regression cases for its error comparator.
+`utils_test.go` checks direct/factory handler parsing, literal argument semantics,
+and missing parentheses. `reflection_test.go` covers registration shape,
+backend assignment, and exported error contracts. `vroomy_test.go` checks graph
+validation before Init, failed startup rollback, close order, registry reuse,
+working-directory restoration, and filesystem causes. `plugins_test.go` is an
+empty placeholder; registry coverage lives in those focused suites.
 
 The exported `Plugins.Test()` and `Plugins.TestAsync()` both return
 `"testing has not yet been implemented"`. They are unrelated to `go test`.
@@ -81,6 +94,17 @@ Both return `PONG` followed by a newline. Stop the example with Ctrl-C. Change
 first argument. The example's default config path is `config.example.toml`, relative
 to the launch directory. It does not use `CONFIG_PATH`.
 
+`handlerGroup_test.go` exercises configured sibling routes and nested groups over
+HTTP for every configured method, full/spare middleware capacity, caller mutation,
+and port release after explicit close.
+
+`listener_test.go` covers startup failure, immediate cancellation, explicit close,
+redirect methods and URL preservation, socket release, TLS HTTP/2, h2c activation
+from the process environment, cached autocert certificates, hostname rejection,
+and shutdown error causes. These tests bind temporary local ports and need a
+sandbox that permits local listeners. Live ACME issuance/renewal is a deployment
+check; tests do not contact a certificate authority.
+
 When testing config loading, assert precedence and path resolution explicitly.
 For service/plugin tests, avoid `t.Parallel` around the global registry or process
 working directory. Restore any state you replace. An external test application in
@@ -97,13 +121,8 @@ guide.
 | Static targets | `initRoute` in `vroomy.go` never adds a file handler for `Route.Target`. The former static-file quickstart could not serve its files. |
 | Methods and flags | `initRoutes` falls back to GET for unrecognized methods (including HEAD/PATCH); group `Method` and dynamic flags have no active consumer. |
 | Includes | `loadIncludes` iterates the original include slice. Newly appended nested entries are not loaded. Included `Plugins` and outer `Config.Plugins` are separate. |
-| Process environment | `populateFromOSEnv` truncates values containing `=`. Config values take precedence over process values. |
-| Handler/reflection validation | Malformed handler arguments, invalid plugin shapes, and nil embedded pointers can panic. Existing tests do not cover all these paths. |
-| Construction and reuse | `NewWithConfig` changes global working directory, retains and mutates config objects, and reuses registered plugin instances. Failed construction does not roll back initialized plugins. |
-| Cancellation | `Listen` returns on context cancellation without closing resources. Its 100 ms startup message is a timer, not a readiness guarantee. `ListenUntilSignal` closes after `Listen`, treats `context.Canceled` as non-error, and combines other listen/close errors. |
-| Signals | `onClose` registers SIGINT, SIGTERM, SIGABRT, but not SIGQUIT. It does not unregister or stop waiting when the parent context ends. |
-| HTTP redirect shutdown | When HTTPS redirects are enabled, `getHTTPListener` creates a separate httpserve `Upgrader` that `Vroomy.Close` does not retain/close. Do not assume all listeners are released when embedding this mode in a long-lived process. |
-| Close ordering | Plugins close in map iteration order, not reverse dependency order. Repeated `Vroomy.Close` returns `errors.ErrIsClosed` from `github.com/gdbu/errors`. |
+| Handler/reflection validation | Missing closing handler parentheses return `ErrExpectedEndParen`, including a trailing `(`. Other malformed expressions are not fully validated; registration validates plugin shapes, anonymous pointers, and tagged fields; empty root paths return errors. Nil backends (including typed nil) and nil handler factory results are rejected. |
+| Construction and reuse | `NewWithConfig` changes global working directory, retains and mutates config objects, and reuses registered plugin instances. One service exclusively owns the registry at a time. Failed construction closes attempted plugins in reverse dependency order and restores the previous directory. |
 
 ## Keeping documentation aligned
 
@@ -116,3 +135,16 @@ Keep the README's first-run instructions independent of third-party plugins.
 Compile complete Go examples, parse TOML examples, check local links, and smoke-test
 changed startup instructions. Go doc comments are part of the documentation too:
 avoid describing a legacy field or stub as an implemented feature.
+
+## Listener dependency
+
+Vroomy pins the published apex release
+[`v0.14.2`](https://github.com/vroomy/apex/tree/v0.14.2)
+for startup/Close synchronization, middleware ownership, and safe TLS walking.
+Listener setup uses a helper with a deferred unlock; serving begins after it returns.
+The previous v0.14.1 release has an immediate-cancellation race that can leave a listener open and make
+shutdown wait forever.
+
+The published module resolves through Go's normal proxy and checksum verification.
+Both modules' race suites, vet and build, and the hello example have been checked.
+No local `replace` directive or workspace file is required.

@@ -5,5 +5,5 @@
 //
 // Plugins share a process-wide registry. Construction changes the process working
 // directory, calls every plugin's Init, then injects dependencies and calls Load in
-// dependency order. Handlers write responses through httpserve.Context.
+// dependency order. Handlers write responses through apex.Context.
 package vroomy
