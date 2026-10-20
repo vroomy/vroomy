@@ -1,9 +1,13 @@
 package vroomy
 
 import (
+	"bufio"
+	"bytes"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/vroomy/apex"
 )
@@ -123,5 +127,54 @@ func BenchmarkRedirectServing(b *testing.B) {
 				listener.server.Handler.ServeHTTP(writer, request)
 			}
 		})
+	}
+}
+
+func BenchmarkPluginHTTPServing(b *testing.B) {
+	var router = benchmarkServingRouter(b, &Route{HTTPPath: "/ping", Handlers: []string{"serving.NoContent"}})
+	var server = httptest.NewServer(router)
+	b.Cleanup(server.Close)
+	var connection, err = net.Dial("tcp", server.Listener.Addr().String())
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.Cleanup(func() {
+		if closeErr := connection.Close(); closeErr != nil {
+			b.Error(closeErr)
+		}
+	})
+	if err = connection.SetDeadline(time.Now().Add(30 * time.Second)); err != nil {
+		b.Fatal(err)
+	}
+
+	var reader = bufio.NewReader(connection)
+	var request = []byte("GET /ping HTTP/1.1\r\nHost: example.com\r\n\r\n")
+	// Reuse one HTTP/1.1 connection and parse headers in place. This includes
+	// server-side net/http allocations without adding an http.Client per request.
+	var exchange = func() {
+		if count, writeErr := connection.Write(request); writeErr != nil || count != len(request) {
+			b.Fatalf("write request = %d, %v", count, writeErr)
+		}
+
+		var line, readErr = reader.ReadSlice('\n')
+		if readErr != nil || !bytes.Equal(line, []byte("HTTP/1.1 204 No Content\r\n")) {
+			b.Fatalf("response = %q, %v", line, readErr)
+		}
+
+		for {
+			if line, readErr = reader.ReadSlice('\n'); readErr != nil {
+				b.Fatal(readErr)
+			}
+
+			if bytes.Equal(line, []byte("\r\n")) {
+				break
+			}
+		}
+	}
+	exchange()
+	b.ReportAllocs()
+	for b.Loop() {
+		exchange()
 	}
 }

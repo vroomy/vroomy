@@ -1,0 +1,41 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/vroomy/vroomy
+cpu: Apple M3
+BenchmarkPluginServing/Direct-8         	 1820676	       118.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Direct-8         	 2260832	       105.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Direct-8         	 2242542	       110.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Direct-8         	 2162070	       109.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Direct-8         	 2206383	       108.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Factory-8        	 5670663	        45.07 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Factory-8        	 5761382	        41.05 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Factory-8        	 4797936	        49.47 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Factory-8        	 4590006	        54.94 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Factory-8        	 5153950	        41.63 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/Bytes-8          	 1864245	       127.7 ns/op	      16 B/op	       1 allocs/op
+BenchmarkPluginServing/Bytes-8          	 1921437	       126.0 ns/op	      16 B/op	       1 allocs/op
+BenchmarkPluginServing/Bytes-8          	 1920014	       125.8 ns/op	      16 B/op	       1 allocs/op
+BenchmarkPluginServing/Bytes-8          	 1924604	       126.7 ns/op	      16 B/op	       1 allocs/op
+BenchmarkPluginServing/Bytes-8          	 1868546	       128.3 ns/op	      16 B/op	       1 allocs/op
+BenchmarkPluginServing/String-8         	 1716832	       140.0 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPluginServing/String-8         	 1721592	       139.8 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPluginServing/String-8         	 1728738	       139.0 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPluginServing/String-8         	 1722688	       139.3 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPluginServing/String-8         	 1718086	       140.4 ns/op	      24 B/op	       2 allocs/op
+BenchmarkPluginServing/MiddlewareParam-8         	 1000000	       249.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/MiddlewareParam-8         	 1000000	       224.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/MiddlewareParam-8         	 1000000	       251.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/MiddlewareParam-8         	 1000000	       222.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPluginServing/MiddlewareParam-8         	 1000000	       224.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkRedirectServing/GET-8                   	 2827363	        83.89 ns/op	      96 B/op	       3 allocs/op
+BenchmarkRedirectServing/GET-8                   	 2901824	        82.51 ns/op	      96 B/op	       3 allocs/op
+BenchmarkRedirectServing/GET-8                   	 2952204	        81.49 ns/op	      96 B/op	       3 allocs/op
+BenchmarkRedirectServing/GET-8                   	 2921904	        81.96 ns/op	      96 B/op	       3 allocs/op
+BenchmarkRedirectServing/GET-8                   	 2955524	        80.93 ns/op	      96 B/op	       3 allocs/op
+BenchmarkRedirectServing/POST-8                  	 9184507	        25.98 ns/op	      16 B/op	       1 allocs/op
+BenchmarkRedirectServing/POST-8                  	 9392426	        26.33 ns/op	      16 B/op	       1 allocs/op
+BenchmarkRedirectServing/POST-8                  	 9418658	        26.02 ns/op	      16 B/op	       1 allocs/op
+BenchmarkRedirectServing/POST-8                  	 9398358	        25.86 ns/op	      16 B/op	       1 allocs/op
+BenchmarkRedirectServing/POST-8                  	 9430408	        25.85 ns/op	      16 B/op	       1 allocs/op
+PASS
+ok  	github.com/vroomy/vroomy	8.627s

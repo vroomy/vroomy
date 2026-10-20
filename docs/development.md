@@ -135,6 +135,15 @@ For service/plugin tests, avoid `t.Parallel` around the global registry or proce
 working directory. Restore any state you replace. An external test application in
 a fresh subprocess can isolate registration and shutdown from other tests.
 
+## Serving benchmarks
+
+See [the serving allocation review](../benchmarks/serving/README.md) for
+reproducible benchmarks, CPU/allocation profiles, before/after samples, and
+remaining costs in apex and Go's HTTP transport. The benchmarks isolate warmed
+handler dispatch from startup and also measure a loopback HTTP keep-alive request.
+`handler_allocations_test.go` protects allocation-free direct dispatch and checks
+receiver binding and concurrent requests.
+
 ## Known implementation gaps
 
 These are current limitations to account for, not features promised by the docs.
@@ -164,7 +173,7 @@ avoid describing a legacy field or stub as an implemented feature.
 ## Listener dependency
 
 Vroomy pins the published apex release
-[`v0.14.2`](https://github.com/vroomy/apex/tree/v0.14.2)
+[`v0.16.1`](https://github.com/vroomy/apex/tree/v0.16.1)
 for startup/Close synchronization, middleware ownership, and safe TLS walking.
 Listener setup uses a helper with a deferred unlock; serving begins after it returns.
 The previous v0.14.1 release has an immediate-cancellation race that can leave a listener open and make
