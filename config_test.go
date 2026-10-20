@@ -217,3 +217,110 @@ func TestNewConfig_IncludePathsAndNonRecursion(t *testing.T) {
 		t.Fatalf("NewConfig changed working directory: %q, %v", currentDir, dirErr)
 	}
 }
+
+func TestNewConfigDefaultsAndFailures(t *testing.T) {
+	var dir = t.TempDir()
+	var empty = filepath.Join(dir, "empty.toml")
+	if err := os.WriteFile(empty, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	var cfg, err = NewConfig(empty)
+	if err != nil || cfg.Dir != "./" || cfg.Environment == nil {
+		t.Fatalf("empty config = %v, %v", cfg, err)
+	}
+
+	var tests = []struct {
+		name     string
+		contents string
+		cause    error
+	}{
+		{name: "invalid main TOML", contents: "port = ["},
+		{name: "missing included file", contents: fmt.Sprintf("include = [%q]", filepath.Join(dir, "missing.toml")), cause: os.ErrNotExist},
+		{name: "invalid included TOML", contents: fmt.Sprintf("include = [%q]", filepath.Join(dir, "invalid.toml"))},
+		{name: "directory containing non TOML file", contents: fmt.Sprintf("include = [%q]", filepath.Join(dir, "includes"))},
+	}
+	if err = os.WriteFile(filepath.Join(dir, "invalid.toml"), []byte("["), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	var includes = filepath.Join(dir, "includes")
+	if err = os.Mkdir(includes, 0700); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = os.WriteFile(filepath.Join(includes, "readme.txt"), nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var filename = filepath.Join(dir, "main.toml")
+			if writeErr := os.WriteFile(filename, []byte(tt.contents), 0600); writeErr != nil {
+				t.Fatal(writeErr)
+			}
+
+			var result, loadErr = NewConfig(filename)
+			if result != nil || loadErr == nil {
+				t.Fatalf("NewConfig() = %v, %v, want failure", result, loadErr)
+			}
+
+			if tt.cause != nil && !errors.Is(loadErr, tt.cause) {
+				t.Fatalf("error = %v, want cause %v", loadErr, tt.cause)
+			}
+		})
+	}
+}
+
+func TestConfigGetFilepath(t *testing.T) {
+	var cfg Config
+	t.Setenv("CONFIG_PATH", "restore-after-test")
+	if err := os.Unsetenv("CONFIG_PATH"); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := cfg.GetFilepath(); got != "config.toml" {
+		t.Fatalf("unset CONFIG_PATH = %q", got)
+	}
+
+	for _, directory := range []string{"", "/etc/vroomy", "relative/config"} {
+		t.Setenv("CONFIG_PATH", directory)
+		if got, want := cfg.GetFilepath(), filepath.Join(directory, "config.toml"); got != want {
+			t.Errorf("CONFIG_PATH %q = %q, want %q", directory, got, want)
+		}
+	}
+}
+
+func TestConfigCertificateSources(t *testing.T) {
+	var tests = []struct {
+		name  string
+		dir   string
+		hosts []string
+		want  bool
+	}{
+		{name: "neither"},
+		{name: "hosts only", hosts: []string{"example.com"}},
+		{name: "directory only", dir: "cache"},
+		{name: "both", dir: "cache", hosts: []string{"example.com"}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var cfg = Config{IncludeConfig: IncludeConfig{AutoCertDir: tt.dir, AutoCertHosts: tt.hosts}}
+			if got := cfg.hasAutoCert(); got != tt.want {
+				t.Fatalf("hasAutoCert() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConfigGetRouteGroup(t *testing.T) {
+	var first = &RouteGroup{Name: "duplicate"}
+	var cfg = Config{IncludeConfig: IncludeConfig{Groups: []*RouteGroup{nil, first, {Name: "duplicate"}}}}
+	if group, err := cfg.GetRouteGroup("duplicate"); err != nil || group != first {
+		t.Fatalf("GetRouteGroup() = %v, %v, want first match", group, err)
+	}
+
+	if group, err := cfg.GetRouteGroup("missing"); group != nil || !errors.Is(err, ErrGroupNotFound) {
+		t.Fatalf("missing group = %v, %v", group, err)
+	}
+}

@@ -1,12 +1,33 @@
 package vroomy
 
 import (
+	stderrors "errors"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gdbu/errors"
 )
+
+func TestDependencyLoadStopsOnCallbackFailure(t *testing.T) {
+	var graph = dependenciesMap{"provider": {}, "consumer": {"provider": {0}}}
+	var cause = stderrors.New("load failure")
+	var calls []string
+	var err = graph.Load(func(key string, _ dependencyMap) error {
+		calls = append(calls, key)
+		return cause
+	})
+	if !stderrors.Is(err, cause) || len(calls) != 1 || calls[0] != "provider" {
+		t.Fatalf("Load() = %v, calls = %v; want provider failure before consumer", err, calls)
+	}
+}
+
+func TestDependencySelfImport(t *testing.T) {
+	var graph = dependenciesMap{"self": {"self": {0}}}
+	if err := graph.Validate(); err == nil || !strings.Contains(err.Error(), "self import") {
+		t.Fatalf("Validate() = %v, want self import error", err)
+	}
+}
 
 func Test_makeDependencyMap(t *testing.T) {
 	type A struct {
