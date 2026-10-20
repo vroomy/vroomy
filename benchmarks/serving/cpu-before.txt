@@ -1,0 +1,124 @@
+File: vroomy-serving-cpu-before.test
+Type: cpu
+Time: 2026-10-19 22:19:00 PDT
+Duration: 2.52s, Total samples = 1.99s (78.91%)
+Showing nodes accounting for 1.99s, 100% of 1.99s total
+      flat  flat%   sum%        cum   cum%
+     0.24s 12.06% 12.06%      0.42s 21.11%  reflect.funcLayout
+     0.23s 11.56% 23.62%      1.42s 71.36%  github.com/vroomy/apex.(*Context).processHandlers
+     0.23s 11.56% 35.18%      0.23s 11.56%  runtime.madvise
+     0.10s  5.03% 40.20%      0.10s  5.03%  runtime.pthread_cond_signal
+     0.09s  4.52% 44.72%      0.10s  5.03%  sync.(*Pool).pin
+     0.08s  4.02% 48.74%      0.18s  9.05%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).Load
+     0.08s  4.02% 52.76%      0.08s  4.02%  reflect.moveMakeFuncArgPtrs
+     0.05s  2.51% 55.28%      0.08s  4.02%  github.com/vroomy/vroomy.(*servingPlugin).Middleware
+     0.05s  2.51% 57.79%      0.05s  2.51%  runtime.(*mspan).initHeapBits
+     0.04s  2.01% 59.80%      1.61s 80.90%  github.com/vroomy/apex.(*Router).ServeHTTP
+     0.04s  2.01% 61.81%      0.04s  2.01%  internal/runtime/maps.memHashAES
+     0.04s  2.01% 63.82%      0.05s  2.51%  net/textproto.CanonicalMIMEHeaderKey
+     0.04s  2.01% 65.83%      0.14s  7.04%  runtime.mallocgcSmallScanNoHeaderSC1
+     0.03s  1.51% 67.34%      0.03s  1.51%  internal/abi.(*IntArgRegBitmap).Get (inline)
+     0.03s  1.51% 68.84%      0.23s 11.56%  reflect.methodReceiver
+     0.03s  1.51% 70.35%      0.03s  1.51%  runtime.kevent
+     0.03s  1.51% 71.86%      0.03s  1.51%  runtime.mapaccess1_faststr
+     0.03s  1.51% 73.37%      0.06s  3.02%  runtime.reflectcallmove
+     0.03s  1.51% 74.87%      0.03s  1.51%  runtime.spillArgs
+     0.03s  1.51% 76.38%      0.09s  4.52%  sync.(*Pool).Get
+     0.02s  1.01% 77.39%      0.07s  3.52%  github.com/vroomy/apex.(*Router).match
+     0.02s  1.01% 78.39%      0.04s  2.01%  github.com/vroomy/apex.(*routeNode).find
+     0.02s  1.01% 79.40%      0.02s  1.01%  internal/abi.(*Type).Uncommon (inline)
+     0.02s  1.01% 80.40%      0.03s  1.51%  reflect.typedmemclr
+     0.02s  1.01% 81.41%      0.03s  1.51%  runtime.(*mspan).refillAllocCache
+     0.02s  1.01% 82.41%      0.03s  1.51%  runtime.mapassign_faststr
+     0.02s  1.01% 83.42%      0.02s  1.01%  runtime.memclrNoHeapPointers
+     0.02s  1.01% 84.42%      0.07s  3.52%  runtime.nilinterhash
+     0.02s  1.01% 85.43%      0.02s  1.01%  runtime.unspillArgs
+     0.01s   0.5% 85.93%      0.03s  1.51%  github.com/vroomy/apex.(*Context).reset (inline)
+     0.01s   0.5% 86.43%      0.05s  2.51%  github.com/vroomy/apex.(*route).find
+     0.01s   0.5% 86.93%      0.05s  2.51%  github.com/vroomy/apex.releaseContext
+     0.01s   0.5% 87.44%      0.01s   0.5%  internal/abi.(*Type).Kind (inline)
+     0.01s   0.5% 87.94%      0.01s   0.5%  internal/abi.(*UncommonType).ExportedMethods (inline)
+     0.01s   0.5% 88.44%      0.01s   0.5%  internal/chacha8rand.(*State).Next (inline)
+     0.01s   0.5% 88.94%      0.01s   0.5%  internal/chacha8rand.block
+     0.01s   0.5% 89.45%      0.01s   0.5%  internal/runtime/maps.(*Map).putSlotSmallFastStr
+     0.01s   0.5% 89.95%      0.05s  2.51%  internal/runtime/maps.MemHash
+     0.01s   0.5% 90.45%      0.01s   0.5%  internal/stringslite.Index
+     0.01s   0.5% 90.95%      0.01s   0.5%  internal/sync.(*HashTrieMap[go.shape.interface {},go.shape.interface {}]).init (inline)
+     0.01s   0.5% 91.46%      0.02s  1.01%  internal/sync.(*entry[go.shape.interface {},go.shape.interface {}]).lookup (inline)
+     0.01s   0.5% 91.96%      0.09s  4.52%  net/textproto.MIMEHeader.Get
+     0.01s   0.5% 92.46%      0.01s   0.5%  net/textproto.validHeaderFieldByte (inline)
+     0.01s   0.5% 92.96%      0.02s  1.01%  reflect.resolveTypeOff
+     0.01s   0.5% 93.47%      0.02s  1.01%  reflect.storeRcvr
+     0.01s   0.5% 93.97%      0.01s   0.5%  runtime.(*gcBits).bytep (inline)
+     0.01s   0.5% 94.47%      0.01s   0.5%  runtime.(*moduledata).textAddr
+     0.01s   0.5% 94.97%      0.01s   0.5%  runtime.acquirem (inline)
+     0.01s   0.5% 95.48%      0.01s   0.5%  runtime.efaceeq
+     0.01s   0.5% 95.98%      0.01s   0.5%  runtime.mapaccess2_fast64
+     0.01s   0.5% 96.48%      0.01s   0.5%  runtime.memequal
+     0.01s   0.5% 96.98%      0.01s   0.5%  runtime.procPin (inline)
+     0.01s   0.5% 97.49%      0.01s   0.5%  runtime.procUnpin (inline)
+     0.01s   0.5% 97.99%      0.01s   0.5%  runtime.reflectcall
+     0.01s   0.5% 98.49%      0.01s   0.5%  runtime.releasem (inline)
+     0.01s   0.5% 98.99%      0.02s  1.01%  strings.HasPrefix (inline)
+     0.01s   0.5% 99.50%      0.06s  3.02%  sync.(*Pool).Put
+     0.01s   0.5%   100%      0.01s   0.5%  testing.(*B).Loop (inline)
+         0     0%   100%      0.06s  3.02%  callRet
+         0     0%   100%      0.03s  1.51%  github.com/vroomy/apex.(*Context).Put (inline)
+         0     0%   100%      0.10s  5.03%  github.com/vroomy/apex.(*Context).WriteNoContent
+         0     0%   100%      0.10s  5.03%  github.com/vroomy/apex.(*Context).getRedirect
+         0     0%   100%      0.10s  5.03%  github.com/vroomy/apex.(*Context).tryRedirect
+         0     0%   100%      0.05s  2.51%  github.com/vroomy/apex.(*Router).ServeHTTP.func1
+         0     0%   100%      0.03s  1.51%  github.com/vroomy/apex.acquireContext (inline)
+         0     0%   100%      1.42s 71.36%  github.com/vroomy/apex.newHandler.func1
+         0     0%   100%      0.08s  4.02%  github.com/vroomy/vroomy.(*servingPlugin).NoContent
+         0     0%   100%      0.02s  1.01%  github.com/vroomy/vroomy.(*servingPlugin).Param
+         0     0%   100%      1.62s 81.41%  github.com/vroomy/vroomy.BenchmarkPluginServing.func1
+         0     0%   100%      0.03s  1.51%  internal/abi.(*Type).ExportedMethods
+         0     0%   100%      0.02s  1.01%  internal/runtime/maps.(*Map).Clear
+         0     0%   100%      0.01s   0.5%  internal/runtime/maps.(*Map).clearSmall
+         0     0%   100%      0.01s   0.5%  internal/runtime/maps.rand
+         0     0%   100%      0.01s   0.5%  internal/runtime/maps.typedmemclr
+         0     0%   100%      0.01s   0.5%  internal/stringslite.Cut
+         0     0%   100%      0.01s   0.5%  internal/stringslite.HasPrefix (inline)
+         0     0%   100%      0.09s  4.52%  net/http.Header.Get (inline)
+         0     0%   100%      0.01s   0.5%  reflect.(*rtype).textOff (inline)
+         0     0%   100%      0.02s  1.01%  reflect.(*rtype).typeOff (inline)
+         0     0%   100%      0.01s   0.5%  reflect.resolveTextOff
+         0     0%   100%      0.01s   0.5%  reflect.textOffFor (inline)
+         0     0%   100%      0.02s  1.01%  reflect.typeOffFor (inline)
+         0     0%   100%      0.08s  4.02%  runtime.(*mcache).nextFree
+         0     0%   100%      0.06s  3.02%  runtime.(*mcache).refill
+         0     0%   100%      0.06s  3.02%  runtime.(*mcentral).cacheSpan
+         0     0%   100%      0.05s  2.51%  runtime.(*mcentral).grow
+         0     0%   100%      0.23s 11.56%  runtime.(*mheap).alloc.func1
+         0     0%   100%      0.23s 11.56%  runtime.(*mheap).allocSpan
+         0     0%   100%      0.02s  1.01%  runtime.(*mspan).nextFreeIndex
+         0     0%   100%      0.03s  1.51%  runtime.gcStart.func4
+         0     0%   100%      0.10s  5.03%  runtime.gopreempt_m (inline)
+         0     0%   100%      0.10s  5.03%  runtime.goschedImpl
+         0     0%   100%      0.01s   0.5%  runtime.mapaccess1_fast64
+         0     0%   100%      0.02s  1.01%  runtime.mapclear
+         0     0%   100%      0.05s  2.51%  runtime.memhash (inline)
+         0     0%   100%      0.10s  5.03%  runtime.morestack
+         0     0%   100%      0.03s  1.51%  runtime.netpoll
+         0     0%   100%      0.10s  5.03%  runtime.newstack
+         0     0%   100%      0.10s  5.03%  runtime.notewakeup
+         0     0%   100%      0.01s   0.5%  runtime.rand
+         0     0%   100%      0.01s   0.5%  runtime.resolveTypeOff
+         0     0%   100%      0.01s   0.5%  runtime.rtype.textOff
+         0     0%   100%      0.01s   0.5%  runtime.rtype.typeOff (inline)
+         0     0%   100%      0.10s  5.03%  runtime.semawakeup
+         0     0%   100%      0.03s  1.51%  runtime.startTheWorldWithSema
+         0     0%   100%      0.10s  5.03%  runtime.startm
+         0     0%   100%      0.23s 11.56%  runtime.sysUsed (inline)
+         0     0%   100%      0.23s 11.56%  runtime.sysUsedOS (inline)
+         0     0%   100%      0.26s 13.07%  runtime.systemstack
+         0     0%   100%      0.02s  1.01%  runtime.typedmemclr
+         0     0%   100%      0.05s  2.51%  runtime.typehash
+         0     0%   100%      0.10s  5.03%  runtime.wakep
+         0     0%   100%      0.01s   0.5%  strings.Cut (inline)
+         0     0%   100%      0.18s  9.05%  sync.(*Map).Load (inline)
+         0     0%   100%      0.01s   0.5%  sync.runtime_procPin
+         0     0%   100%      0.01s   0.5%  sync.runtime_procUnpin
+         0     0%   100%      1.62s 81.41%  testing.(*B).run1.func1
+         0     0%   100%      1.62s 81.41%  testing.(*B).runN
