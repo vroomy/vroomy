@@ -137,10 +137,16 @@ a fresh subprocess can isolate registration and shutdown from other tests.
 
 ## Serving benchmarks
 
-See [the serving allocation review](../benchmarks/serving/README.md) for
-reproducible benchmarks, CPU/allocation profiles, before/after samples, and
-remaining costs in apex and Go's HTTP transport. The benchmarks isolate warmed
-handler dispatch from startup and also measure a loopback HTTP keep-alive request.
+[The serving benchmarks](../serving_benchmark_test.go) isolate warmed handler
+dispatch from startup and also measure a loopback HTTP keep-alive request:
+
+```sh
+go test -run '^$' -bench 'Benchmark(Plugin|Redirect)Serving' -benchmem .
+go test -run '^$' -bench '^BenchmarkPluginHTTPServing$' -benchmem .
+```
+
+The HTTP benchmark needs local socket permissions. Transport and response encoding
+have separate allocation costs from handler dispatch.
 `handler_allocations_test.go` protects allocation-free direct dispatch and checks
 receiver binding and concurrent requests.
 

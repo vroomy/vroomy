@@ -204,7 +204,7 @@ Direct handlers use the unbound reflected method and the registered receiver to
 avoid the per-call allocation of a reflected bound function. Factories return
 ordinary Go functions and avoid reflection while serving. Both paths can serve
 without allocating in the warmed handler dispatch; response encoding and the
-HTTP transport have separate costs. See the [serving benchmarks](../benchmarks/serving/README.md).
+HTTP transport have separate costs. See the [serving benchmarks](../serving_benchmark_test.go).
 
 - `"hello.Ping"` resolves the exported method on the registered `hello` instance.
 - `"hello.Message(one,two)"` supplies two literal strings to a factory.
