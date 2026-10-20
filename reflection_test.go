@@ -170,3 +170,98 @@ func TestPluginErrorContracts(t *testing.T) {
 		t.Fatalf("getHandler() = %v, want invalid handler sentinel", err)
 	}
 }
+
+type recursivePlugin struct {
+	BasePlugin
+	*recursivePlugin
+}
+
+func TestRecursivePluginEmbedding(t *testing.T) {
+	var plugin = &recursivePlugin{}
+	plugin.recursivePlugin = plugin
+	if err := validatePlugin(plugin); err == nil || !strings.Contains(err.Error(), "recursive anonymous embedding") {
+		t.Fatalf("validatePlugin() = %v, want recursive embedding error", err)
+	}
+
+	if _, err := makeDependencyMap(plugin); err == nil || !strings.Contains(err.Error(), "recursive anonymous embedding") {
+		t.Fatalf("makeDependencyMap() = %v, want recursive embedding error", err)
+	}
+}
+
+func TestDependencyInspectionFailures(t *testing.T) {
+	type privateDependency struct {
+		dependency string `vroomy:"provider"`
+	}
+
+	var tests = []struct {
+		name  string
+		value any
+		cause error
+	}{
+		{name: "nil"},
+		{name: "scalar", value: 1},
+		{name: "private tagged field", value: &privateDependency{dependency: "backend"}, cause: ErrNotAddressable},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var dependencies, err = makeDependencyMap(tt.value)
+			if dependencies != nil || err == nil {
+				t.Fatalf("makeDependencyMap() = %v, %v, want failure", dependencies, err)
+			}
+
+			if tt.cause != nil && !errors.Is(err, tt.cause) {
+				t.Fatalf("error = %v, want cause %v", err, tt.cause)
+			}
+		})
+	}
+
+	if _, err := makeDependenciesMap(map[string]Plugin{"invalid": nil}); err == nil || !strings.Contains(err.Error(), "invalid") {
+		t.Fatalf("makeDependenciesMap() = %v, want plugin context", err)
+	}
+}
+
+func TestDependencyFieldPaths(t *testing.T) {
+	var target = struct{ Value string }{Value: "before"}
+	var tests = []struct {
+		name    string
+		value   reflect.Value
+		indices []int
+		cause   error
+	}{
+		{name: "negative index", value: reflect.ValueOf(&target).Elem(), indices: []int{-1}},
+		{name: "out of range", value: reflect.ValueOf(&target).Elem(), indices: []int{1}},
+		{name: "non struct", value: reflect.ValueOf(1), indices: []int{0}},
+		{name: "invalid value", indices: []int{0}},
+		{name: "unsettable field", value: reflect.ValueOf(target), indices: []int{0}, cause: ErrNotAddressable},
+		{name: "empty invalid path", cause: ErrNotAddressable},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var _, err = getField(tt.value, tt.indices)
+			if err == nil {
+				t.Fatal("invalid field path accepted")
+			}
+
+			if tt.cause != nil && !errors.Is(err, tt.cause) {
+				t.Fatalf("getField() = %v, want cause %v", err, tt.cause)
+			}
+		})
+	}
+
+	if err := canSet(reflect.Value{}, reflect.ValueOf(1)); err == nil {
+		t.Fatal("invalid assignment value accepted")
+	}
+
+	var service Vroomy
+	if err := service.setBackend(reflect.ValueOf(1), "missing"); !errors.Is(err, ErrNotAddressable) {
+		t.Fatalf("unsettable backend = %v", err)
+	}
+
+	if err := service.setDependencies("missing", nil); !errors.Is(err, ErrPluginNotLoaded) {
+		t.Fatalf("missing consumer = %v", err)
+	}
+
+	if _, err := service.getReference("missing"); !errors.Is(err, ErrPluginNotLoaded) {
+		t.Fatalf("missing provider = %v", err)
+	}
+}

@@ -2,9 +2,39 @@ package vroomy
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 )
+
+func TestInitDir(t *testing.T) {
+	var directory = filepath.Join(t.TempDir(), "data")
+	if err := initDir(directory); err != nil {
+		t.Fatal(err)
+	}
+
+	if info, err := os.Stat(directory); err != nil || !info.IsDir() {
+		t.Fatalf("created data directory = %v, %v", info, err)
+	}
+
+	if err := initDir(directory); err != nil {
+		t.Fatalf("existing directory = %v", err)
+	}
+
+	if err := initDir(filepath.Join(directory, "missing", "child")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("missing parent = %v, want filesystem cause", err)
+	}
+
+	var link = filepath.Join(directory, "dangling")
+	if err := os.Symlink(filepath.Join(directory, "missing"), link); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := initDir(link); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("dangling symlink = %v, want stat failure", err)
+	}
+}
 
 func Test_getHandlerParts(t *testing.T) {
 	type testcase struct {

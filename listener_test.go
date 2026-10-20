@@ -16,9 +16,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	gdberrors "github.com/gdbu/errors"
 	"github.com/vroomy/apex"
 )
 
@@ -256,4 +258,81 @@ func TestFailedTLSStartupReleasesHTTP(t *testing.T) {
 	}
 
 	assertPortsReleased(t, ports...)
+}
+
+func TestListenRejectsRepeatedStartAndClosedService(t *testing.T) {
+	isolateRegistry(t)
+	var running = startService(t, &Config{Dir: ".", Port: availablePorts(t, 1)[0]})
+	var request, err = http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/", running.service.Port()), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	responseBody(t, requestEventually(t, &http.Client{Timeout: time.Second}, request))
+	if err = running.service.Listen(context.Background()); err == nil || !strings.Contains(err.Error(), "already started") {
+		t.Fatalf("second Listen() = %v", err)
+	}
+
+	if err = running.service.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = running.service.Listen(context.Background()); !errors.Is(err, gdberrors.ErrIsClosed) {
+		t.Fatalf("closed Listen() = %v", err)
+	}
+}
+
+func TestTLSConfigurationFailures(t *testing.T) {
+	var tests = []struct {
+		name   string
+		config IncludeConfig
+		plugin Plugin
+		cause  error
+	}{
+		{name: "no certificate source", cause: ErrInvalidTLSDirectory},
+		{name: "directory without hosts", config: IncludeConfig{AutoCertDir: "cache"}, cause: ErrInvalidTLSDirectory},
+		{name: "invalid host policy", config: IncludeConfig{AutoCertDir: "cache", AutoCertHosts: []string{"example.com"}}, plugin: &invalidHostPolicyPlugin{}, cause: ErrInvalidHostPolicy},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isolateRegistry(t)
+			if tt.plugin != nil {
+				if err := Register("autocert", tt.plugin); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			var service, err = NewWithConfig(&Config{Dir: ".", TLSPort: availablePorts(t, 1)[0], IncludeConfig: tt.config})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err = service.Listen(context.Background()); !errors.Is(err, tt.cause) {
+				t.Fatalf("Listen() = %v, want cause %v", err, tt.cause)
+			}
+
+			if !service.closed.Get() || p.inUse {
+				t.Fatal("failed TLS startup did not close service and release registry")
+			}
+		})
+	}
+}
+
+func TestCanceledListenPreservesTLSStartupFailure(t *testing.T) {
+	isolateRegistry(t)
+	var cfg = &Config{Dir: ".", TLSPort: availablePorts(t, 1)[0], TLSDir: filepath.Join(t.TempDir(), "missing")}
+	var service, err = NewWithConfig(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var ctx, cancel = context.WithCancel(context.Background())
+	cancel()
+	if err = service.Listen(ctx); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("Listen() = %v, want TLS filesystem cause even during cancellation", err)
+	}
+
+	if !service.closed.Get() || p.inUse {
+		t.Fatal("canceled startup retained service resources")
+	}
 }
