@@ -32,8 +32,9 @@ go build ./...
 
 Run `gofmt -w` on changed Go files. Use `go test -race ./...` when changing shared
 state, dependency loading, or lifecycle code. Tests use the standard `testing`
-package; there is no Makefile or checked-in CI workflow. Do not confuse the
-unimplemented `Plugins.Test` / `TestAsync` methods with the Go test suite.
+package; there is no Makefile. Checked-in GitHub Actions workflows run lint, tests,
+and coverage uploads. Do not confuse the unimplemented `Plugins.Test` / `TestAsync`
+methods with the Go test suite.
 
 For an HTTP smoke check, run `go run ./examples/hello config.example.toml`, request
 `http://localhost:8080/` and `http://localhost:8080/api/ping`, and stop with Ctrl-C.

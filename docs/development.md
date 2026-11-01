@@ -35,9 +35,10 @@ temporary cache with the same commands, for example:
 GOCACHE="${TMPDIR:-/tmp}/vroomy-go-build" go test ./...
 ```
 
-There is no Makefile, custom lint configuration, or checked-in CI workflow. Do not
-assume additional checks have run remotely. `go build ./...` compiles all packages;
-the root is a library, so `go run .` is not an application startup command.
+There is no Makefile or custom lint configuration. The checked-in GitHub Actions
+workflows run lint, tests, and a separate coverage upload. `go build ./...` compiles
+all packages; the root is a library, so `go run .` is not an application startup
+command.
 
 Keep documentation versions aligned with `go.mod` when updating dependencies.
 Keep a concrete minimum in the README and
@@ -58,6 +59,19 @@ link other version requirements to `go.mod` when a copied number adds no value.
 | `examples/hello/main.go`, `examples/hello/plugins/hello.go`, `config.example.toml` | HTTP quickstart with a separate plugin file that registers from `init()` when blank-imported by main. |
 
 ## Test coverage and manual verification
+
+The [coverage workflow](../.github/workflows/code_coverage.yaml) runs race-enabled
+tests and uploads `coverage.out` to Codecov for pushes and pull requests targeting
+`main`. Configure `vroomy/vroomy` in Codecov, grant its GitHub app access to this
+repository, and set its default branch to `main`. The GitHub Actions secret
+`CODECOV_TOKEN` must be this repository's upload token or an organization upload
+token valid for it; the workflow's `slug` must match `vroomy/vroomy`.
+
+The [README badge](../README.md) reads coverage from `main`. A successful upload
+step means Codecov accepted the report for processing; confirm that processing
+finishes under the correct repository and branch before expecting the badge to
+show coverage. After changing the workflow, push the correction to `main` for a
+fresh upload; rerunning an older job still uses its original workflow.
 
 Measure library statement coverage and inspect uncovered lines with:
 
